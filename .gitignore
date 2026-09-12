@@ -1,0 +1,14 @@
+# Office temporary files
+~$*.xlsx
+~$*.docx
+~$*.pptx
+
+# Build & IDE files
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS generated files
+.DS_Store
+Thumbs.db
