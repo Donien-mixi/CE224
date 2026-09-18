@@ -77,7 +77,7 @@ Hệ thống sử dụng ngắt cứng Timer của STM32F411 làm nhịp tim đi
 │          │          │          │          │ ~50µs    │ ~80µs    │ > 4270µs (>85% rảnh)
 ```
 
-1. **Task 1 (Đọc dữ liệu thô IMU)**: Đọc 14 bytes thanh ghi từ ICM-20602 qua SPI1 DMA hoặc Polling tốc độ 6.25MHz ($\approx 380\text{ µs}$).
+1. **Task 1 (Đọc dữ liệu thô IMU)**: Đọc 12 bytes thanh ghi từ Bosch BMI160 qua I2C1 (Fast Mode 400kHz, DMA hoặc Polling) ($\approx 300 - 350\text{ µs}$).
 2. **Task 2 (Ước lượng góc nghiêng)**: Chạy giải thuật Complementary Filter kết hợp FPU Cortex-M4 ($\approx 40\text{ µs}$).
 3. **Task 3 (Đọc vận tốc bánh xe)**: Đọc thanh ghi phần cứng TIM2/TIM3 Encoder, tính vận tốc tịnh tiến và lọc LPF ($\approx 60\text{ µs}$).
 4. **Task 4 (Tính toán Cascade PID)**: Tính toán sai số vận tốc $\rightarrow$ $\theta_{\text{target}}$, tính sai số góc $\rightarrow$ $\text{PWM}_{\text{base}}$ ($\approx 120\text{ µs}$).
@@ -116,7 +116,7 @@ flowchart TD
     subgraph Angle_Loop ["VÒNG TRONG: Góc Nghiêng (Angle Loop - PD @ 200Hz)"]
         Err_Angle(( - ))
         FB_Angle["Góc nghiêng lọc Theta_actual (từ Complementary Filter)"]
-        FB_Gyro["Vận tốc góc Omega_gyro (từ ICM-20602)"]
+        FB_Gyro["Vận tốc góc Omega_gyro (từ Bosch BMI160)"]
         P_Ang["Khâu Tỉ lệ: Kp1 * e_theta"]
         D_Ang["Khâu Vi sai: -Kd1 * Omega_gyro"]
 
@@ -254,8 +254,8 @@ stateDiagram-v2
     STATE_RACING --> STATE_FALLEN : |theta| > 45 deg
     STATE_FALLEN --> STATE_STANDBY : Người dùng dựng lại xe (|theta| < 3 deg)
     
-    STATE_BALANCING --> STATE_EMERGENCY : Kẹt bánh > 500ms / Lỗi IMU
-    STATE_RACING --> STATE_EMERGENCY : Kẹt bánh > 500ms / Lỗi IMU
+    STATE_BALANCING --> STATE_EMERGENCY : Kẹt bánh > 500ms / Lỗi I2C BMI160
+    STATE_RACING --> STATE_EMERGENCY : Kẹt bánh > 500ms / Lỗi I2C BMI160
     STATE_EMERGENCY --> [*] : Cắt PWM vĩnh viễn + Còi hú
 ```
 
@@ -267,8 +267,8 @@ stateDiagram-v2
 
 ```c
 void Cascade_PID_Compute_5ms(void) {
-    // 1. Đọc cảm biến quán tính ICM-20602 & tính lọc bù
-    ICM20602_Read_Burst(&g_imu);
+    // 1. Đọc cảm biến quán tính Bosch BMI160 qua I2C1 & tính lọc bù
+    BMI160_Read_All(&g_imu); // Đọc Burst 12 bytes: Gx, Gy, Gz, Ax, Ay, Az
     float theta_acc = atan2f(g_imu.ax, g_imu.az) * 57.2957795f;
     g_robot.pitch = 0.98f * (g_robot.pitch + g_imu.gy * 0.005f) + 0.02f * theta_acc;
 

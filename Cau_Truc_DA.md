@@ -50,9 +50,9 @@ flowchart TD
     end
 
     subgraph S3 ["3. PHÂN HỆ CẢM NHẬN QUÁN TÍNH (Perception & IMU)"]
-        ICM["Cảm biến ICM-20602 (SPI1 @ 6.25MHz)"]
+        BMI["Cảm biến Bosch BMI160 / GY-BMI160 (I2C1 @ 400kHz)"]
         CompFilter["Bộ lọc bù Complementary Filter (Alpha = 0.98)"]
-        Damper["Đệm xốp chống rung FPV"]
+        Damper["Đệm xốp chống rung cơ học"]
     end
 
     subgraph S4 ["4. PHÂN HỆ ĐO VẬN TỐC & PHẢN HỒI (Odometry)"]
@@ -61,11 +61,12 @@ flowchart TD
         LPF_Vel["Bộ lọc thông thấp vận tốc LPF (Beta = 0.75)"]
     end
 
-    subgraph S5 ["5. PHÂN HỆ CHẤP HÀNH & CÔNG SUẤT (Actuation)"]
+    subgraph S5 ["5. PHÂN HỆ CHẤP HÀNH & CÔNG SUẤT (Actuation & Chassis)"]
         Driver["Mạch Driver Dual A4950 (MOSFET 3.5A)"]
         MotorL["Động cơ GA25-370 Trái (12V, 1:30)"]
         MotorR["Động cơ GA25-370 Phải (12V, 1:30)"]
-        Wheels["Bánh xe cao su 65mm lục giác"]
+        Chassis["Khung Mica 2 tầng + Trụ đồng 5cm/6cm + Gá GA25"]
+        Wheels["Bánh xe cao su 65mm + Khớp nối lục giác 4mm"]
     end
 
     subgraph S6 ["6. PHÂN HỆ TRUYỀN THÔNG & GIÁM SÁT (Wireless & Telemetry)"]
@@ -76,11 +77,11 @@ flowchart TD
 
     %% Luồng liên kết
     Buck -->|Nguồn 5V sạch| MCU
-    Buck -->|Nguồn 5V| ICM
+    Buck -->|Nguồn 5V| BMI
     Buck -->|Nguồn 5V| BT
     LiPo -->|Nguồn động lực 12V| Driver
 
-    ICM -->|Dữ liệu gia tốc & Gyro| MCU
+    BMI -->|Dữ liệu gia tốc & Gyro (I2C1 PB8/PB9)| MCU
     MCU -->|Ước lượng góc Theta| S2
     EncL -->|Xung A/B| MCU
     EncR -->|Xung A/B| MCU
@@ -106,10 +107,11 @@ flowchart TD
   * Tận dụng bộ tăng tốc phần cứng FPU để tính toán toàn bộ phương trình vi phân, lượng giác và giải thuật Cascade PID 2 vòng trong thời gian $< 1.0\text{ ms}$.
 
 ### 2.2. Phân hệ Cảm nhận quán tính & Lọc trạng thái (Perception & State Estimation)
-* **Thành phần cốt lõi**: Cảm biến IMU 6 trục ICM-20602, đệm xốp chống rung, giao tiếp SPI tốc độ 6.25MHz.
+* **Thành phần cốt lõi**: Cảm biến quán tính 6 trục cao cấp Bosch BMI160 (Module GY-BMI160), đệm xốp chống rung cơ học, giao tiếp I2C1 tốc độ cao 400kHz (Fast Mode).
 * **Nhiệm vụ**:
-  * Đo vận tốc góc ngã của xe quanh trục Pitch ($\omega_{\text{gyro}}$) với dải đo lớn $\pm 2000^\circ/\text{s}$.
-  * Đo vectơ trọng lực bằng gia tốc kế 3 trục ($A_x, A_y, A_z$) với dải đo $\pm 8\text{g}$.
+  * Đo vận tốc góc ngã của xe quanh trục Pitch ($\omega_{\text{gyro}}$) với dải đo lớn $\pm 2000^\circ/\text{s}$ (độ phân giải 16-bit, độ nhạy $16.4\text{ LSB}/(^\circ/\text{s})$).
+  * Đo vectơ trọng lực bằng gia tốc kế 3 trục ($A_x, A_y, A_z$) với dải đo $\pm 8\text{g}$ (hoặc $\pm 4\text{g}$, độ phân giải 16-bit).
+  * Tận dụng bộ lọc số thông thấp tích hợp ODR/BWP của chip Bosch BMI160 thế hệ mới để triệt tiêu sóng nhiễu rung cao tần từ cặp động cơ GA25.
   * Chạy giải thuật **Bộ lọc bù (Complementary Filter $\alpha = 0.98$)** để kết hợp ưu thế không trễ của Gyro và không trôi của Accel, tạo ra góc nghiêng thực $\theta$ siêu mịn.
 
 ### 2.3. Phân hệ Đo lường phản hồi vị trí & Vận tốc (Odometry Feedback)
@@ -119,8 +121,12 @@ flowchart TD
   * Tính toán chính xác vận tốc tịnh tiến $v$ (m/s) và quãng đường di chuyển của xe mỗi 5ms.
   * Áp dụng bộ lọc thông thấp (LPF $\beta = 0.75$) để khử nhiễu lượng tử hóa xung ở tốc độ chậm.
 
-### 2.4. Phân hệ Chấp hành & Điều khiển công suất (Actuation & Motor Drive)
-* **Thành phần cốt lõi**: Mạch Driver Dual A4950 (cầu H MOSFET 3.5A dòng đỉnh), 2 động cơ giảm tốc GA25-370 (12V, 1:30), cặp bánh xe cao su lục giác 65mm.
+### 2.4. Phân hệ Chấp hành, Cơ khí & Điều khiển công suất (Actuation & Mechanical Chassis)
+* **Thành phần cốt lõi**: 
+  * Mạch Driver Dual A4950 (cầu H MOSFET 3.5A dòng đỉnh).
+  * 2 động cơ giảm tốc kim loại GA25-370 (12V, 1:30, 280-300 RPM).
+  * Cặp bánh xe cao su đường kính 65mm, 2 khớp nối lục giác trục D 4mm, 2 gá động cơ kim loại 25mm.
+  * Kết cấu khung: 2 tấm nhựa mica dày dặn gia công đa tầng, liên kết bằng 4 trục đồng cái-cái 6cm và 4 trụ đồng M3 đực-cái 5cm, tạo khung xe 2 - 3 tầng vững chắc, cách ly chấn động.
 * **Nhiệm vụ**:
   * Khuếch đại tín hiệu điều khiển từ STM32 thành dòng điện công suất lớn (lên tới 2A - 3A ở 12V) cấp cho cuộn cảm động cơ.
   * Điều chế độ rộng xung PWM ở tần số **20kHz** đối xứng tâm (Center-aligned Mode).
@@ -130,7 +136,7 @@ flowchart TD
 * **Thành phần cốt lõi**: Khối pin LiPo 3S 11.1V (dòng xả cao 25C - 35C), giắc cắm nguồn XT60, mạch hạ áp Buck XL4015 5A.
 * **Nhiệm vụ & Thiết kế tối giản**:
   * Cung cấp nguồn 12V trực tiếp từ giắc cắm XT60 tới mạch công suất Driver Dual A4950.
-  * Mạch Buck XL4015 hạ áp từ 12V xuống 5.0V ổn định cung cấp nguồn nuôi số cho STM32, ICM-20602 và Bluetooth.
+  * Mạch Buck XL4015 hạ áp từ 12V xuống đúng 5.0V ổn định cung cấp nguồn nuôi số cho STM32, module GY-BMI160 và Bluetooth.
   * **Vận hành tiện lợi (Plug-and-Play)**: Xe phục vụ thực nghiệm giải thuật và chạy biểu diễn trong thời gian ngắn, người dùng chỉ cần sạc pin LiPo thật đầy trước khi chơi, cắm giắc XT60 vào xe là sẵn sàng điều khiển. Hệ thống lược bỏ hoàn toàn khối đo ADC và cầu chia áp để tinh giản tối đa phần cứng, tiết kiệm chân MCU và loại bỏ xử lý dư thừa trong phần mềm.
 
 ### 2.6. Phân hệ Truyền thông không dây & Giám sát từ xa (Wireless Telemetry & Teleoperation)
@@ -150,11 +156,11 @@ Hệ thống điều khiển vận hành theo mô hình phân tầng thời gian
        [NHỊP TIM CỰC CAO: 200Hz / 5ms]                 [NHỊP TIM THẤP: 20Hz / 50ms]
       (Ngắt cứng Timer 4 - Ưu tiên số 0)               (Vòng lặp nền while(1) - Ưu tiên thấp)
   ────────────────────────────────────────────     ──────────────────────────────────────────────
-  • Đọc cảm biến ICM-20602 (Gia tốc + Gyro)        • Giải mã chuỗi lệnh Bluetooth ($CMD, $PID)
+  • Đọc Bosch BMI160 qua I2C1 (Gia tốc + Gyro)     • Giải mã chuỗi lệnh Bluetooth ($CMD, $PID)
   • Chạy bộ lọc bù Complementary Filter            • Đóng gói chuỗi Telemetry gửi lên PC / App
   • Đọc 2 Timer Encoder -> Tính vận tốc m/s        • Giám sát trạng thái truyền thông không dây
-  • Tính sai số vận tốc -> Sinh Theta_target       • Nhấp nháy LED trạng thái hệ thống
-  • Tính sai số góc -> Sinh Base PWM               • Kích hoạt còi Buzzer cảnh báo khi ngã/kẹt
+  • Tính sai số vận tốc -> Sinh Theta_target       • Nhấp nháy LED trạng thái hệ thống (PC13)
+  • Tính sai số góc -> Sinh Base PWM               • Kích hoạt còi Buzzer (PB12) khi ngã/kẹt
   • Bù vi sai bẻ lái (Steering Authority)
   • Bù vùng chết ma sát hộp số (Deadband)
   • Kiểm tra góc ngã > 45° hoặc kẹt bánh
@@ -165,7 +171,7 @@ Hệ thống điều khiển vận hành theo mô hình phân tầng thời gian
 
 ## 4. MA TRẬN KẾT NỐI PHẦN CỨNG CHUẨN XÁC (CONFLICT-FREE PINOUT MATRIX)
 
-Bảng đấu nối chi tiết, giải quyết hoàn toàn xung đột ngoại vi trên vi điều khiển **STM32F411CEU6 Black Pill**:
+Bảng đấu nối chi tiết, giải quyết hoàn toàn xung đột ngoại vi trên vi điều khiển **STM32F411CEU6 Black Pill** với cảm biến **Bosch BMI160 (GY-BMI160)** và các cơ cấu chấp hành:
 
 | Chân MCU | Chức năng phần cứng | Ngoại vi ánh xạ | Kết nối linh kiện thực tế | Giải thích lý do phân bổ chân |
 | :---: | :--- | :--- | :--- | :--- |
@@ -177,15 +183,14 @@ Bảng đấu nối chi tiết, giải quyết hoàn toàn xung đột ngoại v
 | **PB7** | `USART1_RX` | USART 1 (DMA) | Chân TX của Bluetooth HC-05 | **Remap sang PB7** để giải phóng PA10 cho TIM1_CH3. |
 | **PA0** | `TIM2_CH1` | Timer 2 (Encoder) | Kênh Hall A — Bánh Trái | Bộ đếm 32-bit phần cứng, đếm 2 cạnh xung. |
 | **PA1** | `TIM2_CH2` | Timer 2 (Encoder) | Kênh Hall B — Bánh Trái | Kết hợp với PA0 tạo chế độ đếm x4 resolution. |
-| **PB4** | `TIM3_CH1` | Timer 3 (Encoder) | Kênh Hall A — Bánh Phải | **Remap sang PB4** để giải phóng PA6 cho SPI1_MISO. |
-| **PB5** | `TIM3_CH2` | Timer 3 (Encoder) | Kênh Hall B — Bánh Phải | **Remap sang PB5** để giải phóng PA7 cho SPI1_MOSI. |
-| **PA4** | `GPIO_Output` | SPI1 Chip Select | Chân CS của ICM-20602 | Kéo xuống 0 khi đọc/ghi thanh ghi SPI. |
-| **PA5** | `SPI1_SCK` | SPI 1 Master | Chân SCK của ICM-20602 | Xung nhịp truyền SPI 6.25MHz (Prescaler = 16). |
-| **PA6** | `SPI1_MISO` | SPI 1 Master | Chân SDO/MISO của ICM-20602 | Nhận dữ liệu gia tốc và con quay hồi chuyển. |
-| **PA7** | `SPI1_MOSI` | SPI 1 Master | Chân SDI/MOSI của ICM-20602 | Gửi địa chỉ thanh ghi cấu hình dải đo. |
-| **PB2** | `GPIO_EXTI2` | EXTI Line 2 | Chân INT của ICM-20602 | Ngắt báo dữ liệu mới sẵn sàng (Data Ready). |
-| **PA2** | `GPIO_Input/Free` | Dự phòng tự do | Không sử dụng (Chân mở rộng) | Tối giản phần cứng: Pin sạc đầy cắm chạy trực tiếp, không đo ADC. |
-| **PB8** | `GPIO_Output` | GPIO Output | Còi chíp Buzzer cảnh báo | Kêu bíp cảnh báo khi xe bị kẹt bánh hoặc ngã quá 45°. |
+| **PB4** | `TIM3_CH1` | Timer 3 (Encoder) | Kênh Hall A — Bánh Phải | **Remap sang PB4** để giải phóng chân GPIO tự do. |
+| **PB5** | `TIM3_CH2` | Timer 3 (Encoder) | Kênh Hall B — Bánh Phải | **Remap sang PB5** để giải phóng chân GPIO tự do. |
+| **PB8** | `I2C1_SCL` | I2C 1 (Fast Mode) | Chân SCL/SCK của GY-BMI160 | Xung nhịp I2C 400kHz đọc thanh ghi cảm biến. |
+| **PB9** | `I2C1_SDA` | I2C 1 (Fast Mode) | Chân SDA/SDI của GY-BMI160 | Đường truyền dữ liệu I2C 2 chiều (Data line). |
+| **PB2** | `GPIO_EXTI2` | EXTI Line 2 | Chân INT1 của GY-BMI160 | Ngắt báo dữ liệu mới sẵn sàng (Data Ready). |
+| **PB12**| `GPIO_Output` | GPIO Output | Còi chíp Active Buzzer (+) | Điều khiển còi cảnh báo khi ngã > 45° hoặc kẹt bánh (giải phóng PB8 cho I2C1_SCL). |
+| **PA4..7**| `GPIO_Free` | GPIO Mở rộng | Chân tự do / SPI1 mở rộng | Giải phóng toàn bộ SPI1, sẵn sàng gắn thêm module (NRF24, OLED, SDCard...). |
+| **PA2** | `GPIO_Free` | Dự phòng tự do | Không sử dụng (Chân mở rộng) | Tối giản phần cứng: Pin sạc đầy cắm chạy trực tiếp, không đo ADC. |
 | **PC13**| `GPIO_Output` | GPIO Output | LED xanh trên mạch Black Pill | Active LOW: Báo trạng thái Calib / Run / Error. |
 | **PA13**| `SYS_JTMS-SWDIO` | SWD Debug | Mạch nạp ST-Link V2 (SWDIO) | Nạp và gỡ lỗi chương trình. |
 | **PA14**| `SYS_JTCK-SWCLK` | SWD Debug | Mạch nạp ST-Link V2 (SWCLK) | Xung nhịp nạp SWD. |
@@ -210,14 +215,14 @@ stateDiagram-v2
     STATE_RACING --> STATE_FALLEN : Xe ngã quá 45°
     STATE_FALLEN --> STATE_STANDBY : Người dùng dựng lại xe (|theta| < 3°)
     
-    STATE_BALANCING --> STATE_EMERGENCY : Kẹt bánh > 500ms hoặc mất tín hiệu IMU
-    STATE_RACING --> STATE_EMERGENCY : Kẹt bánh > 500ms hoặc mất tín hiệu IMU
+    STATE_BALANCING --> STATE_EMERGENCY : Kẹt bánh > 500ms hoặc mất tín hiệu BMI160
+    STATE_RACING --> STATE_EMERGENCY : Kẹt bánh > 500ms hoặc mất tín hiệu BMI160
     STATE_EMERGENCY --> [*] : Cắt PWM vĩnh viễn + Còi hú liên tục
 ```
 
 ### Chi tiết 6 kịch bản vận hành thực tế:
 1. **Khởi động & Hiệu chuẩn (`STATE_CALIBRATING`)**:
-   * Khi bật nguồn, xe nằm yên trên sàn. STM32 lấy 500 mẫu con quay hồi chuyển trong 2.5 giây để đo độ trôi tĩnh (Zero-rate Bias) và lưu lại. Đèn LED trên mạch sáng liên tục.
+   * Khi bật nguồn, xe nằm yên trên sàn. STM32 lấy 500 mẫu con quay hồi chuyển từ BMI160 trong 2.5 giây để đo độ trôi tĩnh (Zero-rate Bias) và lưu lại. Đèn LED trên mạch sáng liên tục.
 2. **Chế độ chờ (`STATE_STANDBY`)**:
    * Hiệu chuẩn xong, LED tắt. Động cơ vẫn thả trôi (PWM = 0) để người dùng cầm xe không bị giật. Hệ thống liên tục đo góc nghiêng.
 3. **Kích hoạt cân bằng (`STATE_BALANCING`)**:
@@ -227,7 +232,7 @@ stateDiagram-v2
 5. **Xử lý ngã (`STATE_FALLEN`)**:
    * Nếu xe va chạm vào tường hoặc trượt ngã quá $45^\circ$, phần mềm lập tức cắt PWM về 0 trong $< 5\text{ms}$ và reset bộ tích phân để bánh xe không quay điên cuồng trên sàn. Khi người dùng dựng đứng xe lại, xe tự kích hoạt lại bình thường.
 6. **Bảo vệ khẩn cấp (`STATE_EMERGENCY`)**:
-   * Nếu phát hiện kẹt bánh (PWM cực đại nhưng bánh không quay trong 500ms) hoặc mất kết nối SPI với IMU, xe khóa chặt hệ thống, còi Buzzer hú báo hiệu sự cố phần cứng.
+   * Nếu phát hiện kẹt bánh (PWM cực đại nhưng bánh không quay trong 500ms) hoặc mất kết nối I2C với BMI160 (I2C Bus Timeout/Error), xe khóa chặt hệ thống, còi Buzzer hú báo hiệu sự cố phần cứng.
 
 ---
 
@@ -241,10 +246,10 @@ stateDiagram-v2
    │ • Đo điện áp ra của mạch Buck XL4015: Bắt buộc chỉnh chiết áp về đúng 5.0V trước khi cắm vào STM32.
    │ • Test phát xung PWM TIM1 cho 2 động cơ quay thử tiến/lùi.
    │ • Test quay bánh xe bằng tay để đếm xung Encoder trên STM32 (đúng 1320 xung/vòng).
-   │ • Test đọc ID cảm biến ICM-20602 qua SPI (thanh ghi 0x75 phải trả về 0x12).
+   │ • Test đọc Chip ID của cảm biến Bosch BMI160 qua I2C1 (thanh ghi 0x00 CHIP_ID phải trả về đúng 0xD1).
    ▼
 [BƯỚC 2: CÀI ĐẶT BỘ LỌC GÓC NGHIÊNG (SENSOR FUSION)]
-   │ • Triển khai hàm đọc dữ liệu gia tốc và con quay hồi chuyển.
+   │ • Triển khai hàm đọc dữ liệu gia tốc và con quay hồi chuyển từ BMI160 qua I2C1.
    │ • Cài đặt thuật toán Complementary Filter với hệ số Alpha = 0.98 trong chu kỳ ngắt 5ms.
    │ • Xuất góc nghiêng lên đồ thị máy tính: Nghiêng xe bằng tay và kiểm tra xem góc phản hồi có mượt và đúng độ không.
    ▼
@@ -265,3 +270,4 @@ stateDiagram-v2
    │ • Kích hoạt thuật toán suy giảm vi sai lái theo vận tốc (Steering Authority) để xe ôm cua tốc độ cao không bị lật.
    │ • Kiểm thử tính năng cắt khẩn cấp khi ngã quá 45° hoặc kẹt bánh động cơ.
 ```
+

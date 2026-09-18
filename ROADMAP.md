@@ -1,6 +1,6 @@
 # LỘ TRÌNH CHI TIẾT TRIỂN KHAI ĐỒ ÁN (PROJECT ROADMAP)
 ## XE HAI BÁNH TỰ CÂN BẰNG TỐC ĐỘ CAO (HIGH-SPEED BALANCING ROBOT)
-### Vi Điều Khiển STM32F411CEU6 • Cảm Biến ICM-20602 • Điều Khiển Cascade PID
+### Vi Điều Khiển STM32F411CEU6 • Cảm Biến Bosch BMI160 (GY-BMI160) • Điều Khiển Cascade PID
 
 ---
 
@@ -37,12 +37,15 @@
   * Tần số PWM: $20\text{ kHz}$ (Prescaler = 0, ARR = 2499 với Clock Timer 100MHz). Vượt ngưỡng nghe của tai người, động cơ chạy hoàn toàn êm ái.
 - [ ] **Cấu hình Timer 2 & Timer 3 (Đọc phản hồi Hall Encoder)**:
   * **TIM2** (Bánh Trái): `CH1` (PA0), `CH2` (PA1) $\rightarrow$ `Encoder Mode TI12` (đếm x4 cả 2 cạnh xung A và B).
-  * **TIM3** (Bánh Phải): **Remap sang chân `PB4` (CH1) và `PB5` (CH2)** để không chiếm dụng chân SPI1 của IMU. Cấu hình `Encoder Mode TI12`.
-- [ ] **Cấu hình SPI1 (Giao tiếp cảm biến quán tính tốc độ cao ICM-20602)**:
-  * Chế độ: `Full-Duplex Master`, Frame Format: Motorolar, Data Size: 8 Bits, MSB First.
-  * Chân: `SCK` (PA5), `MISO` (PA6), `MOSI` (PA7), `CS` (PA4 - GPIO Output).
-  * Tốc độ: Prescaler = 16 $\rightarrow$ Baudrate = $100\text{ MHz} / 16 = \mathbf{6.25\text{ Mbps}}$ (đọc toàn bộ gói cảm biến $< 400\text{ µs}$).
-  * Chân ngắt ngoài: `PB2` làm `GPIO_EXTI2` nối chân `INT` của ICM-20602.
+  * **TIM3** (Bánh Phải): **Remap sang chân `PB4` (CH1) và `PB5` (CH2)** để giải phóng chân GPIO tự do. Cấu hình `Encoder Mode TI12`.
+- [ ] **Cấu hình I2C1 (Giao tiếp cảm biến quán tính Bosch BMI160 / GY-BMI160)**:
+  * Chế độ: `I2C Master`, tốc độ **Fast Mode 400kHz** (`I2C Speed Frequency = 400000 Hz`).
+  * Chân kết nối: `SCL` (**PB8**), `SDA` (**PB9**).
+  * Chân ngắt ngoài: `PB2` làm `GPIO_EXTI2` nối chân `INT1` của BMI160 để bắt sự kiện Data Ready.
+  * Giải phóng toàn bộ cụm chân SPI1 (`PA4`..`PA7`) làm chân GPIO tự do phục vụ mở rộng phần cứng.
+- [ ] **Cấu hình GPIO Còi Buzzer & LED trạng thái**:
+  * Chân còi Active Buzzer: Cấu hình **`PB12`** làm `GPIO_Output` (chuyển sang PB12 để giải phóng PB8 cho I2C1_SCL).
+  * Chân LED xanh on-board: Cấu hình **`PC13`** làm `GPIO_Output` (Active LOW).
 - [ ] **Cấu hình USART1 (Truyền thông Bluetooth HC-05 & Telemetry)**:
   * **Remap chân**: Chuyển `TX` sang **`PB6`** và `RX` sang **`PB7`** để giải phóng PA9/PA10 cho Timer 1 PWM.
   * Baudrate: **115200 bps**, 8-N-1.
@@ -75,14 +78,17 @@
   * Quy đổi ra số vòng và vận tốc tịnh tiến $v$ (m/s):
     $$v = \frac{\Delta \text{Count} \times \pi \times D}{1320 \times dt} \quad (\text{với } D = 0.065\text{ m})$$
   * *Kiểm thử*: Lấy tay quay bánh xe đúng 1 vòng tròn cơ học, kiểm tra biến đếm xung trên IDE Watch Window phải đạt xấp xỉ đúng $1320 \text{ xung}$ ($\pm 2\%$).
-- [ ] **Lập trình Driver Cảm biến IMU ICM-20602 (`icm20602.c / icm20602.h`)**:
-  * Viết hàm đọc thanh ghi `ICM20602_Read_Reg()` và ghi thanh ghi `ICM20602_Write_Reg()` qua SPI1.
-  * Kiểm tra định danh cảm biến: Đọc thanh ghi `WHO_AM_I` (địa chỉ `0x75`), giá trị trả về bắt buộc phải là **`0x12`**.
-  * Cấu hình thanh ghi:
-    * Dải đo Gyro: $\pm 2000^\circ/\text{s}$ (Thanh ghi `0x1B`).
-    * Dải đo Accel: $\pm 8\text{g}$ (Thanh ghi `0x1C`).
-    * Bộ lọc số nội DLPF: Cấu hình dải thông $41\text{ Hz}$ (Thanh ghi `0x1A`) để loại trừ nhiễu tần số cao của hộp số động cơ.
-  * Viết hàm đọc Burst 14 bytes liên tục (`ICM20602_Read_Burst()`): Thu thập đồng thời $A_x, A_y, A_z, \text{Temp}, G_x, G_y, G_z$ trong một lần kéo chân CS duy nhất.
+- [ ] **Lập trình Driver Cảm biến IMU Bosch BMI160 (`bmi160.c / bmi160.h`)**:
+  * Địa chỉ I2C của BMI160: `0x68` (địa chỉ 8-bit trên STM32 HAL: `0xD0` khi ghi, `0xD1` khi đọc).
+  * Kiểm tra định danh cảm biến: Đọc thanh ghi `CHIP_ID` (địa chỉ `0x00`), giá trị trả về bắt buộc phải là **`0xD1`**.
+  * Khởi tạo & Đánh thức BMI160 qua thanh ghi lệnh `CMD` (`0x7E`):
+    * Ghi `0x11` vào `CMD (0x7E)` để đưa Accelerometer vào Normal Mode (chờ delay $5\text{ms}$).
+    * Ghi `0x15` vào `CMD (0x7E)` để đưa Gyroscope vào Normal Mode (chờ delay $50\text{ms}$ để bộ dao động ổn định).
+  * Cấu hình dải đo:
+    * Dải đo Gyro: $\pm 2000^\circ/\text{s}$ (Thanh ghi `GYR_RANGE 0x43`, ghi `0x00`, hệ số chia $16.4\text{ LSB}/(^\circ/\text{s})$).
+    * Dải đo Accel: $\pm 8\text{g}$ (Thanh ghi `ACC_RANGE 0x41`, ghi `0x08`, hệ số chia $4096\text{ LSB}/\text{g}$) hoặc $\pm 4\text{g}$ (ghi `0x05`, $8192\text{ LSB}/\text{g}$).
+    * Bộ lọc số nội ODR/BWP: Cấu hình thanh ghi `ACC_CONF (0x40)` và `GYR_CONF (0x42)` về ODR 200Hz hoặc 400Hz, lọc Normal Bandwidth để triệt tiêu sóng rung cơ học từ hộp số GA25.
+  * Viết hàm đọc Burst 12 bytes liên tục (`BMI160_Read_All()`): Thu thập đồng thời $G_x, G_y, G_z, A_x, A_y, A_z$ từ thanh ghi `0x0C` (`DATA_0`) đến `0x17` trong một lần truyền I2C duy nhất ($< 350\text{ µs}$).
 - [ ] **Lập trình Giao tiếp Bluetooth HC-05 & Telemetry (`telemetry.c / telemetry.h`)**:
   * Định nghĩa giao thức gói tin gửi từ App/PC:
     * Lệnh lái: `$CMD,v,steer*` (Ví dụ: `$CMD,0.5,-0.2*`).
@@ -92,7 +98,7 @@
   * Kết nối phần mềm đồ thị **VOFA+** trên máy tính để kiểm tra nhận và hiển thị dạng sóng.
 
 > [!IMPORTANT]
-> **Tiêu chuẩn nghiệm thu Giai đoạn 2**: Động cơ quay đúng lệnh, Encoder đo đúng 1320 xung/vòng, ICM-20602 trả về WHO_AM_I = 0x12, đồ thị VOFA+ nhận thông số mượt mà qua sóng Bluetooth.
+> **Tiêu chuẩn nghiệm thu Giai đoạn 2**: Động cơ quay đúng lệnh, Encoder đo đúng 1320 xung/vòng, Bosch BMI160 trả về CHIP_ID = 0xD1, đồ thị VOFA+ nhận thông số mượt mà qua sóng Bluetooth.
 
 ---
 
@@ -193,10 +199,10 @@
     4. `STATE_BALANCING`: Khóa vòng PID, xe tự cân bằng.
     5. `STATE_RACING`: Chế độ đua tốc độ cao.
     6. `STATE_FALLEN`: Ngã xe $> 45^\circ$, cắt ngay PWM về 0 trong $< 5\text{ms}$ để bảo vệ động cơ.
-    7. `STATE_EMERGENCY`: Khóa hệ thống khi kẹt bánh $> 500\text{ms}$ (PWM cực đại nhưng tốc độ $\approx 0$) hoặc lỗi giao tiếp SPI với IMU.
+    7. `STATE_EMERGENCY`: Khóa hệ thống khi kẹt bánh $> 500\text{ms}$ (PWM cực đại nhưng tốc độ $\approx 0$) hoặc lỗi giao tiếp I2C với BMI160.
 - [ ] **Cài đặt tín hiệu phản hồi người dùng (Buzzer & LED)**:
   * LED nhấp nháy theo tần số tương ứng trạng thái (Calib sáng liên tục, Run nhấp nháy 1Hz, Error nháy nhanh 10Hz).
-  * Còi Buzzer phát tiếng bíp khi chuyển mode và hú liên tục khi rơi vào trạng thái khẩn cấp `STATE_EMERGENCY`.
+  * Còi Buzzer (PB12) phát tiếng bíp khi chuyển mode và hú liên tục khi rơi vào trạng thái khẩn cấp `STATE_EMERGENCY`.
 
 > [!IMPORTANT]
 > **Tiêu chuẩn nghiệm thu Giai đoạn 5**: Xe nhận lệnh từ app Bluetooth chạy tiến/lùi mượt mà, ôm cua ngọt ở tốc độ cao không bị lật. Khi xô ngã xe, motor tự ngắt tức thì, dựng đứng xe lại xe tự động đứng thăng bằng trở lại.
@@ -208,7 +214,7 @@
 
 #### Danh sách đầu việc thực thi:
 - [ ] **Thực nghiệm đo đạc các chỉ tiêu kỹ thuật chất lượng điều khiển**:
-  * *Độ lệch góc tĩnh*: Đo bằng cảm biến IMU khi xe đứng yên ($\le \pm 0.3^\circ$).
+  * *Độ lệch góc tĩnh*: Đo bằng cảm biến Bosch BMI160 khi xe đứng yên ($\le \pm 0.3^\circ$).
   * *Thời gian hồi phục sau va chạm (Recovery Time)*: Tác động xung lực đẩy xe lệch $10^\circ$, đo thời gian xe lấy lại thăng bằng ($t_{\text{settling}} < 0.8\text{ s}$).
   * *Vận tốc tối đa đạt được*: Thử nghiệm chạy đua thẳng đo qua Encoder ($v_{\max} \ge 1.2\text{ m/s}$).
   * *Góc nghiêng dốc tối đa*: Cho xe leo dốc nghiêng thử nghiệm ($> 15^\circ$).

@@ -1,0 +1,155 @@
+================================================================================
+           DANH SÁCH TOÀN BỘ LINH KIỆN & PHỤ KIỆN PHẦN CỨNG
+     ĐỒ ÁN: XE HAI BÁNH TỰ CÂN BẰNG TỐC ĐỘ CAO (HIGH-SPEED BALANCING ROBOT)
+================================================================================
+
+I. KHỐI XỬ LÝ TRUNG TÂM & NẠP CHƯƠNG TRÌNH
+--------------------------------------------------------------------------------
+1. Bo mạch vi điều khiển chính:
+   - Tên linh kiện: STM32F411CEU6 Black Pill
+   - Số lượng: 01 bo
+   - Thông số kỹ thuật: Lõi ARM Cortex-M4F @ 100MHz, bộ tính toán số thực phần
+     cứng FPU (Single Precision), 512KB Flash, 128KB SRAM.
+   - Nhiệm vụ: Xử lý nhịp tim thời gian thực 200Hz (5ms), giải thuật lọc bù
+     Complementary Filter, Cascade PID 2 vòng (Góc & Vận tốc), điều khiển PWM
+     20kHz và truyền thông không dây.
+
+2. Mạch nạp & gỡ lỗi chương trình:
+   - Tên linh kiện: Mạch nạp ST-Link V2
+   - Số lượng: 01 cái
+   - Kết nối: Cổng SWD 4 dây (SWDIO - PA13, SWCLK - PA14, GND, 3.3V).
+
+
+II. KHỐI CẢM BIẾN QUÁN TÍNH (PERCEPTION & IMU)
+--------------------------------------------------------------------------------
+3. Module cảm biến quán tính 6 trục:
+   - Tên linh kiện: Module IMU GY-BMI160 (Chip Bosch Sensortec BMI160)
+   - Số lượng: 01 module
+   - Thông số kỹ thuật:
+     + Con quay hồi chuyển (Gyroscope 3 trục): Dải đo ±2000°/s (đo vận tốc góc Pitch, độ phân giải 16-bit).
+     + Gia tốc kế (Accelerometer 3 trục): Dải đo ±8g (đo vectơ trọng lực tính góc tĩnh, độ phân giải 16-bit).
+     + Giao tiếp: Chuẩn I2C Fast Mode 400kHz (PB8: SCL, PB9: SDA) hoặc SPI.
+     + Ngắt ngoài: Chân INT1 nối PB2 (EXTI2 - Data Ready).
+   - Ưu điểm: Thế hệ mới từ Bosch Sensortec (Đức), độ ồn cực thấp, kháng rung cơ học và trôi nhiệt vượt trội.
+
+4. Phụ kiện chống rung cảm biến:
+   - Tên linh kiện: Đệm xốp chống rung FPV / Cao su giảm chấn
+   - Số lượng: 01 miếng / bộ đệm
+   - Nhiệm vụ: Cách ly rung chấn cơ học tần số cao từ hộp số động cơ truyền vào IMU.
+
+
+III. KHỐI ĐỘNG LỰC, CƠ CẤU CHẤP HÀNH & CƠ KHÍ
+--------------------------------------------------------------------------------
+5. Động cơ DC giảm tốc kim loại:
+   - Tên linh kiện: Động cơ GA25-370 (12V)
+   - Số lượng: 02 cái (1 động cơ Trái, 1 động cơ Phải)
+   - Thông số kỹ thuật: Điện áp danh định 12V, hộp số giảm tốc kim loại tỷ số 1:30,
+     tốc độ quay không tải khoảng 300 RPM.
+
+6. Cảm biến phản hồi tốc độ (Encoder):
+   - Tên linh kiện: Hall Encoder đĩa từ (tích hợp sẵn đuôi motor GA25)
+   - Số lượng: 02 bộ (đi liền động cơ)
+   - Thông số kỹ thuật: 11 xung/vòng đĩa từ, 2 kênh vuông pha A/B lệch nhau 90°.
+     Qua hộp số 1:30 và giải mã phần cứng x4 trên STM32 cho ra 1320 xung/vòng bánh xe.
+   - Kết nối: Motor Trái vào Timer 2 (PA0, PA1); Motor Phải vào Timer 3 (PB4, PB5).
+
+7. Bánh xe chịu tải tốc độ cao:
+   - Tên linh kiện: Bánh xe cao su đường kính 65mm
+   - Số lượng: 02 bánh
+   - Thông số kỹ thuật: Đường kính D = 65mm, chu vi bánh C ≈ 204.2mm, lốp cao su bám đường.
+
+8. Khớp nối trục motor với bánh xe:
+   - Tên linh kiện: Khớp nối lục giác trục D 4mm (Hex Coupler)
+   - Số lượng: 02 cái
+   - Phụ kiện đi kèm: Ốc trí lục giác siết chặt vào vát chữ D của trục motor.
+
+9. Khung xe & phụ kiện liên kết cơ khí:
+   - Tấm nhựa Mica trong suốt làm khung sàn: 02 tấm gia công định hình 2 tầng sàn xe.
+   - Gá kim loại động cơ GA25: 02 cái gá chữ L (đường kính 25mm) siết chặt motor vào sàn mica.
+   - Cọc đồng đỡ tầng: 04 trục đồng cái - cái 6cm và 04 trụ đồng M3 đực - cái 5cm liên kết tầng vững chắc.
+   - Keo khóa ren (Threadlocker): Nhỏ vào ốc trí trục D để chống lỏng khi đảo chiều gắt.
+
+
+IV. KHỐI MẠCH CÔNG SUẤT ĐIỀU KHIỂN ĐỘNG CƠ (MOTOR DRIVER)
+--------------------------------------------------------------------------------
+10. Mạch công suất cầu H kép:
+    - Tên linh kiện: Module Driver Dual A4950
+    - Số lượng: 01 mạch
+    - Thông số kỹ thuật: Cầu H đôi sử dụng transistor MOSFET hiện đại, chịu dòng
+      đỉnh 3.5A mỗi kênh, nội trở cực nhỏ, tổn hao nhiệt rất thấp.
+    - Phương thức điều khiển: Tần số PWM 20kHz đối xứng tâm (Center-aligned) từ Timer 1:
+      + Motor Trái: IN1 (PA8), IN2 (PA9) -> Chế độ Slow Decay.
+      + Motor Phải: IN3 (PA10), IN4 (PA11) -> Chế độ Slow Decay.
+
+
+V. KHỐI TRUYỀN THÔNG KHÔNG DÂY (WIRELESS COMMUNICATION)
+--------------------------------------------------------------------------------
+11. Module truyền thông Bluetooth:
+    - Tên linh kiện: Module Bluetooth HC-05
+    - Số lượng: 01 module
+    - Cấu hình: Tốc độ Baudrate 115200 bps, kết nối USART1 remap (PB6: TX, PB7: RX).
+    - Nhiệm vụ: Nhận lệnh điều khiển lái Joystick từ điện thoại, nhận lệnh tune PID
+      trực tiếp, xuất dữ liệu Telemetry (20Hz) lên phần mềm đồ thị PC (VOFA+).
+
+
+VI. KHỐI NGUỒN ĐIỆN & QUẢN LÝ NĂNG LƯỢNG
+--------------------------------------------------------------------------------
+12. Nguồn cấp động lực chính:
+    - Tên linh kiện: Khối Pin LiPo 3S (11.1V danh định - 12.6V khi sạc đầy)
+    - Số lượng: 01 khối
+    - Thông số kỹ thuật: Dòng xả cao (25C - 35C), dung lượng khuyến nghị 1000mAh - 2200mAh.
+    - Phương thức vận hành: Plug-and-Play (sạc đầy cắm chạy trực tiếp qua giắc XT60).
+
+13. Mạch hạ áp nuôi mạch điều khiển (Buck DC-DC):
+    - Tên linh kiện: Mạch hạ áp Buck XL4015 (5A)
+    - Số lượng: 01 mạch
+    - Thông số kỹ thuật: Điện áp vào 12V (Pin LiPo), ngõ ra chỉnh chiết áp đúng 5.0V.
+    - Nhiệm vụ: Cấp nguồn 5V ổn định cho STM32F411, cảm biến Bosch BMI160 (GY-BMI160) và Bluetooth HC-05.
+
+14. Phụ kiện nguồn:
+    - Giắc cắm nguồn XT60 (01 cặp đực - cái): Chống cắm ngược cực.
+    - Công tắc bập bấp bật/tắt nguồn xe (01 cái).
+    - Bộ sạc cân bằng pin LiPo 3S (01 bộ): Bộ sạc chuyên dụng ngoài (B3 hoặc B6).
+
+
+VII. KHỐI CẢNH BÁO, CHỈ BÁO TRẠNG THÁI & DÂY NỐI
+--------------------------------------------------------------------------------
+15. Còi cảnh báo:
+    - Tên linh kiện: Còi chíp Active Buzzer 5V
+    - Số lượng: 01 cái
+    - Kết nối: Điều khiển qua chân PB12 (kêu bíp khi xe ngã > 45°, kẹt bánh hoặc lỗi I2C).
+
+16. Đèn LED chỉ báo:
+    - Tên linh kiện: LED xanh SMD tích hợp trên bo mạch STM32 Black Pill (chân PC13).
+    - Chức năng: Nhấp nháy báo trạng thái Calib, Standby, Balancing, Error.
+
+17. Dây nối & vật tư phụ trợ:
+    - Dây cắm Breadboard / Dây Dupont (đực-đực, đực-cái, cái-cái).
+    - Dây điện chịu dòng bọc silicon 18AWG - 20AWG (cho đường nguồn 12V motor).
+    - Ốc vít M3, đai ốc, trụ đồng lục giác đỡ tầng.
+
+
+================================================================================
+         BẢNG SƠ ĐỒ ĐẤU NỐI CHÂN VI ĐIỀU KHIỂN STM32F411CEU6 BLACK PILL
+================================================================================
+| Chân STM32 | Chức Năng Cấu Hình | Ngoại Vi Ánh Xạ   | Linh Kiện Thực Tế Kết Nối      |
+|:----------:|:-------------------:|:-----------------:|:--------------------------------|
+|    PA8     | TIM1_CH1 (PWM)      | Timer 1 (20kHz)   | Driver A4950 - Motor Trái (IN1) |
+|    PA9     | TIM1_CH2 (PWM)      | Timer 1 (20kHz)   | Driver A4950 - Motor Trái (IN2) |
+|    PA10    | TIM1_CH3 (PWM)      | Timer 1 (20kHz)   | Driver A4950 - Motor Phải (IN3) |
+|    PA11    | TIM1_CH4 (PWM)      | Timer 1 (20kHz)   | Driver A4950 - Motor Phải (IN4) |
+|    PA0     | TIM2_CH1 (Input)    | Timer 2 Encoder   | Hall Encoder Bánh Trái (Kênh A) |
+|    PA1     | TIM2_CH2 (Input)    | Timer 2 Encoder   | Hall Encoder Bánh Trái (Kênh B) |
+|    PB4     | TIM3_CH1 (Input)    | Timer 3 Encoder   | Hall Encoder Bánh Phải (Kênh A) |
+|    PB5     | TIM3_CH2 (Input)    | Timer 3 Encoder   | Hall Encoder Bánh Phải (Kênh B) |
+|    PB8     | I2C1_SCL            | I2C 1 (400kHz)    | Cảm biến GY-BMI160 (Chân SCL)   |
+|    PB9     | I2C1_SDA            | I2C 1 (400kHz)    | Cảm biến GY-BMI160 (Chân SDA)   |
+|    PB2     | GPIO_EXTI2 (Input)  | Ngắt ngoài EXTI   | Cảm biến GY-BMI160 (Chân INT1)  |
+|    PB12    | GPIO_Output         | Điều khiển còi    | Còi chíp Active Buzzer (+)      |
+|    PB6     | USART1_TX           | USART 1 (DMA)     | Bluetooth HC-05 (Chân RX)       |
+|    PB7     | USART1_RX           | USART 1 (DMA)     | Bluetooth HC-05 (Chân TX)       |
+|  PA4..PA7  | GPIO_Free           | GPIO Tự do        | Chân mở rộng / SPI1 tự do       |
+|    PC13    | GPIO_Output         | LED On-board      | LED xanh tích hợp trên bo mạch  |
+|    PA13    | SYS_JTMS-SWDIO      | SWD Debug         | Mạch nạp ST-Link V2 (SWDIO)     |
+|    PA14    | SYS_JTCK-SWCLK      | SWD Debug         | Mạch nạp ST-Link V2 (SWCLK)     |
+================================================================================

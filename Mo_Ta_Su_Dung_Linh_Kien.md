@@ -24,11 +24,12 @@ Trước khi đi vào từng linh kiện, hãy nhìn vào cách các linh kiện
                 [Driver Dual A4950]            [STM32F411CEU6 Black Pill]
                 Cầu H công suất MOSFET         "Bộ não" Cortex-M4F 100MHz
                   ▲               ▲               ▲      ▲          ▲
-      (PWM 20kHz) │               │ (PWM 20kHz)   │      │ (SPI1)   │ (UART)
-                  │               │               │      │          │
-           [Motor Trái]       [Motor Phải]        │   [ICM-20602] [Bluetooth HC-05]
-           GA25-370 12V       GA25-370 12V        │   Cảm biến IMU Điện thoại/PC
-                  │               │               │   Đo góc & Gyro Lái xe & Tune PID
+      (PWM 20kHz) │               │ (PWM 20kHz)   │      │ (I2C1)   │ (UART)
+                  │               │               │      │ PB8/PB9  │ PB6/PB7
+           [Motor Trái]       [Motor Phải]        │      │          │
+           GA25-370 12V       GA25-370 12V        │   [Bosch BMI160] [Bluetooth HC-05]
+                  │               │               │   (GY-BMI160)   Điện thoại/PC
+                  │               │               │   Đo góc/Gyro Lái xe & Tune PID
                   ▼ (Xung Encoder)▼ (Xung Encoder)│
              [Hall A/B]      [Hall A/B] ──────────┘
              (TIM2 x4)       (TIM3 x4)
@@ -50,40 +51,60 @@ STM32F411CEU6 là trung tâm điều khiển toàn bộ robot. Nó thu thập d�
 1. **Tạo nhịp tim ngắt 200Hz**: Cấu hình Timer 4 đếm định thời chính xác cứ mỗi $5.000\text{ ms}$ thì phát ngắt CPU một lần để thực thi vòng lặp cân bằng.
 2. **Đọc Encoder phần cứng**: Cấu hình Timer 2 (bánh trái) và Timer 3 (bánh phải) ở chế độ `Encoder Mode TI12`. Phần cứng tự đếm xung của động cơ, CPU chỉ việc đọc thanh ghi số đếm.
 3. **Phát xung PWM 20kHz**: Cấu hình Timer 1 phát 4 kênh xung điều khiển chiều và tốc độ động cơ.
-4. **Đọc cảm biến tốc độ cao**: Dùng bộ SPI1 tốc độ 6.25MHz để đọc dữ liệu gia tốc và con quay hồi chuyển từ ICM-20602 trong chưa đầy 400 micro-giây.
-5. **Truyền nhận Bluetooth**: Dùng bộ UART1 kết hợp DMA để gửi dữ liệu telemetry lên đồ thị PC và nhận lệnh điều khiển mà không làm đơ/nghẽn hệ thống.
+4. **Đọc cảm biến tốc độ cao**: Dùng bộ I2C1 tốc độ Fast Mode 400kHz (chân PB8 - SCL, PB9 - SDA) để đọc đồng thời 12 thanh ghi gia tốc và con quay hồi chuyển từ Bosch BMI160 trong khoảng $\approx 300 - 350\text{ µs}$.
+5. **Truyền nhận Bluetooth**: Dùng bộ UART1 kết hợp DMA (chân PB6 - TX, PB7 - RX) để gửi dữ liệu telemetry lên đồ thị PC và nhận lệnh điều khiển mà không làm đơ/nghẽn hệ thống.
 
 ### 2.4. Lưu ý & Cạm bẫy kỹ thuật
-* **Bẫy xung đột chân (Pinout Conflict)**: Chân mặc định của USART1 (PA9, PA10) trùng với chân PWM của TIM1. Bắt buộc phải chuyển (remap) USART1 sang chân `PB6` và `PB7`. Tương tự, Timer 3 Encoder phải dùng `PB4` và `PB5` để không đè lên chân SPI1 của IMU.
-* **Bật phần cứng FPU**: Nếu quên bật FPU trong file khởi tạo, trình biên dịch sẽ sinh mã mô phỏng phần mềm chậm gấp 20 lần.
+* **Bẫy xung đột chân (Pinout Conflict)**: Chân mặc định của USART1 (PA9, PA10) trùng với chân PWM của TIM1. Bắt buộc phải chuyển (remap) USART1 sang chân `PB6` và `PB7`. Timer 3 Encoder dùng `PB4` và `PB5`. Cảm biến Bosch BMI160 dùng I2C1 chân `PB8` (SCL) và `PB9` (SDA). Chân còi Buzzer được chuyển sang `PB12` để giải phóng hoàn toàn PB8 cho I2C1.
+* **Bật phần cứng FPU**: Nếu quên bật FPU trong cấu hình CubeMX (`Hard ABI`), trình biên dịch sẽ sinh mã mô phỏng phần mềm chậm gấp 20 lần.
 
 ---
 
-## 3. CẢM BIẾN QUÁN TÍNH ICM-20602 (IMU 6 TRỤC)
+## 3. CẢM BIẾN QUÁN TÍNH BOSCH BMI160 / MODULE GY-BMI160 (IMU 6 TRỤC)
 
 ### 3.1. Vai trò trong đồ án
-ICM-20602 là "tai trong / mắt thần" của xe, liên tục đo lường:
+Cảm biến quán tính Bosch BMI160 (Module GY-BMI160) là "tai trong / mắt thần" của xe, liên tục đo lường:
 1. Thân xe đang bị ngả về phía trước hay phía sau một góc bao nhiêu độ ($\theta$).
 2. Thân xe đang ngã nhanh hay chậm (vận tốc góc $\omega$).
 
-### 3.2. Tại sao chọn ICM-20602 thay vì MPU6050?
-* MPU6050 là cảm biến đời cũ, cực kỳ nhạy cảm với rung động cơ học. Khi lắp lên xe chạy động cơ công suất lớn, độ rung từ bánh xe truyền vào làm MPU6050 bị nhiễu loạn, dẫn đến xe bị ngã khi vừa tăng tốc.
-* ICM-20602 là cảm biến chuyên dụng cho **FPV Racing Drone (drone đua tốc độ cao)**. Nó có cấu trúc cơ vi cơ điện tử (MEMS) cứng vững hơn, dải đo rộng hơn ($\pm 2000^\circ/\text{s}$ và $\pm 8\text{g}$) và tích hợp bộ lọc số thông thấp nội (DLPF) kháng rung cực tốt.
+### 3.2. Đặc điểm & Lý do lựa chọn Bosch BMI160 (GY-BMI160)
+* **Thế hệ cảm biến tiên tiến từ Bosch Sensortec (Đức)**: Khác với các dòng cảm biến đời cũ, Bosch BMI160 là cảm biến quán tính 16-bit siêu ít nhiễu (Ultra-low Noise), độ trôi nhiệt cực thấp, được thiết kế chuyên biệt cho drone đua, robot tự hành và các thiết bị đòi hỏi độ chính xác cao.
+* **Tích hợp 6 trục chuyển động (6-DOF)**: Tích hợp 3 trục gia tốc kế (Accelerometer) và 3 trục con quay hồi chuyển (Gyroscope) trong một cấu trúc MEMS nguyên khối cứng vững, chịu rung sốc cơ học vượt trội.
+* **Bộ lọc số phần cứng ODR & Bandwidth nội thông minh**: Cho phép cấu hình tốc độ lấy mẫu (Output Data Rate) lên tới 200Hz - 400Hz và chế độ lọc số Normal/Oversampling để triệt tiêu trực tiếp nhiễu rung cao tần từ hộp số GA25 trước khi xuất ra dữ liệu.
+* **Hỗ trợ đa giao tiếp I2C & SPI**: Module GY-BMI160 hỗ trợ cả I2C và SPI. Trong dự án này, hệ thống sử dụng chuẩn **I2C1 Fast Mode 400kHz** (chân PB8/PB9), vừa đảm bảo thời gian đọc nhanh dưới $350\text{ µs}$, vừa giữ nguyên sơ đồ chân không xung đột cho STM32F411.
+* **Tiêu thụ điện năng cực thấp**: Dòng tiêu thụ $< 1\text{ mA}$ khi chạy toàn tải 6 trục, không phát nhiệt làm trôi cảm biến.
 
 ### 3.3. Nguyên lý hoạt động thực tế & Sự kết hợp 2 cảm biến
-Bên trong ICM-20602 có 2 cảm biến hoạt động theo 2 nguyên lý vật lý khác nhau:
+Bên trong Bosch BMI160 có 2 cảm biến hoạt động theo 2 nguyên lý vật lý bổ trợ hoàn hảo cho nhau:
 
 | Cảm biến thành phần | Đo lường đại lượng gì? | Ưu điểm cốt lõi | Nhược điểm chí mạng |
 | :--- | :--- | :--- | :--- |
 | **Gia tốc kế (Accelerometer)** | Đo vectơ trọng lực $g$ của Trái Đất theo 3 trục ($A_x, A_y, A_z$). | **Không bị trôi theo thời gian**. Khi xe đứng yên, tính góc nghiêng tĩnh $\arctan2(A_x, A_z)$ cực kỳ chuẩn xác. | **Cực kỳ nhạy cảm với rung chấn và lực quán tính**. Khi xe chạy nhanh hoặc rung lắc, gia tốc kế sẽ đọc sai góc. |
-| **Con quay hồi chuyển (Gyroscope)** | Đo vận tốc góc quay quanh trục ngã ($\omega_y$, đơn vị $^\circ/\text{s}$). | **Phản hồi tức thời cực nhanh**, không bị ảnh hưởng bởi rung chấn mặt sàn. | **Bị trôi tĩnh (Zero-rate Drift)**. Nếu chỉ tích phân $\int \omega dt$ để tính góc, sau 10 giây góc sẽ bị trôi lệch hàng chục độ. |
+| **Con quay hồi chuyển (Gyroscope)** | Đo vận tốc góc quay quanh trục ngã ($\omega_y$, đơn vị $^\circ/\text{s}$). | **Phản hồi tức thời cực nhanh**, không bị ảnh hưởng bởi rung chấn mặt sàn. | **Bị trôi tĩnh (Zero-rate Drift)**. Nếu chỉ tích phân $\int \omega dt$ để tính góc, sau một khoảng thời gian góc sẽ bị trôi lệch dần. |
 
 $$\implies \textbf{Giải pháp: BỘ LỌC BÙ (Complementary Filter)}$$
-Phần mềm sẽ kết hợp cả 2: Lấy ưu thế phản ứng nhanh ngắn hạn của Gyroscope ($98\%$) kết hợp với ưu thế giữ chuẩn dài hạn của Accelerometer ($2\%$) để tạo ra một góc nghiêng $\theta$ vừa mượt, vừa không có độ trễ, vừa không bị trôi!
+Phần mềm kết hợp cả 2: Lấy ưu thế phản ứng nhanh tức thời của Gyroscope ($98\%$) kết hợp với ưu thế giữ chuẩn dài hạn của Accelerometer ($2\%$) để tạo ra một góc nghiêng $\theta$ vừa mượt, vừa không có độ trễ, vừa không bị trôi!
 
-### 3.4. Lưu ý & Cạm bẫy kỹ thuật
-* **Bắt buộc hiệu chuẩn độ trôi tĩnh (Static Calibration)**: Khi vừa bật nguồn, xe phải được đặt nằm yên tuyệt đối trong 2 - 3 giây để STM32 lấy 500 mẫu Gyroscope tính ra giá trị sai số tĩnh (Bias) và trừ ra khỏi mọi phép đo sau đó.
-* **Đệm xốp chống rung**: Bắt buộc phải gắn cảm biến qua một lớp đệm xốp hoặc cao su chống rung FPV, không bắt ốc trực tiếp lên khung cứng để triệt tiêu sóng rung cao tần từ hộp số.
+### 3.4. Lưu ý & Cạm bẫy kỹ thuật sống còn khi sử dụng Bosch BMI160
+1. **Trình tự đánh thức cảm biến qua thanh ghi lệnh CMD (0x7E)**:
+   * Sau khi cấp nguồn, chip BMI160 mặc định ở chế độ ngủ (Suspend Mode). Bạn không thể đọc dữ liệu ngay mà bắt buộc phải gửi lệnh đánh thức:
+     * Ghi `0x11` vào thanh ghi `CMD (0x7E)` để đưa Accelerometer vào Normal Mode $\rightarrow$ Chờ delay tối thiểu $5\text{ms}$.
+     * Ghi `0x15` vào thanh ghi `CMD (0x7E)` để đưa Gyroscope vào Normal Mode $\rightarrow$ Chờ delay tối thiểu $50\text{ms}$ để bộ dao động Gyro ổn định.
+2. **Kiểm tra định danh chip (Chip ID)**:
+   * Đọc thanh ghi `CHIP_ID (0x00)`. Giá trị trả về chuẩn mực của Bosch BMI160 bắt buộc phải là **`0xD1`**. Nếu đọc ra `0x00` hoặc `0xFF` là bị lỗi tiếp xúc phần cứng I2C.
+3. **Cấu hình dải đo & Bộ lọc số**:
+   * Gyroscope: Cấu hình thanh ghi `GYR_RANGE (0x43)` về giá trị `0x00` tương ứng dải đo $\pm 2000^\circ/\text{s}$ (độ phân giải 16-bit, hệ số chuyển đổi $16.4\text{ LSB}/(^\circ/\text{s})$).
+   * Accelerometer: Cấu hình thanh ghi `ACC_RANGE (0x41)` về giá trị `0x08` tương ứng dải đo $\pm 8\text{g}$ (độ phân giải 16-bit, hệ số chuyển đổi $4096\text{ LSB}/\text{g}$) hoặc $\pm 4\text{g}$ (`0x05`, $8192\text{ LSB}/\text{g}$).
+   * Cấu hình ODR 200Hz hoặc 400Hz tại thanh ghi `ACC_CONF (0x40)` và `GYR_CONF (0x42)` để khớp chính xác với chu kỳ điều khiển ngắt 5ms của hệ thống.
+4. **Đọc Burst 12 bytes liên tục từ thanh ghi DATA (0x0C đến 0x17)**:
+   * BMI160 sắp xếp dữ liệu Gyro trước rồi đến Accel:
+     * `0x0C - 0x11`: $G_x\text{ (LSB, MSB)}, G_y\text{ (LSB, MSB)}, G_z\text{ (LSB, MSB)}$.
+     * `0x12 - 0x17`: $A_x\text{ (LSB, MSB)}, A_y\text{ (LSB, MSB)}, A_z\text{ (LSB, MSB)}$.
+   * Chỉ cần 1 lần kéo đọc I2C Burst 12 bytes liên tục là lấy trọn vẹn toàn bộ trạng thái chuyển động của xe trong vòng $< 350\text{ µs}$.
+5. **Bắt buộc hiệu chuẩn độ trôi tĩnh (Zero-rate Bias Calibration)**:
+   * Khi vừa bật nguồn, xe phải được đặt nằm yên tĩnh trên sàn trong 2 - 3 giây để STM32 lấy 500 mẫu Gyroscope tính giá trị bù lệch tĩnh (Offset) và trừ ra khỏi mọi phép đo sau đó.
+6. **Đệm xốp chống rung cơ học**:
+   * Dán module GY-BMI160 lên lớp băng dính xốp đệm 3M / đệm FPV trên sàn mica để cách ly rung chấn cơ học tần số cao từ động cơ GA25.
 
 ---
 
@@ -152,7 +173,7 @@ Mỗi động cơ được điều khiển bởi 2 chân: `IN1` và `IN2`.
 
 ### 7.1. Vai trò trong đồ án
 * **Pin LiPo 3S**: Khối pin gồm 3 cell mắc nối tiếp (Điện áp khi sạc đầy là $12.6\text{V}$, điện áp danh định $11.1\text{V}$). Pin LiPo có dòng xả lớn (25C - 35C), cung cấp dòng xả tức thời mạnh mẽ cho 2 động cơ GA25 khi tăng tốc đua hoặc thắng gấp mà không bị nghẽn nguồn.
-* **Mạch Buck XL4015 (5A)**: Đảm nhiệm hạ áp từ 12V của pin xuống đúng **5.0V** ổn định, công suất dư dả để cấp nguồn nuôi số cho vi điều khiển STM32F411, cảm biến ICM-20602 và module Bluetooth HC-05.
+* **Mạch Buck XL4015 (5A)**: Đảm nhiệm hạ áp từ 12V của pin xuống đúng **5.0V** ổn định, công suất dư dả để cấp nguồn nuôi số cho vi điều khiển STM32F411, module GY-BMI160 và module Bluetooth HC-05.
 
 ### 7.2. Phương thức cấp nguồn & Vận hành Plug-and-Play (Không đo đạc pin)
 * **Đặc thù thực nghiệm của xe**: Xe tự cân bằng hoạt động trong các phiên thực nghiệm, biểu diễn thuật toán hoặc chạy đua ngắn (từ vài phút đến 15 phút mỗi lần), không cần vận hành liên tục nhiều giờ liền.
@@ -161,7 +182,29 @@ Mỗi động cơ được điều khiển bởi 2 chân: `IN1` và `IN2`.
   2. **Cắm giắc XT60 là chạy (Plug-and-Play)**: Cắm nguồn pin trực tiếp vào xe qua giắc XT60 chống cắm ngược, bật công tắc nguồn xe để hệ thống khởi động, dựng đứng xe và điều khiển.
   3. **Ngắt pin khi kết thúc**: Sau khi hoàn thành phiên chạy hoặc biểu diễn, người dùng chỉ cần rút giắc XT60 để ngắt nguồn hoàn toàn.
 * **Lợi ích của việc loại bỏ khối đo đạc kiểm thử pin**:
-  * Không cần hàn thêm mạch cầu chia điện trở (10k/2.2k) ngoài phần cứng, giúp mạch gọn gàng, giảm dây nối chằng chịt và loại bỏ nguy cơ chập mạch.
-  * Tiết kiệm chân phần cứng `PA2` (ADC1_IN2) trên vi điều khiển STM32 cho các mục đích mở rộng khác.
-  * Giải phóng tài nguyên tính toán của CPU: Không cần chạy bộ chuyển đổi ADC DMA, không cần thuật toán lọc trung bình trượt Moving Average 16 mẫu loại trừ sụt áp, mã nguồn trở nên tinh gọn và tập trung 100% vào giải thuật điều khiển cân bằng tốc độ cao.
+  * Không cần hàn thêm mạch cầu chia điện trở ngoài phần cứng, giúp mạch gọn gàng, giảm dây nối chằng chịt và loại bỏ nguy cơ chập mạch.
+  * Tiết kiệm chân phần cứng trên vi điều khiển STM32 cho các mục đích mở rộng khác.
+  * Giải phóng tài nguyên tính toán của CPU: Không cần chạy bộ chuyển đổi ADC DMA, mã nguồn tinh gọn và tập trung 100% vào giải thuật điều khiển cân bằng tốc độ cao.
+
+---
+
+## 8. KHUNG GÁ XE MICA ĐA TẦNG, TRỤ ĐỒNG M3 & PHỤ KIỆN CƠ KHÍ
+
+### 8.1. Vai trò của kết cấu cơ khí trong bài toán cân bằng
+Một chiếc xe cân bằng dù giải thuật PID có tốt đến mấy nhưng cơ khí lỏng lẻo, rung lắc hoặc lệch trọng tâm quá lớn thì xe không bao giờ đứng yên được. Các linh kiện cơ khí trong file dự toán đóng vai trò là "bộ xương" vững chắc định hình robot.
+
+### 8.2. Danh mục chi tiết các linh kiện cơ khí sử dụng:
+1. **2 Tấm nhựa Mica trong suốt làm khung sàn**:
+   * Gia công đục lỗ chính xác tạo thành 2 tầng sàn xe:
+     * *Tầng dưới (Tầng động lực)*: Bắt chặt 2 gá động cơ kim loại, cố định mạch Driver Dual A4950 và mạch Buck XL4015.
+     * *Tầng trên (Tầng não bộ & nguồn)*: Gá đặt vi điều khiển STM32F411, khối pin LiPo 3S, module Bluetooth HC-05, và dán module cảm biến Bosch BMI160 ở chính giữa trục trọng tâm trên lớp đệm xốp chống rung.
+2. **4 Trục đồng M3 cái - cái 6cm & 4 Trụ đồng M3 đực - cái 5cm**:
+   * Dùng liên kết vững chãi giữa tầng sàn mica dưới và tầng sàn mica trên.
+   * Chiều cao trụ 5cm - 6cm tạo khoảng không gian cực kỳ thoáng đãng để bố trí dây điện silicon chịu dòng, tản nhiệt tốt cho Driver A4950 và giữ trọng tâm xe ở độ cao lý tưởng (khoảng cách $L$ hợp lý cho mô hình con lắc ngược).
+3. **2 Gá động cơ GA25 kim loại 25mm**:
+   * Dạng chữ L gia công chính xác bằng hợp kim cứng cáp, bắt ốc chặt vào thân động cơ GA25-370 và siết chắc vào sàn mica, loại bỏ hoàn toàn hiện tượng vặn xoắn cơ học khi motor đảo chiều giật cục.
+4. **2 Khớp nối lục giác trục D 4mm (Hex Coupler) & Bánh xe cao su 65mm**:
+   * Khớp nối lục giác bằng đồng/nhôm có ốc trí siết thẳng vào vát chữ D của trục động cơ, khóa cứng trục quay với bánh xe cao su đường kính 65mm.
+   * Lốp cao su đường kính 65mm có độ bám dính mặt sàn cực tốt, diện tích tiếp xúc vừa đủ giúp sinh lực ma sát bám đường khi bứt tốc đua mà không bị trượt bánh.
+
 
