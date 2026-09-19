@@ -29,7 +29,7 @@
 | **Thời gian ổn định (Settling Time)** | **$< 1.5\text{ giây}$** | Thời gian dập tắt hoàn toàn dao động sau khi bị ngoại lực đẩy nhẹ. |
 | **Góc cắt an toàn khẩn cấp (Fall Cutoff)** | **$|\theta| > 45.0^\circ$** | Ngắt tức thì xung PWM về 0 trong $< 5\text{ms}$ khi xe ngã để bảo vệ motor và driver. |
 | **Tần số xung PWM động cơ** | **20 kHz đối xứng tâm** | Nằm ngoài ngưỡng nghe tai người (không rít cuộn cảm); giảm 50% sóng hài dòng điện. |
-| **Tần số gửi Telemetry lên máy tính** | **20 Hz (mỗi 50 ms)** | Tối ưu hóa băng thông Bluetooth 115200 bps; đủ mịn để vẽ đồ thị thời gian thực. |
+| **Tần số gửi Telemetry lên máy tính** | **20 Hz (mỗi 50 ms)** | Tối ưu hóa băng thông UART 115200 bps tới ESP32-S3 (Wi-Fi / BLE); đủ mịn để vẽ đồ thị thời gian thực. |
 
 ---
 
@@ -69,16 +69,16 @@ flowchart TD
         Wheels["Bánh xe cao su 65mm + Khớp nối lục giác 4mm"]
     end
 
-    subgraph S6 ["6. PHÂN HỆ TRUYỀN THÔNG & GIÁM SÁT (Wireless & Telemetry)"]
-        BT["Module Bluetooth HC-05 (USART1 DMA 115200)"]
-        App["App Điện Thoại (Lái xe Joystick)"]
-        VOFA["Phần mềm PC (Vẽ đồ thị & Tune PID live)"]
+    subgraph S6 ["6. PHÂN HỆ TRUYỀN THÔNG & GIÁM SÁT (Wireless & IoT Gateway)"]
+        ESP["Gateway ESP32-S3 N16R8 (Wi-Fi / BLE / WebSockets)"]
+        App["Web UI / App Mobile (Joystick điều khiển)"]
+        VOFA["Phần mềm PC (Vẽ đồ thị VOFA+ & Tune PID live)"]
     end
 
     %% Luồng liên kết
     Buck -->|Nguồn 5V sạch| MCU
     Buck -->|Nguồn 5V| BMI
-    Buck -->|Nguồn 5V| BT
+    Buck -->|Nguồn 5V| ESP
     LiPo -->|Nguồn động lực 12V| Driver
 
     BMI -->|Dữ liệu gia tốc & Gyro (I2C1 PB8/PB9)| MCU
@@ -92,9 +92,9 @@ flowchart TD
     MotorL --> Wheels
     MotorR --> Wheels
 
-    App <-->|Sóng Bluetooth| BT
-    VOFA <-->|Sóng Bluetooth| BT
-    BT <-->|UART DMA PB6/PB7| MCU
+    App <-->|Sóng Wi-Fi / BLE| ESP
+    VOFA <-->|Sóng Wi-Fi / BLE / TCP| ESP
+    ESP <-->|UART DMA PB6/PB7| MCU
 ```
 
 ### Chi tiết nhiệm vụ từng phân hệ:
@@ -126,7 +126,7 @@ flowchart TD
   * Mạch Driver Dual A4950 (cầu H MOSFET 3.5A dòng đỉnh).
   * 2 động cơ giảm tốc kim loại GA25-370 (12V, 1:30, 280-300 RPM).
   * Cặp bánh xe cao su đường kính 65mm, 2 khớp nối lục giác trục D 4mm, 2 gá động cơ kim loại 25mm.
-  * Kết cấu khung: 2 tấm nhựa mica dày dặn gia công đa tầng, liên kết bằng 4 trục đồng cái-cái 6cm và 4 trụ đồng M3 đực-cái 5cm, tạo khung xe 2 - 3 tầng vững chắc, cách ly chấn động.
+  * Kết cấu khung: Chế tạo dạng DIY từ 2 tấm mica định hình 2 tầng sàn, liên kết bằng các cọc đồng M3 (5cm và 6cm) linh hoạt và vững chắc.
 * **Nhiệm vụ**:
   * Khuếch đại tín hiệu điều khiển từ STM32 thành dòng điện công suất lớn (lên tới 2A - 3A ở 12V) cấp cho cuộn cảm động cơ.
   * Điều chế độ rộng xung PWM ở tần số **20kHz** đối xứng tâm (Center-aligned Mode).
@@ -136,15 +136,19 @@ flowchart TD
 * **Thành phần cốt lõi**: Khối pin LiPo 3S 11.1V (dòng xả cao 25C - 35C), giắc cắm nguồn XT60, mạch hạ áp Buck XL4015 5A.
 * **Nhiệm vụ & Thiết kế tối giản**:
   * Cung cấp nguồn 12V trực tiếp từ giắc cắm XT60 tới mạch công suất Driver Dual A4950.
-  * Mạch Buck XL4015 hạ áp từ 12V xuống đúng 5.0V ổn định cung cấp nguồn nuôi số cho STM32, module GY-BMI160 và Bluetooth.
+  * Mạch Buck XL4015 hạ áp từ 12V xuống đúng 5.0V ổn định cung cấp nguồn nuôi số cho STM32, module GY-BMI160 và module ESP32-S3 N16R8.
   * **Vận hành tiện lợi (Plug-and-Play)**: Xe phục vụ thực nghiệm giải thuật và chạy biểu diễn trong thời gian ngắn, người dùng chỉ cần sạc pin LiPo thật đầy trước khi chơi, cắm giắc XT60 vào xe là sẵn sàng điều khiển. Hệ thống lược bỏ hoàn toàn khối đo ADC và cầu chia áp để tinh giản tối đa phần cứng, tiết kiệm chân MCU và loại bỏ xử lý dư thừa trong phần mềm.
 
-### 2.6. Phân hệ Truyền thông không dây & Giám sát từ xa (Wireless Telemetry & Teleoperation)
-* **Thành phần cốt lõi**: Module Bluetooth HC-05 (115200 bps), ứng dụng điều khiển Joystick trên điện thoại, phần mềm đồ thị VOFA+ trên PC.
+### 2.6. Phân hệ Truyền thông không dây & Giám sát từ xa (Wireless Telemetry & IoT Gateway)
+* **Thành phần cốt lõi**: Module vi điều khiển Gateway **ESP32-S3 N16R8** (Xtensa 32-bit LX7 Dual-Core 240MHz, 16MB Flash, 8MB PSRAM, Wi-Fi 2.4GHz + BLE 5), giao tiếp USART1 DMA 115200 bps với STM32F411, ứng dụng Web UI Dashboard nhúng / App mobile, phần mềm đồ thị VOFA+ trên PC.
 * **Nhiệm vụ**:
-  * **Nhận lệnh lái (Uplink)**: Nhận lệnh vận tốc $v_{\text{target}}$ và lệnh rẽ $steer$ qua cơ chế UART DMA + Idle Line không chặn nhịp điều khiển.
-  * **Xuất đồ thị thời gian thực (Downlink 20Hz)**: Đóng gói góc nghiêng, góc đặt, vận tốc, PWM gửi lên PC để hiển thị đồ thị đáp ứng bước (Step Response), phục vụ tune thông số PID.
-  * **Căn chỉnh thông số trực tiếp**: Cho phép gửi lệnh đổi $K_{p1}, K_{d1}, K_{p2}, K_{i2}$ ngay khi xe đang tự đứng thăng bằng.
+  * **Cầu nối truyền thông không dây đa phương thức**:
+    * *Wi-Fi Web Server & WebSockets*: ESP32-S3 tự phát Wi-Fi AP (Access Point) và chạy máy chủ Web trực tiếp. Người dùng mở trình duyệt web trên điện thoại/máy tính là có thể lái xe bằng Joystick ảo và xem đồ thị trực tiếp mà không cần cài app bên ngoài.
+    * *Bluetooth 5 Low Energy (BLE)*: Hỗ trợ kết nối BLE Serial (Nordic UART Service) với smartphone.
+    * *ESP-NOW*: Sẵn sàng kết nối tay cầm điều khiển không dây độ trễ cực thấp (< 2ms) phục vụ đua xe tốc độ cao.
+  * **Nhận lệnh lái (Uplink)**: Nhận lệnh vận tốc $v_{\text{target}}$ và lệnh rẽ $steer$ từ Wi-Fi/BLE, chuyển tiếp qua UART DMA + Idle Line sang STM32 trong $< 1\text{ms}$.
+  * **Xuất đồ thị thời gian thực (Downlink 20Hz)**: Nhận telemetry từ STM32, phát qua WebSockets / TCP / BLE lên PC (VOFA+) và Web UI để hiển thị đồ thị đáp ứng bước (Step Response), phục vụ tune thông số PID.
+  * **Căn chỉnh thông số trực tiếp**: Cho phép gửi lệnh đổi $K_{p1}, K_{d1}, K_{p2}, K_{i2}$ tức thì ngay khi xe đang tự đứng thăng bằng.
 
 ---
 
@@ -156,7 +160,7 @@ Hệ thống điều khiển vận hành theo mô hình phân tầng thời gian
        [NHỊP TIM CỰC CAO: 200Hz / 5ms]                 [NHỊP TIM THẤP: 20Hz / 50ms]
       (Ngắt cứng Timer 4 - Ưu tiên số 0)               (Vòng lặp nền while(1) - Ưu tiên thấp)
   ────────────────────────────────────────────     ──────────────────────────────────────────────
-  • Đọc Bosch BMI160 qua I2C1 (Gia tốc + Gyro)     • Giải mã chuỗi lệnh Bluetooth ($CMD, $PID)
+  • Đọc Bosch BMI160 qua I2C1 (Gia tốc + Gyro)     • Giải mã chuỗi lệnh từ ESP32-S3 ($CMD, $PID)
   • Chạy bộ lọc bù Complementary Filter            • Đóng gói chuỗi Telemetry gửi lên PC / App
   • Đọc 2 Timer Encoder -> Tính vận tốc m/s        • Giám sát trạng thái truyền thông không dây
   • Tính sai số vận tốc -> Sinh Theta_target       • Nhấp nháy LED trạng thái hệ thống (PC13)
@@ -179,8 +183,8 @@ Bảng đấu nối chi tiết, giải quyết hoàn toàn xung đột ngoại v
 | **PA9** | `TIM1_CH2` | Timer 1 PWM | Motor Trái: Chân IN2 của A4950 | Chế độ Slow Decay (1 chân PWM, 1 chân mức 0). |
 | **PA10**| `TIM1_CH3` | Timer 1 PWM | Motor Phải: Chân IN3 của A4950 | Xung PWM 20kHz đối xứng tâm. |
 | **PA11**| `TIM1_CH4` | Timer 1 PWM | Motor Phải: Chân IN4 của A4950 | Chế độ Slow Decay (1 chân PWM, 1 chân mức 0). |
-| **PB6** | `USART1_TX` | USART 1 (DMA) | Chân RX của Bluetooth HC-05 | **Remap sang PB6** để giải phóng PA9 cho TIM1_CH2. |
-| **PB7** | `USART1_RX` | USART 1 (DMA) | Chân TX của Bluetooth HC-05 | **Remap sang PB7** để giải phóng PA10 cho TIM1_CH3. |
+| **PB6** | `USART1_TX` | USART 1 (DMA) | Chân RX (GPIO18 / RX) của ESP32-S3 N16R8 | **Remap sang PB6** để giải phóng PA9 cho TIM1_CH2. |
+| **PB7** | `USART1_RX` | USART 1 (DMA) | Chân TX (GPIO17 / TX) của ESP32-S3 N16R8 | **Remap sang PB7** để giải phóng PA10 cho TIM1_CH3. |
 | **PA0** | `TIM2_CH1` | Timer 2 (Encoder) | Kênh Hall A — Bánh Trái | Bộ đếm 32-bit phần cứng, đếm 2 cạnh xung. |
 | **PA1** | `TIM2_CH2` | Timer 2 (Encoder) | Kênh Hall B — Bánh Trái | Kết hợp với PA0 tạo chế độ đếm x4 resolution. |
 | **PB4** | `TIM3_CH1` | Timer 3 (Encoder) | Kênh Hall A — Bánh Phải | **Remap sang PB4** để giải phóng chân GPIO tự do. |
@@ -208,7 +212,7 @@ stateDiagram-v2
     STATE_CALIBRATING --> STATE_STANDBY : Hiệu chuẩn 500 mẫu IMU xong (Xe nằm yên)
     STATE_STANDBY --> STATE_BALANCING : Dựng đứng xe vào vùng an toàn (|theta| < 3°)
     
-    STATE_BALANCING --> STATE_RACING : Nhận lệnh đua từ Bluetooth ($RACE,1*)
+    STATE_BALANCING --> STATE_RACING : Nhận lệnh đua từ ESP32-S3 ($RACE,1*)
     STATE_RACING --> STATE_BALANCING : Hết lệnh đua (về chế độ thường)
     
     STATE_BALANCING --> STATE_FALLEN : Xe ngã quá 45°
@@ -265,7 +269,7 @@ stateDiagram-v2
    │ • Kết quả Bước 4: Xe tự đứng bất động tại một chỗ, khi bị đẩy tay thì tự chống trả và quay về vị trí ban đầu.
    ▼
 [BƯỚC 5: TỐI ƯU CHẾ ĐỘ ĐUA, BẺ LÁI & CÁC CƠ CHẾ AN TOÀN]
-   │ • Kết nối Bluetooth với app điện thoại, gạt Joystick để lái xe chạy thử nghiệm.
+   │ • Kết nối Wi-Fi / Web App / BLE từ ESP32-S3 với điện thoại, gạt Joystick để lái xe chạy thử nghiệm.
    │ • Áp dụng thuật toán bù vùng chết động cơ (Deadband) để triệt tiêu rung giật ở tốc độ chậm.
    │ • Kích hoạt thuật toán suy giảm vi sai lái theo vận tốc (Steering Authority) để xe ôm cua tốc độ cao không bị lật.
    │ • Kiểm thử tính năng cắt khẩn cấp khi ngã quá 45° hoặc kẹt bánh động cơ.

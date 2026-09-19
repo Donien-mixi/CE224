@@ -27,9 +27,9 @@ Trước khi đi vào từng linh kiện, hãy nhìn vào cách các linh kiện
       (PWM 20kHz) │               │ (PWM 20kHz)   │      │ (I2C1)   │ (UART)
                   │               │               │      │ PB8/PB9  │ PB6/PB7
            [Motor Trái]       [Motor Phải]        │      │          │
-           GA25-370 12V       GA25-370 12V        │   [Bosch BMI160] [Bluetooth HC-05]
-                  │               │               │   (GY-BMI160)   Điện thoại/PC
-                  │               │               │   Đo góc/Gyro Lái xe & Tune PID
+           GA25-370 12V       GA25-370 12V        │   [Bosch BMI160] [ESP32-S3 N16R8]
+                   │               │               │   (GY-BMI160)   Wi-Fi/BLE Web UI
+                   │               │               │   Đo góc/Gyro Lái xe & Tune PID
                   ▼ (Xung Encoder)▼ (Xung Encoder)│
              [Hall A/B]      [Hall A/B] ──────────┘
              (TIM2 x4)       (TIM3 x4)
@@ -44,7 +44,7 @@ STM32F411CEU6 là trung tâm điều khiển toàn bộ robot. Nó thu thập d�
 
 ### 2.2. Tại sao lại chọn STM32F411?
 * **Có bộ tính toán số thực FPU (Floating Point Unit)**: Trong xe cân bằng, các phép toán lượng giác (`atan2`), tích phân và bộ lọc số đều xử lý trên số thực `float`. Chip dòng Cortex-M0/M3 (như STM32F103 Blue Pill) không có FPU, phải tính số thực bằng phần mềm mất hàng chục chu kỳ máy. STM32F411 (Cortex-M4F) tính `float` trong **đúng 1 chu kỳ máy**, giúp giải thuật chạy cực nhanh (< 1ms).
-* **Tốc độ xung nhịp 100MHz**: Đủ mạnh để chạy vòng lặp điều khiển thời gian thực **200Hz (5ms)** mà CPU vẫn rảnh rỗi hơn 80% để truyền telemetry và nhận lệnh Bluetooth.
+* **Tốc độ xung nhịp 100MHz**: Đủ mạnh để chạy vòng lặp điều khiển thời gian thực **200Hz (5ms)** mà CPU vẫn rảnh rỗi hơn 80% để truyền telemetry và nhận lệnh từ ESP32-S3.
 * **Hệ thống Timer phần cứng cực mạnh**: Tích hợp các bộ đếm giải mã xung Encoder và Timer phát xung PWM đối xứng tâm (Center-aligned) mà không tốn tài nguyên CPU.
 
 ### 2.3. Cách hệ thống sử dụng STM32F411
@@ -52,7 +52,7 @@ STM32F411CEU6 là trung tâm điều khiển toàn bộ robot. Nó thu thập d�
 2. **Đọc Encoder phần cứng**: Cấu hình Timer 2 (bánh trái) và Timer 3 (bánh phải) ở chế độ `Encoder Mode TI12`. Phần cứng tự đếm xung của động cơ, CPU chỉ việc đọc thanh ghi số đếm.
 3. **Phát xung PWM 20kHz**: Cấu hình Timer 1 phát 4 kênh xung điều khiển chiều và tốc độ động cơ.
 4. **Đọc cảm biến tốc độ cao**: Dùng bộ I2C1 tốc độ Fast Mode 400kHz (chân PB8 - SCL, PB9 - SDA) để đọc đồng thời 12 thanh ghi gia tốc và con quay hồi chuyển từ Bosch BMI160 trong khoảng $\approx 300 - 350\text{ µs}$.
-5. **Truyền nhận Bluetooth**: Dùng bộ UART1 kết hợp DMA (chân PB6 - TX, PB7 - RX) để gửi dữ liệu telemetry lên đồ thị PC và nhận lệnh điều khiển mà không làm đơ/nghẽn hệ thống.
+5. **Truyền nhận dữ liệu qua ESP32-S3**: Dùng bộ UART1 kết hợp DMA (chân PB6 - TX, PB7 - RX) để gửi dữ liệu telemetry lên đồ thị PC/Web và nhận lệnh điều khiển mà không làm đơ/nghẽn hệ thống.
 
 ### 2.4. Lưu ý & Cạm bẫy kỹ thuật
 * **Bẫy xung đột chân (Pinout Conflict)**: Chân mặc định của USART1 (PA9, PA10) trùng với chân PWM của TIM1. Bắt buộc phải chuyển (remap) USART1 sang chân `PB6` và `PB7`. Timer 3 Encoder dùng `PB4` và `PB5`. Cảm biến Bosch BMI160 dùng I2C1 chân `PB8` (SCL) và `PB9` (SDA). Chân còi Buzzer được chuyển sang `PB12` để giải phóng hoàn toàn PB8 cho I2C1.
@@ -154,18 +154,38 @@ Mỗi động cơ được điều khiển bởi 2 chân: `IN1` và `IN2`.
 
 ---
 
-## 6. MODULE BLUETOOTH HC-05 (GIAO TIẾP KHÔNG DÂY)
+## 6. BOARD GATEWAY KHÔNG DÂY ESP32-S3 N16R8 (WI-FI & BLUETOOTH 5 LE)
 
 ### 6.1. Vai trò trong đồ án
-1. **Truyền dữ liệu lên đồ thị thời gian thực (Telemetry Downlink)**: Gửi góc nghiêng, góc đặt, vận tốc và công suất động cơ về máy tính để vẽ đồ thị theo thời gian thực (dùng phần mềm VOFA+ hoặc Python). Nhờ đó, bạn nhìn thấy rõ đáp ứng bước (Step Response) của xe để biết xe đang thiếu hay thừa $K_p, K_d$.
-2. **Nhận lệnh điều khiển từ xa (Command Uplink)**: Nhận lệnh từ joystick điện thoại để lái xe tiến, lùi, rẽ trái, rẽ phải, bật chế độ đua.
-3. **Hiệu chỉnh PID trực tiếp (Wireless PID Tuning)**: Cho phép gửi lệnh đổi $K_p, K_i, K_d$ ngay khi xe đang đứng cân bằng mà không cần cắm dây nạp lại firmware.
+Module ESP32-S3 N16R8 đóng vai trò là "Trung tâm truyền thông không dây & IoT Gateway" của robot. Nó kết nối cầu nối với STM32F411 qua kênh UART DMA tốc độ cao, đồng thời mở ra các phương thức giao tiếp không dây hiện đại (Wi-Fi 2.4GHz và Bluetooth 5 LE) để điều khiển xe từ xa và hiển thị đồ thị telemetry theo thời gian thực.
 
-### 6.2. Cách sử dụng & Giao thức truyền thông
-* Kết nối: Chân TX của HC-05 nối vào RX của STM32 (`PB7`), chân RX của HC-05 nối vào TX của STM32 (`PB6`).
-* Tốc độ truyền: Cài đặt tốc độ cao **115200 bps** (dùng lệnh AT trước khi lắp vào xe).
-* Cơ chế nhận dữ liệu: Dùng chế độ **DMA + Idle Line Interrupt** trên STM32 để nhận trọn vẹn chuỗi lệnh từ điện thoại mà không làm chậm nhịp tim điều khiển 200Hz.
-* Tần số gửi Telemetry: Đặt ở mức **20Hz (mỗi 50ms gửi 1 gói tin)**. Tuyệt đối không gửi ở tần số 200Hz vì sẽ làm nghẽn băng thông truyền UART.
+### 6.2. Tại sao nâng cấp lên ESP32-S3 N16R8 thay vì module Bluetooth HC-05 cổ điển?
+* **Cấu hình phần cứng vượt trội**:
+  * Chip ESP32-S3: Lõi kép 32-bit Xtensa® LX7 xung nhịp lên tới **240 MHz**, tích hợp tập lệnh tăng tốc tính toán vector AI.
+  * Bộ nhớ cực lớn: **16MB Flash (N16)** và **8MB Octal PSRAM (R8)**, cho phép lưu trữ toàn bộ mã nguồn Web Dashboard (HTML/CSS/JS nhúng) và bộ đệm telemetry dung lượng lớn trực tiếp trên chip mà không lo thiếu RAM.
+* **Vượt trội hoàn toàn so với HC-05**:
+  * *HC-05 cổ điển*: Chỉ hỗ trợ Bluetooth 2.0 SPP (Serial Port Profile) lạc hậu, tốc độ thấp, không thể kết nối trực tiếp với iPhone/iOS (do Apple chặn Bluetooth Classic SPP), bắt buộc người dùng phải cài app Android của bên thứ ba.
+  * *ESP32-S3 N16R8*:
+    1. **Tạo Web Dashboard điều khiển không cần cài App**: ESP32-S3 tự phát Wi-Fi Access Point (ví dụ: `TWIP-Robot-AP`), chạy Web Server & WebSockets nhúng. Người dùng dùng bất kỳ thiết bị nào (iPhone, Android, Laptop, iPad) chỉ cần kết nối Wi-Fi và mở trình duyệt web là có thể điều khiển xe bằng Joystick cảm ứng ảo và xem đồ thị thời gian thực siêu mượt.
+    2. **Đa giao thức không dây**: Hỗ trợ đồng thời Wi-Fi (WebSockets / HTTP / TCP Socket), Bluetooth Low Energy (BLE 5.0 - tương thích hoàn hảo cả iOS và Android), và giao thức **ESP-NOW** (độ trễ siêu thấp $< 2\text{ms}$ phục vụ đua xe tốc độ cao với tay cầm điều khiển chuyên dụng).
+    3. **Băng thông truyền dữ liệu cao**: Cho phép truyền dữ liệu Telemetry tốc độ cao mà không làm nghẽn kênh truyền UART của STM32.
+
+### 6.3. Cách sử dụng & Sơ đồ giao tiếp với STM32F411
+* **Giao tiếp liên chip (Inter-Chip UART)**:
+  * STM32F411 `PB6` (USART1_TX) $\longrightarrow$ ESP32-S3 Chân `RX` (ví dụ GPIO18 / RXD1).
+  * STM32F411 `PB7` (USART1_RX) $\longleftarrow$ ESP32-S3 Chân `TX` (ví dụ GPIO17 / TXD1).
+  * Chân `GND` của ESP32-S3 bắt buộc phải nối chung với `GND` của STM32F411.
+* **Cấp nguồn cho ESP32-S3**:
+  * Cấp nguồn 5.0V sạch từ mạch Buck XL4015 (5A) vào chân `5V` (hoặc `VIN`) của board ESP32-S3. Mạch Buck 5A dư sức gánh đỉnh dòng phát sóng Wi-Fi (~300 - 500mA) của ESP32-S3 mà không gây sụt áp cho STM32.
+* **Tốc độ truyền dữ liệu**: Cài đặt **115200 bps** (hoặc nâng lên 460800 bps khi cần xuất đồ thị siêu mịn).
+* **Luồng dữ liệu 2 chiều**:
+  * *Uplink (Điều khiển)*: Web UI / App BLE $\xrightarrow{\text{Wi-Fi/BLE}}$ ESP32-S3 $\xrightarrow{\text{UART DMA}}$ STM32 (`$CMD,v,steer*`, `$PID,kp1,kd1,kp2,ki2*`).
+  * *Downlink (Telemetry)*: STM32 $\xrightarrow{\text{UART DMA (20Hz)}}$ ESP32-S3 $\xrightarrow{\text{WebSockets/TCP}}$ Web Dashboard / PC VOFA+ (`$TEL,pitch,pitch_target,velocity,pwm_l,pwm_r\r\n`).
+
+### 6.4. Lưu ý & Cạm bẫy kỹ thuật khi sử dụng ESP32-S3
+1. **Dòng khởi động và phát sóng Wi-Fi**: Khi phát sóng RF Wi-Fi, ESP32-S3 có các xung dòng đỉnh ngắn lên tới 400mA - 500mA. Do đó, bắt buộc phải lấy nguồn 5V từ ngõ ra của mạch Buck XL4015 (5A), tuyệt đối không lấy nguồn từ chân 3.3V của STM32F411 vì sẽ gây sụt áp làm reset chip STM32.
+2. **Chọn chân GPIO UART trên ESP32-S3**: ESP32-S3 cho phép ma trận GPIO Matrix gán bất kỳ chân nào cho UART. Tránh các chân Strapping Pin (như GPIO0, GPIO45, GPIO46) hoặc các chân nối sẵn với Flash/PSRAM Octal (GPIO33 đến GPIO37) để không làm treo bootloader. Khuyến nghị gán UART1 qua cặp chân GPIO17 (TX) và GPIO18 (RX).
+3. **Phân bổ nhân xử lý (Dual-core FreeRTOS)**: Nên chạy tác vụ nhận/truyền UART với STM32 trên Core 1, còn tác vụ Web Server / Wi-Fi / BLE chạy trên Core 0 để đảm bảo không bị nghẽn ngắt dữ liệu.
 
 ---
 
@@ -173,7 +193,7 @@ Mỗi động cơ được điều khiển bởi 2 chân: `IN1` và `IN2`.
 
 ### 7.1. Vai trò trong đồ án
 * **Pin LiPo 3S**: Khối pin gồm 3 cell mắc nối tiếp (Điện áp khi sạc đầy là $12.6\text{V}$, điện áp danh định $11.1\text{V}$). Pin LiPo có dòng xả lớn (25C - 35C), cung cấp dòng xả tức thời mạnh mẽ cho 2 động cơ GA25 khi tăng tốc đua hoặc thắng gấp mà không bị nghẽn nguồn.
-* **Mạch Buck XL4015 (5A)**: Đảm nhiệm hạ áp từ 12V của pin xuống đúng **5.0V** ổn định, công suất dư dả để cấp nguồn nuôi số cho vi điều khiển STM32F411, module GY-BMI160 và module Bluetooth HC-05.
+* **Mạch Buck XL4015 (5A)**: Đảm nhiệm hạ áp từ 12V của pin xuống đúng **5.0V** ổn định, công suất dư dả để cấp nguồn nuôi số cho vi điều khiển STM32F411, module GY-BMI160 và board ESP32-S3 N16R8.
 
 ### 7.2. Phương thức cấp nguồn & Vận hành Plug-and-Play (Không đo đạc pin)
 * **Đặc thù thực nghiệm của xe**: Xe tự cân bằng hoạt động trong các phiên thực nghiệm, biểu diễn thuật toán hoặc chạy đua ngắn (từ vài phút đến 15 phút mỗi lần), không cần vận hành liên tục nhiều giờ liền.
@@ -188,23 +208,18 @@ Mỗi động cơ được điều khiển bởi 2 chân: `IN1` và `IN2`.
 
 ---
 
-## 8. KHUNG GÁ XE MICA ĐA TẦNG, TRỤ ĐỒNG M3 & PHỤ KIỆN CƠ KHÍ
+## 8. KẾT CẤU CƠ KHÍ KHUNG XE DIY & PHỤ KIỆN TRUYỀN ĐỘNG
 
-### 8.1. Vai trò của kết cấu cơ khí trong bài toán cân bằng
-Một chiếc xe cân bằng dù giải thuật PID có tốt đến mấy nhưng cơ khí lỏng lẻo, rung lắc hoặc lệch trọng tâm quá lớn thì xe không bao giờ đứng yên được. Các linh kiện cơ khí trong file dự toán đóng vai trò là "bộ xương" vững chắc định hình robot.
+> [!NOTE]
+> Khung cơ khí của xe được chế tạo theo dạng **DIY (Do-It-Yourself)** linh hoạt dựa trên các vật tư đã mua trong danh sách linh kiện, không gò bó theo khuôn mẫu thương mại đúc sẵn.
 
-### 8.2. Danh mục chi tiết các linh kiện cơ khí sử dụng:
-1. **2 Tấm nhựa Mica trong suốt làm khung sàn**:
-   * Gia công đục lỗ chính xác tạo thành 2 tầng sàn xe:
-     * *Tầng dưới (Tầng động lực)*: Bắt chặt 2 gá động cơ kim loại, cố định mạch Driver Dual A4950 và mạch Buck XL4015.
-     * *Tầng trên (Tầng não bộ & nguồn)*: Gá đặt vi điều khiển STM32F411, khối pin LiPo 3S, module Bluetooth HC-05, và dán module cảm biến Bosch BMI160 ở chính giữa trục trọng tâm trên lớp đệm xốp chống rung.
-2. **4 Trục đồng M3 cái - cái 6cm & 4 Trụ đồng M3 đực - cái 5cm**:
-   * Dùng liên kết vững chãi giữa tầng sàn mica dưới và tầng sàn mica trên.
-   * Chiều cao trụ 5cm - 6cm tạo khoảng không gian cực kỳ thoáng đãng để bố trí dây điện silicon chịu dòng, tản nhiệt tốt cho Driver A4950 và giữ trọng tâm xe ở độ cao lý tưởng (khoảng cách $L$ hợp lý cho mô hình con lắc ngược).
-3. **2 Gá động cơ GA25 kim loại 25mm**:
-   * Dạng chữ L gia công chính xác bằng hợp kim cứng cáp, bắt ốc chặt vào thân động cơ GA25-370 và siết chắc vào sàn mica, loại bỏ hoàn toàn hiện tượng vặn xoắn cơ học khi motor đảo chiều giật cục.
-4. **2 Khớp nối lục giác trục D 4mm (Hex Coupler) & Bánh xe cao su 65mm**:
-   * Khớp nối lục giác bằng đồng/nhôm có ốc trí siết thẳng vào vát chữ D của trục động cơ, khóa cứng trục quay với bánh xe cao su đường kính 65mm.
-   * Lốp cao su đường kính 65mm có độ bám dính mặt sàn cực tốt, diện tích tiếp xúc vừa đủ giúp sinh lực ma sát bám đường khi bứt tốc đua mà không bị trượt bánh.
+### 8.1. Các vật tư cơ khí phục vụ lắp ráp DIY:
+1. **2 Tấm nhựa Mica trong suốt**: Làm 2 tầng sàn xe (tầng 1 đặt động lực/driver/pin, tầng 2 đặt mạch điều khiển và IMU).
+2. **Cọc đồng M3 (4 trục cái - cái 6cm & 4 trụ đực - cái 5cm)**: Ghép nối và định cự ly chiều cao giữa các tầng sàn.
+3. **2 Gá kim loại động cơ GA25 (25mm)**: Bắt vít cố định cặp động cơ GA25 vào sàn đáy, đảm bảo 2 trục bánh xe thẳng hàng.
+4. **2 Khớp nối đồng lục giác trục D 4mm & 2 Bánh xe cao su 65mm**: Truyền mô-men xoắn từ hộp số 1:30 ra mặt sàn với độ bám đường cao.
+
+---
+
 
 

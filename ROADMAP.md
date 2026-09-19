@@ -10,7 +10,7 @@
   * Tự động bù lệch trọng tâm tĩnh ($\theta_{\text{trim}}$) do sai số phân bổ linh kiện và vị trí pin, xe đứng bất động mà không bị trôi vị trí trên sàn bằng phẳng.
   * Khi có ngoại lực tác động (ngón tay đẩy nhẹ hoặc va chạm nhẹ), xe tự động tạo lực đẩy phản kháng, lùi/tiến để đỡ trọng tâm và trở về vị trí cân bằng cũ.
 * **Điều khiển chạy đua tốc độ cao (High-Speed Racing & Maneuvering)**:
-  * Nhận lệnh điều khiển từ xa qua sóng Bluetooth (Joystick điện thoại hoặc phần mềm PC) với đáp ứng vận tốc tức thì.
+  * Nhận lệnh điều khiển từ xa qua Wi-Fi Web App / BLE từ gateway ESP32-S3 (Joystick ảo trên trình duyệt điện thoại/PC hoặc tay cầm ESP-NOW) với đáp ứng vận tốc tức thì.
   * Chủ động ngả thân xe về phía trước khi tăng tốc ($\theta_{\text{target}}$ mở rộng lên tới $\pm 15^\circ$) để đạt gia tốc đua lớn ($a_x > 2.5\text{ m/s}^2$).
   * Tích hợp thuật toán bẻ lái vi sai thích ứng vận tốc (Speed-Adaptive Steering) giúp xe vào cua gắt, lượn số 8 ở tốc độ cao mà thân xe vẫn đầm chắc, hoàn toàn không bị lật.
 * **Vận hành tiện lợi, tối giản (Plug-and-Play)**:
@@ -46,10 +46,10 @@
 - [ ] **Cấu hình GPIO Còi Buzzer & LED trạng thái**:
   * Chân còi Active Buzzer: Cấu hình **`PB12`** làm `GPIO_Output` (chuyển sang PB12 để giải phóng PB8 cho I2C1_SCL).
   * Chân LED xanh on-board: Cấu hình **`PC13`** làm `GPIO_Output` (Active LOW).
-- [ ] **Cấu hình USART1 (Truyền thông Bluetooth HC-05 & Telemetry)**:
-  * **Remap chân**: Chuyển `TX` sang **`PB6`** và `RX` sang **`PB7`** để giải phóng PA9/PA10 cho Timer 1 PWM.
+- [ ] **Cấu hình USART1 (Truyền thông Gateway ESP32-S3 N16R8 & Telemetry)**:
+  * **Remap chân**: Chuyển `TX` sang **`PB6`** (nối RX ESP32-S3) và `RX` sang **`PB7`** (nối TX ESP32-S3) để giải phóng PA9/PA10 cho Timer 1 PWM.
   * Baudrate: **115200 bps**, 8-N-1.
-  * Kích hoạt chế độ **DMA Circular / Normal** kèm ngắt **Idle Line Detection** để nhận trọn vẹn chuỗi lệnh từ điện thoại mà không làm nghẽn CPU.
+  * Kích hoạt chế độ **DMA Circular / Normal** kèm ngắt **Idle Line Detection** để nhận trọn vẹn chuỗi lệnh từ ESP32-S3 mà không làm nghẽn CPU.
 - [ ] **Cấu hình Timer 4 (Tạo nhịp tim điều khiển 200Hz / 5ms)**:
   * Cấu hình ngắt định thời định kỳ: Prescaler = 99, ARR = 4999 $\rightarrow$ Thời gian ngắt chính xác đúng $5.000\text{ ms}$.
   * Mức ưu tiên ngắt (NVIC Priority): Đặt độ ưu tiên cao nhất (`Preemption Priority = 0`).
@@ -89,16 +89,17 @@
     * Dải đo Accel: $\pm 8\text{g}$ (Thanh ghi `ACC_RANGE 0x41`, ghi `0x08`, hệ số chia $4096\text{ LSB}/\text{g}$) hoặc $\pm 4\text{g}$ (ghi `0x05`, $8192\text{ LSB}/\text{g}$).
     * Bộ lọc số nội ODR/BWP: Cấu hình thanh ghi `ACC_CONF (0x40)` và `GYR_CONF (0x42)` về ODR 200Hz hoặc 400Hz, lọc Normal Bandwidth để triệt tiêu sóng rung cơ học từ hộp số GA25.
   * Viết hàm đọc Burst 12 bytes liên tục (`BMI160_Read_All()`): Thu thập đồng thời $G_x, G_y, G_z, A_x, A_y, A_z$ từ thanh ghi `0x0C` (`DATA_0`) đến `0x17` trong một lần truyền I2C duy nhất ($< 350\text{ µs}$).
-- [ ] **Lập trình Giao tiếp Bluetooth HC-05 & Telemetry (`telemetry.c / telemetry.h`)**:
-  * Định nghĩa giao thức gói tin gửi từ App/PC:
+- [ ] **Lập trình Giao tiếp Gateway ESP32-S3 N16R8 & Telemetry (`telemetry.c / telemetry.h`)**:
+  * Định nghĩa giao thức gói tin nhận từ ESP32-S3 (nguồn từ Web UI / BLE / App):
     * Lệnh lái: `$CMD,v,steer*` (Ví dụ: `$CMD,0.5,-0.2*`).
     * Lệnh tune thông số PID trực tiếp: `$PID,kp1,kd1,kp2,ki2*`.
-  * Định nghĩa gói tin Telemetry gửi lên PC (tần số 20Hz):
+  * Định nghĩa gói tin Telemetry gửi từ STM32 sang ESP32-S3 (tần số 20Hz):
     * `$TEL,pitch,pitch_target,velocity,pwm_l,pwm_r\r\n`
-  * Kết nối phần mềm đồ thị **VOFA+** trên máy tính để kiểm tra nhận và hiển thị dạng sóng.
+  * Lập trình firmware ESP32-S3 (phát Wi-Fi AP, chạy Web Server / WebSockets hoặc BLE Serial để forward dữ liệu sang STM32).
+  * Kết nối phần mềm đồ thị **VOFA+** trên máy tính (qua TCP/Wi-Fi hoặc BLE) và giao diện Web trên điện thoại để kiểm tra hiển thị dạng sóng và điều khiển.
 
 > [!IMPORTANT]
-> **Tiêu chuẩn nghiệm thu Giai đoạn 2**: Động cơ quay đúng lệnh, Encoder đo đúng 1320 xung/vòng, Bosch BMI160 trả về CHIP_ID = 0xD1, đồ thị VOFA+ nhận thông số mượt mà qua sóng Bluetooth.
+> **Tiêu chuẩn nghiệm thu Giai đoạn 2**: Động cơ quay đúng lệnh, Encoder đo đúng 1320 xung/vòng, Bosch BMI160 trả về CHIP_ID = 0xD1, đồ thị VOFA+ và Web Dashboard nhận thông số mượt mà từ ESP32-S3.
 
 ---
 
@@ -187,7 +188,7 @@
     $$\text{steer}_{\text{adaptive}} = \frac{\text{steer}_{\text{cmd}}}{1.0 + 1.2 \times |v_{\text{actual}}|}$$
     $$\text{PWM}_{\text{Left}} = \text{PWM}_{\text{base}} + \text{steer}_{\text{adaptive}}, \quad \text{PWM}_{\text{Right}} = \text{PWM}_{\text{base}} - \text{steer}_{\text{adaptive}}$$
 - [ ] **Cài đặt Chế độ Đua (Racing Mode)**:
-  * Khi nhận lệnh `$RACE,1*` từ Bluetooth: Mở rộng góc nghiêng cho phép từ $\pm 8^\circ$ lên **$\pm 15^\circ$**.
+  * Khi nhận lệnh `$RACE,1*` từ ESP32-S3 (Web UI / BLE): Mở rộng góc nghiêng cho phép từ $\pm 8^\circ$ lên **$\pm 15^\circ$**.
   * Cho phép gia tốc tịnh tiến $a_x$ đạt cực đại:
     $$\tan(15^\circ) \approx 0.268 \implies a_x \approx 0.268 \times 9.81 \approx \mathbf{2.63\text{ m/s}^2}$$
     Xe bốc đầu lao vút về phía trước với tốc độ đua ấn tượng.
@@ -205,7 +206,7 @@
   * Còi Buzzer (PB12) phát tiếng bíp khi chuyển mode và hú liên tục khi rơi vào trạng thái khẩn cấp `STATE_EMERGENCY`.
 
 > [!IMPORTANT]
-> **Tiêu chuẩn nghiệm thu Giai đoạn 5**: Xe nhận lệnh từ app Bluetooth chạy tiến/lùi mượt mà, ôm cua ngọt ở tốc độ cao không bị lật. Khi xô ngã xe, motor tự ngắt tức thì, dựng đứng xe lại xe tự động đứng thăng bằng trở lại.
+> **Tiêu chuẩn nghiệm thu Giai đoạn 5**: Xe nhận lệnh từ Web UI / App qua ESP32-S3 chạy tiến/lùi mượt mà, ôm cua ngọt ở tốc độ cao không bị lật. Khi xô ngã xe, motor tự ngắt tức thì, dựng đứng xe lại xe tự động đứng thăng bằng trở lại.
 
 ---
 

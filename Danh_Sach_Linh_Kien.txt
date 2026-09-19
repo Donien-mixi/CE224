@@ -82,14 +82,23 @@ IV. KHỐI MẠCH CÔNG SUẤT ĐIỀU KHIỂN ĐỘNG CƠ (MOTOR DRIVER)
       + Motor Phải: IN3 (PA10), IN4 (PA11) -> Chế độ Slow Decay.
 
 
-V. KHỐI TRUYỀN THÔNG KHÔNG DÂY (WIRELESS COMMUNICATION)
+V. KHỐI TRUYỀN THÔNG KHÔNG DÂY & IOT GATEWAY (WIRELESS & IOT GATEWAY)
 --------------------------------------------------------------------------------
-11. Module truyền thông Bluetooth:
-    - Tên linh kiện: Module Bluetooth HC-05
-    - Số lượng: 01 module
-    - Cấu hình: Tốc độ Baudrate 115200 bps, kết nối USART1 remap (PB6: TX, PB7: RX).
-    - Nhiệm vụ: Nhận lệnh điều khiển lái Joystick từ điện thoại, nhận lệnh tune PID
-      trực tiếp, xuất dữ liệu Telemetry (20Hz) lên phần mềm đồ thị PC (VOFA+).
+11. Bo mạch Gateway truyền thông không dây kép:
+    - Tên linh kiện: Board ESP32-S3 N16R8 (16MB Flash, 8MB PSRAM)
+    - Số lượng: 01 board
+    - Thông số kỹ thuật: Lõi kép 32-bit Xtensa LX7 @ 240MHz, tích hợp Wi-Fi 2.4GHz
+      (802.11 b/g/n) và Bluetooth 5 (LE) / BLE, 16MB Flash, 8MB PSRAM.
+    - Cấu hình & Kết nối với STM32: Tốc độ Baudrate 115200 bps (hoặc 460800 bps),
+      kết nối USART1 remap (PB6: TX nối RX ESP32-S3, PB7: RX nối TX ESP32-S3, chung GND).
+    - Nhiệm vụ:
+      + Tự phát Wi-Fi AP và chạy Web Server & WebSockets nhúng (điều khiển xe bằng
+        Joystick ảo và xem đồ thị Telemetry trực tiếp qua trình duyệt web trên
+        điện thoại/PC mà không cần cài app).
+      + Hỗ trợ giao tiếp Bluetooth Low Energy (BLE) và giao thức ESP-NOW độ trễ
+        cực thấp (< 2ms) cho tay cầm điều khiển tốc độ cao.
+      + Nhận lệnh điều khiển ($CMD), lệnh tune PID ($PID) chuyển tiếp sang STM32.
+      + Nhận dữ liệu Telemetry (20Hz) từ STM32 phát qua WebSockets / TCP lên PC (VOFA+).
 
 
 VI. KHỐI NGUỒN ĐIỆN & QUẢN LÝ NĂNG LƯỢNG
@@ -104,7 +113,7 @@ VI. KHỐI NGUỒN ĐIỆN & QUẢN LÝ NĂNG LƯỢNG
     - Tên linh kiện: Mạch hạ áp Buck XL4015 (5A)
     - Số lượng: 01 mạch
     - Thông số kỹ thuật: Điện áp vào 12V (Pin LiPo), ngõ ra chỉnh chiết áp đúng 5.0V.
-    - Nhiệm vụ: Cấp nguồn 5V ổn định cho STM32F411, cảm biến Bosch BMI160 (GY-BMI160) và Bluetooth HC-05.
+    - Nhiệm vụ: Cấp nguồn 5V ổn định cho STM32F411, cảm biến Bosch BMI160 (GY-BMI160) và board ESP32-S3 N16R8.
 
 14. Phụ kiện nguồn:
     - Giắc cắm nguồn XT60 (01 cặp đực - cái): Chống cắm ngược cực.
@@ -146,8 +155,8 @@ VII. KHỐI CẢNH BÁO, CHỈ BÁO TRẠNG THÁI & DÂY NỐI
 |    PB9     | I2C1_SDA            | I2C 1 (400kHz)    | Cảm biến GY-BMI160 (Chân SDA)   |
 |    PB2     | GPIO_EXTI2 (Input)  | Ngắt ngoài EXTI   | Cảm biến GY-BMI160 (Chân INT1)  |
 |    PB12    | GPIO_Output         | Điều khiển còi    | Còi chíp Active Buzzer (+)      |
-|    PB6     | USART1_TX           | USART 1 (DMA)     | Bluetooth HC-05 (Chân RX)       |
-|    PB7     | USART1_RX           | USART 1 (DMA)     | Bluetooth HC-05 (Chân TX)       |
+|    PB6     | USART1_TX           | USART 1 (DMA)     | ESP32-S3 N16R8 (Chân RX)        |
+|    PB7     | USART1_RX           | USART 1 (DMA)     | ESP32-S3 N16R8 (Chân TX)        |
 |  PA4..PA7  | GPIO_Free           | GPIO Tự do        | Chân mở rộng / SPI1 tự do       |
 |    PC13    | GPIO_Output         | LED On-board      | LED xanh tích hợp trên bo mạch  |
 |    PA13    | SYS_JTMS-SWDIO      | SWD Debug         | Mạch nạp ST-Link V2 (SWDIO)     |

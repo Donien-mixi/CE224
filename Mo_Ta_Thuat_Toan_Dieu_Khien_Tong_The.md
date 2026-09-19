@@ -73,7 +73,7 @@ Hệ thống sử dụng ngắt cứng Timer của STM32F411 làm nhịp tim đi
 0 µs ───────────────────────────────────────────────────────────── 5000 µs
 │ [Task 1] │ [Task 2] │ [Task 3] │ [Task 4] │ [Task 5] │ [Task 6] │ [Rảnh / CPU Idle]
 │ Đọc IMU  │ Lọc bù   │ Encoder  │ Cascade  │ Bù lái & │ An toàn  │ Xử lý UART DMA,
-│ ~380µs   │ ~40µs    │ ~60µs    │ ~120µs   │ Deadband │ & PWM    │ Telemetry & Bluetooth
+│ ~380µs   │ ~40µs    │ ~60µs    │ ~120µs   │ Deadband │ & PWM    │ Telemetry & ESP32-S3
 │          │          │          │          │ ~50µs    │ ~80µs    │ > 4270µs (>85% rảnh)
 ```
 
@@ -83,7 +83,7 @@ Hệ thống sử dụng ngắt cứng Timer của STM32F411 làm nhịp tim đi
 4. **Task 4 (Tính toán Cascade PID)**: Tính toán sai số vận tốc $\rightarrow$ $\theta_{\text{target}}$, tính sai số góc $\rightarrow$ $\text{PWM}_{\text{base}}$ ($\approx 120\text{ µs}$).
 5. **Task 5 (Bù phi tuyến)**: Áp dụng Steering Authority theo vận tốc và bù ma sát tĩnh Deadband ($\approx 50\text{ µs}$).
 6. **Task 6 (An toàn & Xuất xung)**: Kiểm tra góc ngã, nạp thanh ghi `TIM1->CCRx` điều khiển Dual A4950 ($\approx 80\text{ µs}$).
-7. **Thời gian rảnh (> 85%)**: CPU thoát ngắt để vòng lặp nền `while(1)` xử lý nhận và giải mã gói tin Bluetooth, đóng gói gửi dữ liệu Telemetry lên máy tính.
+7. **Thời gian rảnh (> 85%)**: CPU thoát ngắt để vòng lặp nền `while(1)` xử lý nhận và giải mã gói tin từ ESP32-S3 qua UART DMA, đóng gói gửi dữ liệu Telemetry lên máy tính/Web UI.
 
 ---
 
@@ -94,7 +94,7 @@ Hệ thống sử dụng ngắt cứng Timer của STM32F411 làm nhịp tim đi
 ```mermaid
 flowchart TD
     subgraph Velocity_Loop ["VÒNG NGOÀI: Vận Tốc (Velocity Loop - PI @ 50-200Hz)"]
-        SP_V["Vận tốc đặt V_target (từ Bluetooth)"]
+        SP_V["Vận tốc đặt V_target (từ ESP32-S3: Web UI / BLE)"]
         FB_V["Vận tốc đo được V_actual (từ Encoder + LPF)"]
         Err_V(( - ))
         P_Vel["Khâu Tỉ lệ: Kp2 * e_v"]
@@ -129,7 +129,7 @@ flowchart TD
     end
 
     subgraph Steering_Mixing ["BÙ LÁI & BÙ PHI TUYẾN"]
-        Steer_Cmd["Lệnh rẽ từ App"]
+        Steer_Cmd["Lệnh rẽ từ Web UI / App"]
         Vel_Adaptive["Hệ số suy giảm theo tốc độ: 1 / (1 + beta*|v|)"]
         Deadband["Bù vùng chết Deadband"]
         Mix["Bộ trộn PWM Trái / Phải"]
@@ -226,7 +226,7 @@ Vòng ngoài giải quyết bài toán: Điều khiển xe bám theo vận tốc
 ---
 
 ### 4.3. Thuật toán Bù lái thích ứng vận tốc (Velocity-adaptive Steering Authority)
-Khi nhận lệnh rẽ từ app Bluetooth, hệ thống cộng/trừ vi sai vào 2 bánh:
+Khi nhận lệnh rẽ từ Web UI / App qua ESP32-S3, hệ thống cộng/trừ vi sai vào 2 bánh:
 $$\text{PWM}_{\text{Left}} = \text{PWM}_{\text{base}} + \Delta\text{PWM}_{\text{steer}}$$
 $$\text{PWM}_{\text{Right}} = \text{PWM}_{\text{base}} - \Delta\text{PWM}_{\text{steer}}$$
 
@@ -247,7 +247,7 @@ stateDiagram-v2
     STATE_INIT --> STATE_CALIBRATING : Phần cứng ngoại vi OK
     STATE_CALIBRATING --> STATE_STANDBY : Hiệu chuẩn 500 mẫu IMU xong
     STATE_STANDBY --> STATE_BALANCING : Dựng đứng xe (|theta| < 3 deg)
-    STATE_BALANCING --> STATE_RACING : Nhận lệnh đua từ Bluetooth
+    STATE_BALANCING --> STATE_RACING : Nhận lệnh đua từ ESP32-S3 ($RACE,1*)
     STATE_RACING --> STATE_BALANCING : Hết lệnh đua (về chế độ thường)
     
     STATE_BALANCING --> STATE_FALLEN : |theta| > 45 deg
