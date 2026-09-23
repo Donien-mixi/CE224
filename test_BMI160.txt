@@ -1,0 +1,13 @@
+xuất hiện ra kết quả như này thì đúng chưa và giải thích 4 tiêu đề để tôi hiểu bmi160 đang làm gì
+
+Pitch:-145.05 | Gyro_Pitch: -0.61 deg/s | Acc_Z:-0.48 g | Acc_X:-0.33 g
+Pitch:-145.30 | Gyro_Pitch: -0.06 deg/s | Acc_Z:-0.48 g | Acc_X:-0.33 g
+Pitch:-145.58 | Gyro_Pitch: -0.12 deg/s | Acc_Z:-0.48 g | Acc_X:-0.33 g
+Pitch:-145.45 | Gyro_Pitch: -0.37 deg/s | Acc_Z:-0.48 g | Acc_X:-0.33 g
+Pitch:-145.44 | Gyro_Pitch: -0.18 deg/s | Acc_Z:-0.48 g | Acc_X:-0.33 g
+Pitch:-145.15 | Gyro_Pitch: -0.30 deg/s | Acc_Z:-0.48 g | Acc_X:-0.33 g
+Pitch:-144.88 | Gyro_Pitch: -0.24 deg/s | Acc_Z:-0.48 g | Acc_X:-0.34 g
+Pitch:-145.07 | Gyro_Pitch: -0.06 deg/s | Acc_Z:-0.48 g | Acc_X:-0.33 g
+Pitch:-145.42 | Gyro_Pitch: -0.37 deg/s | Acc_Z:-0.48 g | Acc_X:-0.33 g
+Pitch:-145.03 | Gyro_Pitch: -0.43 deg/s | Acc_Z:-0.48 g | Acc_X:-0.34 g
+Pitch:-144.79 | Gyro_Pitch: -0.12 deg/s | Acc_Z:-0.48 g | Acc_X:-0.34 g
