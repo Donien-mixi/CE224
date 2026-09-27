@@ -32,7 +32,7 @@ Tài liệu hợp nhất toàn bộ thông số kỹ thuật, danh mục linh ki
 |  6  | **Mạch Driver Dual A4950**          |     01     | Mạch công suất cầu H MOSFET 3.5A, điều khiển 2 motor                        |
 |  7  | **Board ESP32-S3 N16R8**             |     01     | Gateway không dây: phát Wi-Fi AP, chạy Web HUD điều khiển                   |
 |  8  | **Pin LiPo 3S 11.1V (XT60)**         |     01     | Cấp nguồn động lực 12V cho động cơ qua giắc XT60                          |
-|  9  | **Mạch Buck XL4015 (5A)**           |     01     | Hạ áp từ 12V về 5.0V cấp nguồn cho STM32, BMI160, ESP32                      |
+|  9  | **Mạch Buck XL4015 (5A)**           |     01     | Hạ áp từ 12V về 5.0V cấp nguồn cho STM32, ESP32, Buzzer (BMI160 dùng 3.3V từ STM32) |
 | 10 | **Khung Mica 2 tầng + Cọc đồng** |   01 bộ   | 2 tấm mica DIY, 2 gá chữ L (25mm), 4 cọc đồng M3 dài 6cm                    |
 | 11 | **Còi Buzzer + Công tắc nguồn**  |   01 bộ   | Còi chíp 5V (PB12), công tắc bập bênh ngắt nguồn pin                       |
 
@@ -53,12 +53,15 @@ Bảng đấu nối chi tiết, không trùng lặp và không xung đột ngo�
 │ PB2 (EXTI2) ─────┐  │  │  │
 │ PB12 (Buzzer)    │  │  │  │           ┌───────────────────────────┐
 │ PC13 (Status LED)│  │  │  │           │       BOSCH BMI160        │
-└───────┬──────────┼──┼──┼──┘           │ SCL ──< Nối PB8 (I2C1)    │
-        │          │  │  │              │ SDA ──< Nối PB9 (I2C1)    │
-        │          └──┼──┼─────────────>│ INT1 ─< Nối PB2 (EXTI2)   │
-        │             └──┼─────────────>│ GND, 3.3V/5V              │
-        │                └─────────────>└───────────────────────────┘
-        ▼ PWM 20kHz
+└───────┬──────────┼──┼──┼──┘           │ SCL  ──< Nối PB8 (I2C1)   │
+        │          │  │  │              │ SDA  ──< Nối PB9 (I2C1)   │
+        │          └──┼──┼─────────────>│ INT1 ──< Nối PB2 (EXTI2)  │
+        │             └──┼─────────────>│ CS   ──< Nối 3.3V (I2C)   │
+        │                └─────────────>│ SA0  ──< Nối GND (0x68)   │
+        │                               │ 3V3  ──< Nối 3.3V STM32   │
+        │                               │ GND  ──< Nối chung GND    │
+        │                               │ (BỎ TRỐNG HOÀN TOÀN VIN)  │
+        ▼ PWM 20kHz                     └───────────────────────────┘
 ┌───────────────────────────┐           ┌───────────────────────────┐
 │     DRIVER DUAL A4950     │           │     HALL ENCODER 2 BÁNH   │
 │ PA8  ──> IN1 (Motor L+)   │           │ PA0 (TIM2_CH1) <── Kênh A │ Trái
@@ -104,6 +107,14 @@ Bảng đấu nối chi tiết, không trùng lặp và không xung đột ngo�
   3. Ghi `0x15` vào `CMD (0x7E)` $\to$ Đánh thức Gyro (delay 50ms để bộ dao động ổn định).
 * **Dải đo**: Gyro $\pm 2000^\circ/s$ (`16.4 LSB/dps`), Accel $\pm 8g$ (`4096 LSB/g`).
 * **Đọc Burst 12 bytes**: Đọc liên tục thanh ghi `0x0C` đến `0x17` trong 1 frame I2C ($< 350\text{µs}$).
+* **Cấu hình 6 chân bắt buộc của Module GY-BMI160 (Chuẩn hóa 100%)**:
+  * **Chân `3V3`**: Cấp nguồn `3.30V` lấy từ chân `3.3V` của STM32 Black Pill. **TUYỆT ĐỐI KHÔNG DÙNG CHÂN `VIN`** (chân `VIN` đi qua diode/LDO dỏm gây sụt áp đường I2C khiến chip bị treo).
+  * **Chân `GND`**: Nối vào đường ray GND chung của hệ thống.
+  * **Chân `SCL`**: Nối vào chân `PB8` của STM32 (I2C1 SCL).
+  * **Chân `SDA`**: Nối vào chân `PB9` của STM32 (I2C1 SDA).
+  * **Chân `CS` (Chip Select)**: Bắt buộc nối lên `3.3V` để kích hoạt giao tiếp I2C. Nếu thả nổi hoặc nối đất, chip sẽ nhảy sang giao thức SPI và ngắt I2C làm STM32 không tìm thấy cảm biến (còi hú liên tục).
+  * **Chân `SA0` (hoặc `SDO`)**: Bắt buộc nối xuống `GND` để cố định địa chỉ I2C là `0x68` (khớp với mã nguồn).
+  * **Chân `VIN` & `INT2`**: **HOÀN TOÀN BỎ TRỐNG KHÔNG CẮM DÂY**. Chân `INT1` nối vào `PB2` (tùy chọn ngắt EXTI).
 
 ### 4.3. Động cơ GA25-370 & Encoder
 

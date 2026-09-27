@@ -1,0 +1,6 @@
+../Core/Src/bmi160.c:20:13:BMI160_WriteReg	32	static
+../Core/Src/bmi160.c:30:13:BMI160_ReadReg	32	static
+../Core/Src/bmi160.c:39:6:BMI160_Init	16	static
+../Core/Src/bmi160.c:102:6:BMI160_Read_All	40	static
+../Core/Src/bmi160.c:133:6:BMI160_Calibrate_Gyro	48	static
+../Core/Src/bmi160.c:162:6:BMI160_Test_Run	216	static

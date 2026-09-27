@@ -1,0 +1,6 @@
+../Core/Src/encoder.c:17:6:Encoder_Init	8	static
+../Core/Src/encoder.c:26:6:Encoder_Reset	4	static
+../Core/Src/encoder.c:45:6:Encoder_Update	24	static
+../Core/Src/encoder.c:79:7:Encoder_GetLeftVelocity	4	static
+../Core/Src/encoder.c:84:7:Encoder_GetRightVelocity	4	static
+../Core/Src/encoder.c:89:7:Encoder_GetAverageVelocity	4	static

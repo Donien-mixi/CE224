@@ -1,0 +1,5 @@
+../Core/Src/motor.c:10:6:Motor_Init	1
+../Core/Src/motor.c:25:6:Motor_SetDuty	9
+../Core/Src/motor.c:75:6:Motor_Stop	1
+../Core/Src/motor.c:83:6:Motor_Brake	1
+../Core/Src/motor.c:91:6:Motor_SelfTest	1

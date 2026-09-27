@@ -53,6 +53,11 @@ void Motor_Stop(void);
   */
 void Motor_Brake(void);
 
+/**
+  * @brief  Tự kiểm tra quay thử 2 động cơ khi khởi động (Self-Test)
+  */
+void Motor_SelfTest(void);
+
 #ifdef __cplusplus
 }
 #endif

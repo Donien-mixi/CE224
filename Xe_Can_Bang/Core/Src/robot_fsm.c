@@ -38,6 +38,11 @@ void Robot_Init(void)
     PID_Init();
     ESP32_Comm_Init();
 
+    /* Tự kiểm tra 2 động cơ ngay khi khởi động:
+     * Quay nhẹ bánh trái 350ms, sau đó bánh phải 350ms để kiểm tra
+     * nguồn pin 12V, mạch Driver A4950 và động cơ hoạt động hoàn hảo. */
+    Motor_SelfTest();
+
     /* 2. Khởi tạo cảm biến Bosch BMI160 */
     if (!BMI160_Init()) {
         s_robot.state = ROBOT_STATE_EMERGENCY;
@@ -69,10 +74,18 @@ void Robot_ControlLoop_200Hz(void)
 {
     s_robot.loop_count++;
 
+    /* Nếu hệ thống đang gặp lỗi khẩn cấp, cắt PWM và thoát ngay để không làm nghẽn vi điều khiển */
+    if (s_robot.state == ROBOT_STATE_EMERGENCY) {
+        Motor_Stop();
+        return;
+    }
+
     /* Task 1: Đọc dữ liệu IMU Bosch BMI160 qua I2C1 */
     BMI160_Data_t imu;
     if (!BMI160_Read_All(&imu)) {
         s_robot.state = ROBOT_STATE_EMERGENCY;
+        LED_SetPattern(LED_PATTERN_ALARM);
+        Buzzer_On();
         Motor_Stop();
         return;
     }
@@ -108,8 +121,8 @@ void Robot_ControlLoop_200Hz(void)
 
     /* Task 6: Máy trạng thái chuyển đổi giữa STANDBY / FALLEN và BALANCING */
     if (s_robot.state == ROBOT_STATE_STANDBY || s_robot.state == ROBOT_STATE_FALLEN) {
-        if (fabsf(s_robot.pitch) < 2.5f) {
-            /* Dựng xe đứng thẳng -> Tự động kích hoạt cân bằng! */
+        if (fabsf(s_robot.pitch) < 15.0f) {
+            /* Dựng xe đứng thẳng trong phạm vi +-15 độ -> Tự động kích hoạt cân bằng! */
             s_robot.state = cmd->is_racing ? ROBOT_STATE_RACING : ROBOT_STATE_BALANCING;
             PID_Reset_Integral();
             Encoder_Reset();

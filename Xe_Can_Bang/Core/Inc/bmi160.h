@@ -4,6 +4,15 @@
   * @brief   Driver cảm biến quán tính 6 trục cao cấp Bosch BMI160 (GY-BMI160).
   *          Giao tiếp qua I2C1 Fast Mode 400kHz (PB8: SCL, PB9: SDA).
   *          Đọc đồng thời 12 bytes Gia tốc và Con quay hồi chuyển trong < 350µs.
+  *
+  * @note    QUY TẮC ĐẤU DÂY 6 CHÂN BẮT BUỘC ĐÃ TEST THỰC NGHIỆM:
+  *          1. Chân 3V3 : Cấp nguồn 3.30V từ chân 3.3V của STM32 (BỎ TRỐNG VIN!)
+  *          2. Chân GND : Nối mass chung hệ thống
+  *          3. Chân SCL : Nối chân PB8 (I2C1_SCL)
+  *          4. Chân SDA : Nối chân PB9 (I2C1_SDA)
+  *          5. Chân CS  : Nối chân 3.3V (Ép chip chạy chế độ I2C thay vì SPI)
+  *          6. Chân SA0 : Nối GND (Cố định địa chỉ I2C = 0x68)
+  *          * TUYỆT ĐỐI BỎ TRỐNG CHÂN VIN (không cấp nguồn vào VIN)
   ******************************************************************************
   */
 
@@ -83,6 +92,12 @@ bool BMI160_Read_All(BMI160_Data_t *data);
   * @param  samples: Số mẫu lấy trung bình (khuyến nghị 500 mẫu trong 2.5s khi xe nằm yên)
   */
 void BMI160_Calibrate_Gyro(uint16_t samples);
+
+/**
+  * @brief  Chạy quy trình kiểm tra toàn diện cảm biến BMI160 trên STM32
+  *         (Quét bus I2C, đọc Chip ID 0xD1, khởi tạo, đo bias và in dữ liệu qua UART1)
+  */
+void BMI160_Test_Run(void);
 
 #ifdef __cplusplus
 }

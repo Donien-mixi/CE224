@@ -10,10 +10,13 @@
 void Motor_Init(void)
 {
     // Khởi động phát xung PWM cho cả 4 kênh của Timer 1
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // PA8  - Motor Trái (IN1)
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2); // PA9  - Motor Trái (IN2)
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3); // PA10 - Motor Phải (IN3)
-    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4); // PA11 - Motor Phải (IN4)
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // PA8  - Motor Trái (AIN1)
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2); // PA9  - Motor Trái (AIN2)
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3); // PA10 - Motor Phải (BIN1)
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4); // PA11 - Motor Phải (BIN2)
+
+    // Đảm bảo Main Output Enable của Advanced Timer 1 luôn được kích hoạt
+    __HAL_TIM_MOE_ENABLE(&htim1);
 
     // Khởi tạo trạng thái dừng an toàn ban đầu
     Motor_Stop();
@@ -83,4 +86,24 @@ void Motor_Brake(void)
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, MOTOR_MAX_PWM);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, MOTOR_MAX_PWM);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, MOTOR_MAX_PWM);
+}
+
+void Motor_SelfTest(void)
+{
+    __HAL_TIM_MOE_ENABLE(&htim1);
+
+    /* 1. Quay nhẹ bánh trái trong 350ms (~40% công suất) */
+    Motor_SetDuty(1000, 0);
+    HAL_Delay(350);
+
+    /* Nghỉ 100ms giữa 2 bánh */
+    Motor_Stop();
+    HAL_Delay(100);
+
+    /* 2. Quay nhẹ bánh phải trong 350ms (~40% công suất) */
+    Motor_SetDuty(0, 1000);
+    HAL_Delay(350);
+
+    /* 3. Dừng an toàn */
+    Motor_Stop();
 }

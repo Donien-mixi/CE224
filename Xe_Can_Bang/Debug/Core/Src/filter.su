@@ -1,0 +1,3 @@
+../Core/Src/filter.c:12:6:Filter_Init	16	static
+../Core/Src/filter.c:17:7:Filter_Complementary_Update	32	static
+../Core/Src/filter.c:31:7:Filter_GetAngle	4	static

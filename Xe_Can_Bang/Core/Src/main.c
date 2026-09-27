@@ -29,6 +29,8 @@
 #include "robot_fsm.h"
 #include "buzzer_led.h"
 #include "esp32_comm.h"
+#include "bmi160.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,6 +102,11 @@ int main(void)
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  /* [TEST RIÊNG CẢM BIẾN BMI160] 
+   * Bỏ dấu comment dòng dưới nếu muốn test cảm biến BMI160 xuất dữ liệu qua USART1 (PB6 TX, 115200) 
+   * mà không khởi động động cơ xe: */
+  // BMI160_Test_Run();
+
   /* Khởi tạo toàn bộ driver linh kiện và thuật toán */
   Robot_Init();
 
@@ -179,6 +186,15 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+/**
+  * @brief  Chuyển hướng luồng dữ liệu printf ra cổng USART1 (PB6 TX)
+  */
+int __io_putchar(int ch)
+{
+  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 10);
+  return ch;
+}
+
 /**
   * @brief  Ngắt tràn Timer định thời (Callback từ HAL_TIM_IRQHandler)
   * @param  htim: Con trỏ Timer gây ngắt

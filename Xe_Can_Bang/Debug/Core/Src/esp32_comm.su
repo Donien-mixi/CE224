@@ -1,0 +1,5 @@
+../Core/Src/esp32_comm.c:34:6:ESP32_Comm_Init	8	static
+../Core/Src/esp32_comm.c:46:13:Parse_Packet	56	static
+../Core/Src/esp32_comm.c:74:6:ESP32_Comm_Process	16	static
+../Core/Src/esp32_comm.c:112:18:ESP32_Comm_GetCommand	4	static
+../Core/Src/esp32_comm.c:117:6:ESP32_Comm_SendTelemetry	152	static
