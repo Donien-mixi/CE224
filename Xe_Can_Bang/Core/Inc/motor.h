@@ -58,6 +58,12 @@ void Motor_Brake(void);
   */
 void Motor_SelfTest(void);
 
+/**
+  * @brief  Chế độ kiểm tra liên tục 2 động cơ và hỗ trợ đo điện áp VOM
+  *         (Chạy vòng lặp vô hạn: Trái -> Phải -> Tiến -> Lùi)
+  */
+void Motor_Test_Run(void);
+
 #ifdef __cplusplus
 }
 #endif

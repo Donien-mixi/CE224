@@ -1,10 +1,10 @@
-13:18:25 **** Incremental Build of configuration Debug for project Xe_Can_Bang ****
+17:09:03 **** Incremental Build of configuration Debug for project Xe_Can_Bang ****
 make -j12 all 
 arm-none-eabi-size  Xe_Can_Bang.elf 
    text	   data	    bss	    dec	    hex	filename
-  48936	    508	   3228	  52672	   cdc0	Xe_Can_Bang.elf
+  53984	    508	   3236	  57728	   e180	Xe_Can_Bang.elf
 Finished building: default.size.stdout
  
 
-13:18:25 Build Finished. 0 errors, 0 warnings. (took 362ms)
+17:09:04 Build Finished. 0 errors, 0 warnings. (took 359ms)
 

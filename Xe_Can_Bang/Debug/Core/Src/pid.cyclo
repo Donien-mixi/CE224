@@ -1,7 +1,9 @@
-../Core/Src/pid.c:15:6:PID_Init	1
-../Core/Src/pid.c:25:6:PID_SetParams	5
-../Core/Src/pid.c:33:7:PID_Velocity_Compute	6
-../Core/Src/pid.c:60:7:PID_Angle_Compute	1
-../Core/Src/pid.c:69:7:PID_Adaptive_Steering	1
-../Core/Src/pid.c:77:9:PID_Apply_Deadband	5
-../Core/Src/pid.c:92:6:PID_Reset_Integral	1
+../Core/Src/pid.c:16:6:PID_Init	1
+../Core/Src/pid.c:27:6:PID_SetParams	5
+../Core/Src/pid.c:35:6:PID_SetTrim	1
+../Core/Src/pid.c:40:7:PID_GetTrim	1
+../Core/Src/pid.c:45:7:PID_Velocity_Compute	6
+../Core/Src/pid.c:72:7:PID_Angle_Compute	1
+../Core/Src/pid.c:82:7:PID_Adaptive_Steering	1
+../Core/Src/pid.c:90:9:PID_Apply_Deadband	5
+../Core/Src/pid.c:105:6:PID_Reset_Integral	1

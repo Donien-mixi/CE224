@@ -183,11 +183,16 @@ Tất cả các kết nối tín hiệu dưới đây là dây nhảy ngắn c�
 | **`PB5`** | TIM3_CH2 | Encoder Bánh Phải | Dây **Xanh Lá** (Pin 4)| Đọc xung Hall Kênh B Bánh Phải |
 | **`PC13`**| LED Onboard| *Có sẵn trên bo* | — | Đèn báo: Khởi động (2.5s) $\to$ Standby (chậm) $\to$ Run (sáng) |
 
+> [!TIP]
+> **NẠP CODE BẰNG MẠCH NẠP ST-LINK V2 (KHUYẾN NGHỊ - XEM MỤC 5 BÊN DƯỚI)**:
+> Dùng **ST-Link V2** cắm vào 4 chân `3V3`, `GND`, `SWDIO`, `SWCLK` của Black Pill. Vì ST-LINK dùng giao thức **SWD** (không dùng cổng Type-C) nên:
+> * **KHÔNG cần rút dây `PA11`** ra khỏi Driver A4950.
+> * **KHÔNG cần bấm `BOOT0`/`NRST`** để vào chế độ nạp.
+> * Bấm `Run/Debug` trong STM32CubeIDE là nạp ngay, nạp lại bao nhiêu lần cũng mượt.
+
 > [!WARNING]
-> **LƯU Ý ĐẶC BIỆT KHI NẠP CODE QUA CỔNG TYPE-C**:
-> Chân **`PA11`** của STM32 đồng thời là chân tín hiệu **`USB_DM` (D-)** của cổng Type-C.
-> * **Nếu dùng Mạch nạp ST-Link V2**: Cắm qua 3 chân `SWDIO`, `SWCLK`, `GND` $\to$ **Nạp thoải mái, không cần rút bất kỳ dây nào**!
-> * **Nếu nạp bằng Cáp Type-C qua DFU**: Bắt buộc phải **RÚT DÂY PA11** ra khỏi Driver A4950 trước khi cắm cáp USB vào máy tính để tránh xung đột trở kháng làm máy tính báo *"USB device not recognized"*.
+> **LƯU Ý VỀ CHÂN `PA11` (CHỈ KHI NẠP BẰNG CÁP TYPE-C/DFU)**:
+> Chân **`PA11`** của STM32 đồng thời là chân tín hiệu **`USB_DM` (D-)** của cổng Type-C. Nếu buộc phải nạp bằng cáp Type-C qua DFU (không có ST-LINK) thì **bắt buộc RÚT DÂY `PA11`** ra khỏi Driver A4950, nếu không máy tính sẽ báo *"USB device not recognized"*.
 
 ---
 
@@ -227,6 +232,36 @@ Tất cả các kết nối tín hiệu dưới đây là dây nhảy ngắn c�
 * **Loại Còi chíp rời 2 chân**:
   - Chân Dài (`+`) $\to$ Cắm vào chân **`PB12`** của STM32 Black Pill.
   - Chân Ngắn (`-`) $\to$ Cắm vào **Ray GND (-)** của Breadboard.
+
+---
+
+### 5. Mạch nạp ST-Link V2 (Cắm ngoài Breadboard — Dùng để nạp và gỡ lỗi)
+
+Kết nối tối thiểu **4 dây** (đấu theo **nhãn in trên mạch nạp**, không cần đếm số chân):
+
+| Chân ST-Link V2 | Nhãn trên mạch ST-Link | Nối tới STM32 Black Pill | Ghi chú |
+| :---: | :---: | :--- | :--- |
+| **3.3V** | `3.3V` (hoặc `3V3`) | Chân **`3.3V`** | **CHỈ cắm khi board CHƯA có nguồn riêng** |
+| **GND** | `GND` | Chân **`GND`** | **Bắt buộc** nối chung mass |
+| **SWDIO** | `SWDIO` (hoặc `DIO`) | Chân **`PA13`** (SWDIO) | Tuyến dữ liệu nạp/gỡ lỗi |
+| **SWCLK** | `SWCLK` (hoặc `CLK`) | Chân **`PA14`** (SWCLK) | Tuyến xung nhịp nạp/gỡ lỗi |
+| *(tùy chọn)* **RST** | `RST` | Chân **`NRST`** / `R` | Tăng độ ổn định khi chọn *"Connect under reset"* |
+
+```
+   [ST-Link V2]                         [STM32F411 BLACK PILL]
+    3.3V  ───────────────────────────────  3.3V   (chỉ khi board chưa có nguồn)
+    GND   ───────────────────────────────  GND
+    SWDIO ───────────────────────────────  PA13 (SWDIO)
+    SWCLK ───────────────────────────────  PA14 (SWCLK)
+    RST   ───────────────────────────────  NRST   (tùy chọn, nên nối)
+```
+
+> [!CAUTION]
+> **TRÁNH CẤP NGUỒN TRÙNG**:
+> Nếu xe đang cắm Pin LiPo (board đã có nguồn riêng), **TUYỆT ĐỐI KHÔNG nối dây `3.3V` từ ST-LINK** vào board để tránh hai nguồn đấu nhau gây hỏng. Khi đó chỉ nối **`GND`, `SWDIO`, `SWCLK`** (và `RST` nếu có). Chỉ nối `3.3V` khi muốn ST-LINK nuôi board lúc board chưa có nguồn.
+
+> [!NOTE]
+> **QUY TRÌNH NẠP**: Cắm ST-LINK vào cổng USB máy tính → mở STM32CubeIDE → chọn đúng cấu hình `Xe_Can_Bang Debug` (ST-LINK, SWD) → bấm **Run/Debug** (`F11`). CubeIDE tự build rồi nạp, **không cần bấm `BOOT0`** và **không cần rút `PA11`**.
 
 ---
 

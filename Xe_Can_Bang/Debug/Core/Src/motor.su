@@ -1,5 +1,6 @@
-../Core/Src/motor.c:10:6:Motor_Init	8	static
-../Core/Src/motor.c:25:6:Motor_SetDuty	16	static
-../Core/Src/motor.c:75:6:Motor_Stop	4	static
-../Core/Src/motor.c:83:6:Motor_Brake	4	static
-../Core/Src/motor.c:91:6:Motor_SelfTest	8	static
+../Core/Src/motor.c:11:6:Motor_Init	8	static
+../Core/Src/motor.c:27:6:Motor_SetDuty	16	static
+../Core/Src/motor.c:77:6:Motor_Stop	4	static
+../Core/Src/motor.c:85:6:Motor_Brake	4	static
+../Core/Src/motor.c:93:6:Motor_SelfTest	8	static
+../Core/Src/motor.c:138:6:Motor_Test_Run	16	static

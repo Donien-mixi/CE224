@@ -30,6 +30,7 @@
 #include "buzzer_led.h"
 #include "esp32_comm.h"
 #include "bmi160.h"
+#include "motor.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -107,6 +108,11 @@ int main(void)
    * mà không khởi động động cơ xe: */
   // BMI160_Test_Run();
 
+  /* [CHẾ ĐỘ TEST ĐỘNG CƠ LIÊN TỤC & ĐO ÁP VOM]
+   * Bỏ dấu comment dòng dưới nếu muốn xe chạy lặp vô hạn (Trái 2s -> Phải 2s -> Cả 2 2s)
+   * để quan sát động cơ quay hoặc dùng đồng hồ VOM đo điện áp kích tại PA8..PA11: */
+  // Motor_Test_Run();
+
   /* Khởi tạo toàn bộ driver linh kiện và thuật toán */
   Robot_Init();
 
@@ -120,8 +126,12 @@ int main(void)
 
   while (1)
   {
-    /* 1. Xử lý giải mã lệnh UART từ ESP32-S3 qua DMA buffer */
+    /* 1. Xử lý giải mã lệnh UART từ ESP32-S3 qua DMA buffer
+     * CRITICAL: Tắt ngắt TIM4 tạm thời để tránh race condition khi
+     * Robot_ControlLoop_200Hz() đọc s_command đang được cập nhật giữa chừng. */
+    __disable_irq();
     ESP32_Comm_Process();
+    __enable_irq();
 
     /* 2. Cập nhật hiệu ứng Còi và LED trạng thái (phi phong bế) */
     BuzzerLED_Update(HAL_GetTick());
@@ -131,7 +141,8 @@ int main(void)
         last_telemetry_tick = HAL_GetTick();
         Robot_Data_t* r = Robot_GetData();
         ESP32_Comm_SendTelemetry(r->pitch, r->gyro_rate, r->v_actual, r->v_target,
-                                 r->pwm_left, r->pwm_right, (uint8_t)r->state, r->batt_voltage);
+                                 r->pwm_left, r->pwm_right, (uint8_t)r->state, r->batt_voltage,
+                                 r->v_left, r->v_right);
     }
     /* USER CODE END WHILE */
 
@@ -187,13 +198,17 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 /**
-  * @brief  Chuyển hướng luồng dữ liệu printf ra cổng USART1 (PB6 TX)
+  * @brief  [ĐÃ VÔ HIỆU HÓA] printf redirect qua USART1
+  * LÝ DO: USART1 được dùng SONG SONG cho DMA TX Telemetry ($TEL) và DMA RX
+  *        lệnh điều khiển ($CMD). Hàm HAL_UART_Transmit() blocking sẽ xung đột
+  *        trạng thái gState với DMA, gây mất gói telemetry và lock TX channel.
+  * NẾU CẦN DEBUG: Hãy dùng bộ đệm ghi nội bộ hoặc LED/Buzzer thay thế.
   */
-int __io_putchar(int ch)
+/* int __io_putchar(int ch)
 {
   HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 10);
   return ch;
-}
+} */
 
 /**
   * @brief  Ngắt tràn Timer định thời (Callback từ HAL_TIM_IRQHandler)

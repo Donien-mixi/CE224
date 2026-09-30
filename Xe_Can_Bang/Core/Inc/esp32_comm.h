@@ -27,6 +27,7 @@ typedef struct {
     uint8_t is_racing;      // 1: Chế độ đua (góc nghiêng tối đa 15 deg), 0: Thường (8 deg)
     uint8_t trigger_calib;  // Cờ yêu cầu hiệu chuẩn IMU
     uint8_t emergency_stop; // Cờ dừng khẩn cấp
+    uint8_t bench_test;     // 1: Chế độ test quay bánh trực tiếp trên bàn, 0: Cân bằng tự động
     uint32_t last_cmd_time; // Thời điểm nhận gói tin cuối (dùng cho Failsafe timeout)
 } ESP32_Command_t;
 
@@ -49,7 +50,8 @@ ESP32_Command_t* ESP32_Comm_GetCommand(void);
   * @brief  Gửi gói tin Telemetry lên ESP32-S3 qua DMA không nghẽn
   */
 bool ESP32_Comm_SendTelemetry(float pitch, float gyro, float v_act, float v_tgt,
-                              int16_t pwm_l, int16_t pwm_r, uint8_t state, float batt_volt);
+                              int16_t pwm_l, int16_t pwm_r, uint8_t state, float batt_volt,
+                              float v_l, float v_r);
 
 #ifdef __cplusplus
 }

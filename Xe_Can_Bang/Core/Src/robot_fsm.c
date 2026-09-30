@@ -20,6 +20,8 @@ static Robot_Data_t s_robot = {
     .pitch = 0.0f,
     .gyro_rate = 0.0f,
     .v_actual = 0.0f,
+    .v_left = 0.0f,
+    .v_right = 0.0f,
     .v_target = 0.0f,
     .steer_cmd = 0.0f,
     .pwm_left = 0,
@@ -36,7 +38,6 @@ void Robot_Init(void)
     Motor_Stop();
     Encoder_Init();
     PID_Init();
-    ESP32_Comm_Init();
 
     /* Tự kiểm tra 2 động cơ ngay khi khởi động:
      * Quay nhẹ bánh trái 350ms, sau đó bánh phải 350ms để kiểm tra
@@ -68,6 +69,10 @@ void Robot_Init(void)
     s_robot.state = ROBOT_STATE_STANDBY;
     LED_SetPattern(LED_PATTERN_SLOW_BLINK);
     Buzzer_BeepAsync(200);
+
+    /* 6. Khởi động giao tiếp UART1 DMA với ESP32-S3 NGAY TRƯỚC KHI VÀO VÒNG LẶP CHÍNH
+     * (Tránh tràn bộ đệm DMA và lỗi Overrun/Framing trong thời gian 5s chạy SelfTest và Calib) */
+    ESP32_Comm_Init();
 }
 
 void Robot_ControlLoop_200Hz(void)
@@ -96,6 +101,8 @@ void Robot_ControlLoop_200Hz(void)
 
     /* Task 3: Đọc vận tốc Encoder bánh xe & lọc LPF */
     Encoder_Update(0.005f);
+    s_robot.v_left = Encoder_GetLeftVelocity();
+    s_robot.v_right = Encoder_GetRightVelocity();
     s_robot.v_actual = Encoder_GetAverageVelocity();
 
     /* Task 4: Lấy lệnh điều khiển từ ESP32-S3 */
@@ -103,6 +110,55 @@ void Robot_ControlLoop_200Hz(void)
     if (cmd->emergency_stop) {
         s_robot.state = ROBOT_STATE_FALLEN;
         cmd->emergency_stop = 0;
+        cmd->bench_test = 0;
+    }
+    /* Luôn đồng bộ lệnh vận tốc đặt và lái vào cấu trúc Telemetry thời gian thực */
+    s_robot.v_target = cmd->v_target;
+    s_robot.steer_cmd = cmd->steer_cmd;
+
+    /* Xử lý bật / tắt CHẾ ĐỘ TEST BÀN (BENCH TEST) */
+    if (cmd->bench_test) {
+        if (s_robot.state != ROBOT_STATE_BENCH_TEST) {
+            s_robot.state = ROBOT_STATE_BENCH_TEST;
+            LED_SetPattern(LED_PATTERN_FAST_BLINK);
+            Buzzer_BeepAsync(60);
+        }
+    } else if (s_robot.state == ROBOT_STATE_BENCH_TEST) {
+        /* Khi tắt Bench Test, đưa về STANDBY an toàn và tắt motor */
+        s_robot.state = ROBOT_STATE_STANDBY;
+        Motor_Stop();
+        s_robot.pwm_left = 0;
+        s_robot.pwm_right = 0;
+        LED_SetPattern(LED_PATTERN_SLOW_BLINK);
+    }
+
+    /* Task 4.1: THỰC THI CHẾ ĐỘ TEST BÀN (Bỏ qua bảo vệ góc nghiêng) */
+    if (s_robot.state == ROBOT_STATE_BENCH_TEST) {
+        int16_t pwm_base = 0;
+        if (fabsf(s_robot.v_target) > 0.01f) {
+            /* Quy đổi v_target (-1.5 đến +1.5 m/s) ra PWM trực tiếp:
+             * Tại v = 0.60 m/s -> PWM = 0.60 * 1500 = 900 + deadband 250 = 1150 (46% công suất) */
+            if (s_robot.v_target > 0.0f) {
+                pwm_base = (int16_t)(s_robot.v_target * 1500.0f) + MOTOR_DEADBAND;
+            } else {
+                pwm_base = (int16_t)(s_robot.v_target * 1500.0f) - MOTOR_DEADBAND;
+            }
+        }
+
+        int16_t steer = (int16_t)s_robot.steer_cmd;
+        int16_t pwm_l = pwm_base + steer;
+        int16_t pwm_r = pwm_base - steer;
+
+        if (pwm_l > MOTOR_MAX_PWM) pwm_l = MOTOR_MAX_PWM;
+        if (pwm_l < -MOTOR_MAX_PWM) pwm_l = -MOTOR_MAX_PWM;
+        if (pwm_r > MOTOR_MAX_PWM) pwm_r = MOTOR_MAX_PWM;
+        if (pwm_r < -MOTOR_MAX_PWM) pwm_r = -MOTOR_MAX_PWM;
+
+        s_robot.pwm_left = pwm_l;
+        s_robot.pwm_right = pwm_r;
+
+        Motor_SetDuty(pwm_l, pwm_r);
+        return; // Thoát Task điều khiển, bỏ qua Task 5-7
     }
 
     /* Task 5: Bảo vệ chống ngã - Cắt điện ngay lập tức nếu góc ngả > 45 độ */

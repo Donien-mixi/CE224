@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    ESP32_S3_Gateway.ino
+  * @file    ESP32_S3_Gateway.ino  
   * @brief   Firmware Cầu nối Không dây Tốc độ cao ESP32-S3 N16R8 (Arduino IDE)
   *          Tạo Wi-Fi SoftAP + WebSockets Server + Cầu truyền thông USART1 với STM32
   ******************************************************************************
@@ -57,6 +57,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       // Chuyển tiếp ngay lập tức xuống STM32F411 qua Serial1
       Serial1.write(payload, length);
       Serial1.print("\r\n");
+      // Debug log để người dùng quan sát trên Arduino IDE Serial Monitor
+      Serial.printf("[WS->STM32] %.*s\n", (int)length, (char*)payload);
       break;
     }
 

@@ -11,6 +11,7 @@
 /* Biến toàn cục quản lý cấu trúc PID */
 static PID_Angle_t    s_pid_angle;
 static PID_Velocity_t s_pid_vel;
+static float          s_pitch_trim = 0.0f;
 
 void PID_Init(void)
 {
@@ -20,6 +21,7 @@ void PID_Init(void)
     s_pid_vel.Kp = DEFAULT_KP_VELOCITY;
     s_pid_vel.Ki = DEFAULT_KI_VELOCITY;
     s_pid_vel.integral = 0.0f;
+    s_pitch_trim = 0.0f;
 }
 
 void PID_SetParams(float kp1, float kd1, float kp2, float ki2)
@@ -28,6 +30,16 @@ void PID_SetParams(float kp1, float kd1, float kp2, float ki2)
     if (kd1 >= 0.0f) s_pid_angle.Kd = kd1;
     if (kp2 >= 0.0f) s_pid_vel.Kp = kp2;
     if (ki2 >= 0.0f) s_pid_vel.Ki = ki2;
+}
+
+void PID_SetTrim(float trim)
+{
+    s_pitch_trim = trim;
+}
+
+float PID_GetTrim(void)
+{
+    return s_pitch_trim;
 }
 
 float PID_Velocity_Compute(float target_vel, float actual_vel, uint8_t is_racing, float dt)
@@ -59,7 +71,8 @@ float PID_Velocity_Compute(float target_vel, float actual_vel, uint8_t is_racing
 
 float PID_Angle_Compute(float target_angle, float actual_angle, float gyro_rate)
 {
-    float error_theta = target_angle - actual_angle;
+    /* Bù góc lệch trọng tâm cơ khí tĩnh theta_trim: e = (target + trim) - actual */
+    float error_theta = (target_angle + s_pitch_trim) - actual_angle;
 
     /* Base PWM = Kp1 * error - Kd1 * Gyro_rate (Tránh Derivative Kick) */
     float base_pwm = (s_pid_angle.Kp * error_theta) - (s_pid_angle.Kd * gyro_rate);

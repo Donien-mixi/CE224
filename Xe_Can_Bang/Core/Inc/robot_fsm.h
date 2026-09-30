@@ -24,7 +24,8 @@ typedef enum {
     ROBOT_STATE_BALANCING,      // Cân bằng chế độ thường (tối đa +-8 độ)
     ROBOT_STATE_RACING,         // Cân bằng chế độ đua tốc độ cao (tối đa +-15 độ)
     ROBOT_STATE_FALLEN,         // Xe bị ngã (|pitch| > 45 độ) -> Cắt PWM
-    ROBOT_STATE_EMERGENCY       // Lỗi khẩn cấp (I2C đứt, quá dòng, mất cảm biến)
+    ROBOT_STATE_EMERGENCY,      // Lỗi khẩn cấp (I2C đứt, quá dòng, mất cảm biến)
+    ROBOT_STATE_BENCH_TEST = 7  // Chế độ thử nghiệm quay động cơ trực tiếp trên bàn
 } Robot_State_t;
 
 /* Cấu trúc dữ liệu trạng thái toàn cục của robot */
@@ -33,6 +34,8 @@ typedef struct {
     float   pitch;              // Góc nghiêng Pitch hiện tại (độ)
     float   gyro_rate;          // Vận tốc góc Pitch (deg/s)
     float   v_actual;           // Vận tốc tịnh tiến thực tế trung bình (m/s)
+    float   v_left;             // Vận tốc thực tế bánh trái (m/s)
+    float   v_right;            // Vận tốc thực tế bánh phải (m/s)
     float   v_target;           // Vận tốc đặt (m/s)
     float   steer_cmd;          // Lực rẽ
     int16_t pwm_left;           // PWM bánh trái (-2499 đến +2499)

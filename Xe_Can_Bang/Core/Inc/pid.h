@@ -19,8 +19,8 @@ extern "C" {
 /* Thông số mặc định ban đầu */
 #define DEFAULT_KP_ANGLE        350.0f  // Hệ số tỉ lệ vòng góc
 #define DEFAULT_KD_ANGLE        8.5f    // Hệ số vi sai vòng góc
-#define DEFAULT_KP_VELOCITY     1.2f    // Hệ số tỉ lệ vòng vận tốc
-#define DEFAULT_KI_VELOCITY     0.15f   // Hệ số tích phân vòng vận tốc (tự học trọng tâm)
+#define DEFAULT_KP_VELOCITY     2.5f    // Hệ số tỉ lệ vòng vận tốc (đáp ứng nhanh lệnh TIẾN/LÙI)
+#define DEFAULT_KI_VELOCITY     0.20f   // Hệ số tích phân vòng vận tốc (tự học trọng tâm)
 
 #define MAX_TILT_NORMAL         8.0f    // Giới hạn góc ngả chế độ thường (độ)
 #define MAX_TILT_RACE           15.0f   // Giới hạn góc ngả chế độ đua (độ)
@@ -46,6 +46,17 @@ void PID_Init(void);
   * @brief  Cập nhật tham số PID trực tiếp từ lệnh tune ($PID,kp1,kd1,kp2,ki2*)
   */
 void PID_SetParams(float kp1, float kd1, float kp2, float ki2);
+
+/**
+  * @brief  Thiết lập góc bù trọng tâm tĩnh thực tế (Pitch Trim)
+  * @param  trim Góc bù trọng tâm (độ), dương nếu nghiêng trước, âm nếu nghiêng sau
+  */
+void PID_SetTrim(float trim);
+
+/**
+  * @brief  Lấy góc bù trọng tâm hiện tại (độ)
+  */
+float PID_GetTrim(void);
 
 /**
   * @brief  Tính toán vòng ngoài (Velocity Loop PI) sinh ra góc nghiêng đặt

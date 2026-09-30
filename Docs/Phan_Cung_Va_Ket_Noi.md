@@ -168,9 +168,10 @@ Bảng đấu nối chi tiết, không trùng lặp và không xung đột ngo�
 
 * **Tầng 1 (Đáy)**:
   * Mặt dưới: 2 gá kim loại chữ L giữ motor GA25, **2 trục bánh xe phải nằm thẳng hàng 100%**.
-  * Mặt trên: Pin LiPo đặt sát trục bánh để hạ thấp quán tính xoay; Driver A4950 đặt giữa 2 motor; Buck XL4015 ở mép sau.
+  * Mặt trên: Driver A4950 đặt giữa 2 motor; Buck XL4015 ở mép sau; Pin LiPo có thể bố trí ở tầng 1 hoặc dời lên tầng 2:
+    * *Lưu ý trọng tâm*: Đặt pin ở tầng 1 giúp xe linh hoạt nhưng trọng tâm $L$ thấp sẽ làm xe ngã rất nhanh (khó tune). Nếu thấy động cơ GA25 bám không kịp gia tốc ngã của xe, hãy dời Pin LiPo lên Tầng 2 để tăng chu kỳ dao động tự nhiên $T_n = 2\pi\sqrt{L/g}$, giúp xe ngã chậm lại để GA25 dễ giữ thăng bằng hơn!
 * **Tầng 2 (Đỉnh)**:
-  * **BMI160**: Đặt tại **chính giữa tâm hình học** ngay trên trục bánh xe. **Dán lên đệm xốp 3M / FPV dày 2-3mm** để hấp thụ rung cơ học từ hộp số.
+  * **BMI160**: Đặt tại **chính giữa tâm hình học** ngay trên trục bánh xe. **Dán lên đệm xốp 3M / FPV dày 2-3mm** để hấp thụ rung cơ học từ hộp số. Dây cắm I2C phải dùng dây silicone mềm.
   * **STM32F411**: Đặt cạnh BMI160 để dây I2C ngắn ($< 5\text{cm}$), hướng cổng Type-C ra ngoài để cắm nạp code.
   * **ESP32-S3**: Đặt ở mép ngoài, hướng ăng-ten ra ngoài để sóng Wi-Fi không bị cọc đồng che khuất.
 
