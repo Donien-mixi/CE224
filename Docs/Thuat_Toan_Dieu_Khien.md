@@ -221,16 +221,15 @@ stateDiagram-v2
     EMERGENCY --> [*] : Cắt PWM + Còi hú (cần reset nguồn)
 ```
 
-> **Ngưỡng tự kích hoạt cân bằng thực tế trong code là `|pitch| < 15.0°`**
-> (`robot_fsm.c`), khớp với thông báo trên Web HUD. *(Riêng dòng chú thích trong
-> `robot_fsm.h` còn ghi 2.5° là chú thích cũ — sẽ đồng bộ lại.)*
+> **Ngưỡng tự kích hoạt cân bằng trong code là `|pitch| < 15.0°`** (`robot_fsm.c`),
+> khớp với thông báo trên Web HUD và chú thích trong `robot_fsm.h`.
 > Việc có nên siết về `8–10°` hay không được bàn ở `Roadmap_Do_An.md`.
 
 ### Chu trình khởi tạo `Robot_Init()`
 
 ```
 BuzzerLED_Init() → Motor_Init() → Motor_Stop() → Encoder_Init() → PID_Init()
-  → Motor_SelfTest()                       (quay thử bánh trái 350ms, bánh phải 350ms)
+  → Motor_SelfTest()                       (PWM 1600 ≈ 64%/bánh, mỗi bánh 600ms, có bíp báo)
   → BMI160_Init()                          (thất bại → EMERGENCY + còi hú)
   → CALIBRATING: BMI160_Calibrate_Gyro(500)
   → Filter_Init(atan2(ax, az))
@@ -452,8 +451,8 @@ Giá trị thực tế đang nạp trong mã nguồn (làm mốc để tune theo
 | :-- | :--: | :-- | :-- |
 | `DEFAULT_KP_ANGLE` | 350.0 | Tỉ lệ vòng góc $K_{p1}$ | `pid.h` |
 | `DEFAULT_KD_ANGLE` | 8.5 | Vi phân vòng góc $K_{d1}$ | `pid.h` |
-| `DEFAULT_KP_VELOCITY` | 1.2 | Tỉ lệ vòng vận tốc $K_{p2}$ | `pid.h` |
-| `DEFAULT_KI_VELOCITY` | 0.15 | Tích phân vòng vận tốc $K_{i2}$ | `pid.h` |
+| `DEFAULT_KP_VELOCITY` | 2.5 | Tỉ lệ vòng vận tốc $K_{p2}$ | `pid.h` |
+| `DEFAULT_KI_VELOCITY` | 0.20 | Tích phân vòng vận tốc $K_{i2}$ | `pid.h` |
 | `MAX_TILT_NORMAL` | 8.0° | Giới hạn góc ngả chế độ thường | `pid.h` |
 | `MAX_TILT_RACE` | 15.0° | Giới hạn góc ngả chế độ đua | `pid.h` |
 | `MAX_INTEGRAL_VELOCITY` | 10.0° | Kẹp anti-windup tích phân vận tốc | `pid.h` |

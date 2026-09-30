@@ -14,7 +14,7 @@ Tài liệu hợp nhất toàn bộ thông số kỹ thuật, danh mục linh ki
 | **Động cơ & Hộp số**             |                   2x GA25-370 12V                   | Giảm tốc kim loại 1:30, tốc độ không tải ~300 RPM              |
 | **Encoder phản hồi**                |              Hall đĩa từ 2 kênh A/B              | 11 xung$\times$ 30 $\times$ 4 = **1320 xung/vòng bánh xe** |
 | **Mạch công suất**                 |                  Dual A4950 Driver                  | Cầu H MOSFET 3.5A, PWM 20kHz Center-aligned, Slow Decay               |
-| **Kết nối không dây**             |                    ESP32-S3 N16R8                    | Wi-Fi SoftAP, WebSockets, giao diện Web HUD (Joystick ảo)            |
+| **Kết nối không dây**             |                    ESP32-S3 N16R8                    | Wi-Fi SoftAP, WebSockets, giao diện Web HUD (điều khiển & telemetry) |
 | **Nguồn cấp**                       |               Pin LiPo 3S 11.1V (25C)               | Mạch Buck XL4015 hạ áp cố định 5.0V (5A) nuôi mạch số         |
 | **Góc nghiêng cho phép**           | $\pm 8^\circ$ (thường) / $\pm 15^\circ$ (đua) | Tự ngắt PWM bảo vệ khi nghiêng quá$\pm 45^\circ$               |
 
@@ -133,8 +133,9 @@ Bảng đấu nối chi tiết, không trùng lặp và không xung đột ngo�
 * **Mạng Wi-Fi**: SoftAP `TWIP_RACER_S3` (mật khẩu `12345678`), truy cập `http://192.168.4.1`.
 * **Giao tiếp**: Web Server port 80, WebSockets port 81.
 * **Gói tin UART**:
-  * Nhận: `$CMD,v_tgt,steer*`, `$PID,kp1,kd1,kp2,ki2*`, `$RACE,1/0*`, `$CALIB*`, `$STOP*`.
-  * Gửi: `$TEL,pitch,gyro,v_act,v_tgt,pwm_l,pwm_r,state,batt\r\n` (chu kỳ 50ms / 20Hz).
+  * Nhận (Web → STM32): `$CMD,v_tgt,steer*`, `$PID,kp1,kd1,kp2,ki2*`, `$TRIM,value*`, `$RACE,1/0*`, `$BENCH,1/0*`, `$CALIB*`, `$STOP*`.
+  * Gửi (STM32 → Web): `$TEL,pitch,gyro,v_act,v_tgt,pwm_l,pwm_r,state,batt,v_l,v_r\r\n` (10 trường, chu kỳ 50ms / 20Hz).
+* **Trạng thái FSM (8)**: `INIT`, `CALIBRATING`, `STANDBY`, `BALANCING`, `RACING`, `FALLEN`, `EMERGENCY`, `BENCH_TEST`.
 
 ### 4.6. Nguồn Pin LiPo 3S & Buck XL4015
 

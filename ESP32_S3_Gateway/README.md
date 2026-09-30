@@ -110,25 +110,27 @@ Giao diện Web HUD lập tức kết nối WebSockets (Port 81) với độ tr�
 
 ### 5.3. Các Tính Năng Trên Giao Diện Web HUD
 1. **Thanh Trượt Chọn Tốc Độ**: Cho phép chọn vận tốc mục tiêu từ `0.10 m/s` đến `1.50 m/s`.
-2. **Nút TIẾN (▲) / LÙI (▼)**: 
-   * **Nhấn giữ**: Xe nhận lệnh chạy theo đúng tốc độ đã đặt.
-   * **Thả tay**: Xe tự động gửi lệnh vận tốc về `0.0 m/s` để hãm xe đứng cân bằng tại chỗ.
-3. **Nút DỪNG (■)**: Đưa vận tốc về 0 ngay lập tức mà vẫn giữ thăng bằng.
-4. **Nút DỪNG KHẨN CẤP (E-STOP)**: Cắt hoàn toàn xung PWM động cơ, đưa xe về trạng thái ngã an toàn (`FALLEN`).
-5. **Bảng Telemetry Thời Gian Thực (20Hz)**:
-   * **Pitch**: Góc nghiêng thời gian thực kèm thanh đo màu sắc trực quan (ngưỡng ngã $\pm 40^\circ$).
-   * **V_Act / V_Tgt**: Vận tốc thực tế từ Encoder và vận tốc đặt.
+2. **Chế Độ Test Bàn (Bench Test)**: Nút bật/tắt gửi `$BENCH,1*` / `$BENCH,0*`. Khi bật, xe **bỏ qua cảm biến cân bằng**, cho phép quay trực tiếp 2 bánh bằng nút TIẾN/LÙI — dùng kiểm tra chiều quay động cơ và kết nối web khi xe đang đặt nằm trên bàn.
+3. **Nút TIẾN (▲) / LÙI (▼)**: Hỗ trợ 2 kiểu bấm: **Giữ nút** (nhả là dừng) hoặc **Bấm 1 lần** (bấm lần nữa để dừng). Hỗ trợ phím tắt bàn phím `W`/`↑` (tiến), `S`/`↓` (lùi), `Space`/`Esc` (dừng).
+4. **Nút DỪNG (■)**: Đưa vận tốc về 0 ngay lập tức mà vẫn giữ thăng bằng.
+5. **Nút DỪNG KHẨN CẤP (E-STOP)**: Gửi `$STOP*`, cắt hoàn toàn xung PWM động cơ, đưa xe về trạng thái ngã an toàn (`FALLEN`).
+6. **Bảng Telemetry Thời Gian Thực (20Hz)**:
+   * **Pitch**: Góc nghiêng thời gian thực kèm thanh đo màu sắc trực quan.
+   * **V_Act / V_Tgt / V_L / V_R**: Vận tốc trung bình thực tế, vận tốc đặt, và vận tốc riêng từng bánh từ 2 Encoder.
    * **PWM L/R**: Công suất kích xung 2 động cơ GA25.
    * **Gyro**: Tốc độ góc con quay hồi chuyển trục Y.
    * **Battery**: Điện áp Pin LiPo 3S giám sát trực tiếp.
-6. **Thanh Chẩn Đoán Hệ Thống (Diagnostic Bar)**: Báo trạng thái FSM:
-   * `STANDBY`: Đang chờ dựng xe thăng bằng.
+7. **Bộ Ghi Dữ Liệu (Tuning Logger)**: Tự động gom mẫu 20Hz khi xe ở `BALANCING`/`RACING`/`BENCH_TEST`; có nút bật/dừng/xóa thủ công và nút **XUẤT FILE TXT** (ngăn bằng TAB, kèm header cấu hình PID) để phân tích đồ thị.
+8. **Thanh Chẩn Đoán Hệ Thống (Diagnostic Bar)**: Báo trạng thái FSM:
+   * `STANDBY`: Đang chờ dựng xe thăng bằng (`|pitch| < 15°`).
    * `CALIBRATING`: Đang bù độ trôi con quay Gyro.
-   * `BALANCING`: Xe đang giữ thăng bằng ổn định.
-   * `FALLEN`: Xe đã nghiêng quá $40^\circ$, động cơ đã ngắt an toàn.
-7. **Menu Rút Gọn "TINH CHỈNH THÔNG SỐ (PID & PITCH TRIM)"**:
+   * `BALANCING` / `RACING`: Xe đang giữ thăng bằng ổn định.
+   * `FALLEN`: Xe nghiêng quá `45°`, động cơ đã ngắt an toàn.
+   * `EMERGENCY`: Lỗi khẩn cấp (mất kết nối I2C BMI160).
+   * `BENCH_TEST`: Đang ở chế độ Test Bàn.
+9. **Menu Rút Gọn "TINH CHỈNH THÔNG SỐ (PID & PITCH TRIM)"**:
    * **Đọc/Ghi 4 hệ số PID**: $K_{p1}, K_{d1}$ (Vòng góc nghiêng) và $K_{p2}, K_{i2}$ (Vòng vận tốc).
-   * **Hiệu chuẩn Pitch Trim (`pitch_trim`)**: Bù lệch trọng tâm cơ học của xe theo bước $0.1^\circ$ giúp xe đứng yên hoàn toàn tại chỗ mà không bị trôi tới hay trôi lui.
+   * **Hiệu chuẩn Pitch Trim (`pitch_trim`)**: Bù lệch trọng tâm cơ học của xe theo bước $0.1^\circ$ / $0.02^\circ$ giúp xe đứng yên hoàn toàn tại chỗ mà không bị trôi tới hay trôi lui.
 
 ---
 
@@ -138,13 +140,16 @@ Tốc độ baud mặc định: **`115200 bps, 8N1`** giữa STM32 (`PB6/PB7`) v
 
 ### A. Chiều STM32 $\rightarrow$ ESP32 $\rightarrow$ WebSockets (Telemetry 20Hz):
 ```text
-$TEL,pitch,gyro_rate,v_actual,v_target,pwm_l,pwm_r,state,batt_voltage*
+$TEL,pitch,gyro_rate,v_actual,v_target,pwm_l,pwm_r,state,batt_voltage,v_left,v_right\r\n
 ```
-*Ví dụ*: `$TEL,1.2,-0.5,0.05,0.00,320,315,2,11.85*`
+*Ví dụ*: `$TEL,1.2,-0.5,0.05,0.00,320,315,2,11.85,0.03,0.07`
+* *10 trường, ngăn bằng dấu phẩy. `state` là mã số FSM 0–7. Không có dấu `*` kết thúc.*
 
 ### B. Chiều WebSockets $\rightarrow$ ESP32 $\rightarrow$ STM32 (Lệnh Điều Khiển):
 * **Lệnh chạy**: `$CMD,v_target,steer_cmd*` *(ví dụ: `$CMD,0.50,0.0*`)*
 * **Lệnh ngắt khẩn cấp**: `$STOP*`
-* **Lệnh nạp PID mới**: `$PID,kp1,kd1,kp2,ki2*` *(ví dụ: `$PID,55.0,2.2,25.0,0.8*`)*
+* **Lệnh nạp PID mới**: `$PID,kp1,kd1,kp2,ki2*` *(ví dụ: `$PID,350.0,8.5,2.5,0.20*`)*
 * **Lệnh chỉnh lệch trọng tâm**: `$TRIM,trim_val*` *(ví dụ: `$TRIM,-0.50*`)*
-* **Lệnh đọc lại PID hiện tại**: `$GETPID*`
+* **Lệnh bật/tắt Test Bàn**: `$BENCH,1*` / `$BENCH,0*`
+* **Lệnh bật/tắt chế độ đua**: `$RACE,1*` / `$RACE,0*`
+* **Lệnh hiệu chuẩn lại IMU**: `$CALIB*`

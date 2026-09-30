@@ -23,7 +23,7 @@ extern "C" {
 /* Cấu trúc dữ liệu nhận từ ESP32 */
 typedef struct {
     float   v_target;       // Vận tốc đặt (m/s)
-    float   steer_cmd;      // Lực lái rẽ (-1000 đến +1000)
+    float   steer_cmd;      // Lệnh lái rẽ (thang PWM, mặc định 0)
     uint8_t is_racing;      // 1: Chế độ đua (góc nghiêng tối đa 15 deg), 0: Thường (8 deg)
     uint8_t trigger_calib;  // Cờ yêu cầu hiệu chuẩn IMU
     uint8_t emergency_stop; // Cờ dừng khẩn cấp

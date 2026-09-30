@@ -293,11 +293,11 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         </div>
         <div class="tune-field">
           <label>Kp Van Toc</label>
-          <input type="number" id="kp2" value="1.2" step="0.1">
+          <input type="number" id="kp2" value="2.5" step="0.1">
         </div>
         <div class="tune-field">
           <label>Ki Van Toc</label>
-          <input type="number" id="ki2" value="0.15" step="0.02">
+          <input type="number" id="ki2" value="0.20" step="0.02">
         </div>
         <div class="tune-field" style="grid-column: span 2;">
           <label>Bu Trong Tam Co Khi Pitch Trim (&deg;)</label>
@@ -615,8 +615,8 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
 
       var kp1 = document.getElementById("kp1").value || "350.0";
       var kd1 = document.getElementById("kd1").value || "8.5";
-      var kp2 = document.getElementById("kp2").value || "1.2";
-      var ki2 = document.getElementById("ki2").value || "0.15";
+      var kp2 = document.getElementById("kp2").value || "2.5";
+      var ki2 = document.getElementById("ki2").value || "0.20";
       var trim = document.getElementById("pitch-trim").value || "0.00";
 
       var now = new Date();

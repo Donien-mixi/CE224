@@ -20,7 +20,7 @@ extern "C" {
 typedef enum {
     ROBOT_STATE_INIT = 0,       // Khởi tạo phần cứng
     ROBOT_STATE_CALIBRATING,    // Lấy 500 mẫu hiệu chuẩn Gyro tĩnh
-    ROBOT_STATE_STANDBY,        // Chờ người dùng dựng xe (|pitch| < 2.5 độ)
+    ROBOT_STATE_STANDBY,        // Chờ người dùng dựng xe (|pitch| < 15 độ)
     ROBOT_STATE_BALANCING,      // Cân bằng chế độ thường (tối đa +-8 độ)
     ROBOT_STATE_RACING,         // Cân bằng chế độ đua tốc độ cao (tối đa +-15 độ)
     ROBOT_STATE_FALLEN,         // Xe bị ngã (|pitch| > 45 độ) -> Cắt PWM
