@@ -13,6 +13,7 @@
 #include "pid.h"
 #include "buzzer_led.h"
 #include "esp32_comm.h"
+#include "tim.h"
 #include <math.h>
 
 static Robot_Data_t s_robot = {
@@ -39,9 +40,9 @@ void Robot_Init(void)
     Encoder_Init();
     PID_Init();
 
-    /* Tự kiểm tra 2 động cơ ngay khi khởi động:
-     * Quay nhẹ bánh trái 350ms, sau đó bánh phải 350ms để kiểm tra
-     * nguồn pin 12V, mạch Driver A4950 và động cơ hoạt động hoàn hảo. */
+    /* Tự kiểm tra 2 động cơ ngay khi khởi động (GĐ0 self-test):
+     * PWM 1600 (~64%) mỗi bánh 600ms kèm bíp báo — xác nhận nguồn pin 12V,
+     * mạch Driver A4950 và 2 động cơ hoạt động hoàn hảo. */
     Motor_SelfTest();
 
     /* 2. Khởi tạo cảm biến Bosch BMI160 */
@@ -75,6 +76,43 @@ void Robot_Init(void)
     ESP32_Comm_Init();
 }
 
+void Robot_RecalibrateIMU(void)
+{
+    /* Tạm dừng vòng điều khiển 200Hz để tránh truy cập I2C chồng chéo trong lúc hiệu chuẩn */
+    HAL_TIM_Base_Stop_IT(&htim4);
+
+    Motor_Stop();
+    s_robot.pwm_left  = 0;
+    s_robot.pwm_right = 0;
+
+    s_robot.state = ROBOT_STATE_CALIBRATING;
+    LED_SetPattern(LED_PATTERN_FAST_BLINK);
+    Buzzer_BeepAsync(100);
+
+    /* Lấy 500 mẫu trung bình tĩnh (~2.5s) để bù trôi Gyro */
+    BMI160_Calibrate_Gyro(500);
+
+    /* Khởi tạo lại góc ban đầu cho bộ lọc bù */
+    BMI160_Data_t imu;
+    if (!BMI160_Read_All(&imu)) {
+        s_robot.state = ROBOT_STATE_EMERGENCY;
+        LED_SetPattern(LED_PATTERN_ALARM);
+        Buzzer_On();
+        return; /* Không khởi động lại TIM4 -> hệ thống giữ ở trạng thái khẩn cấp */
+    }
+
+    Filter_Init(atan2f(imu.ax, imu.az) * RAD_TO_DEG);
+    PID_Reset_Integral();
+    Encoder_Reset();
+
+    s_robot.state = ROBOT_STATE_STANDBY;
+    LED_SetPattern(LED_PATTERN_SLOW_BLINK);
+    Buzzer_BeepAsync(200);
+
+    __HAL_TIM_SET_COUNTER(&htim4, 0);
+    HAL_TIM_Base_Start_IT(&htim4);
+}
+
 void Robot_ControlLoop_200Hz(void)
 {
     s_robot.loop_count++;
@@ -82,6 +120,8 @@ void Robot_ControlLoop_200Hz(void)
     /* Nếu hệ thống đang gặp lỗi khẩn cấp, cắt PWM và thoát ngay để không làm nghẽn vi điều khiển */
     if (s_robot.state == ROBOT_STATE_EMERGENCY) {
         Motor_Stop();
+        s_robot.pwm_left = 0;
+        s_robot.pwm_right = 0;
         return;
     }
 
@@ -92,6 +132,8 @@ void Robot_ControlLoop_200Hz(void)
         LED_SetPattern(LED_PATTERN_ALARM);
         Buzzer_On();
         Motor_Stop();
+        s_robot.pwm_left = 0;
+        s_robot.pwm_right = 0;
         return;
     }
 
@@ -186,6 +228,8 @@ void Robot_ControlLoop_200Hz(void)
             Buzzer_BeepAsync(80);
         } else {
             Motor_Stop();
+            s_robot.pwm_left = 0;
+            s_robot.pwm_right = 0;
             return;
         }
     }

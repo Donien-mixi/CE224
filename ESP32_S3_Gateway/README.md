@@ -131,6 +131,7 @@ Giao diện Web HUD lập tức kết nối WebSockets (Port 81) với độ tr�
 9. **Menu Rút Gọn "TINH CHỈNH THÔNG SỐ (PID & PITCH TRIM)"**:
    * **Đọc/Ghi 4 hệ số PID**: $K_{p1}, K_{d1}$ (Vòng góc nghiêng) và $K_{p2}, K_{i2}$ (Vòng vận tốc).
    * **Hiệu chuẩn Pitch Trim (`pitch_trim`)**: Bù lệch trọng tâm cơ học của xe theo bước $0.1^\circ$ / $0.02^\circ$ giúp xe đứng yên hoàn toàn tại chỗ mà không bị trôi tới hay trôi lui.
+   * **Nút "HIỆU CHUẨN LẠI IMU" (`$CALIB`)**: Hiệu chuẩn lại Gyro Bias (~2.5s) mà **không cần tắt nguồn** — đặt xe nằm yên trên mặt phẳng trước khi bấm.
 
 ---
 

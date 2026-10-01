@@ -311,6 +311,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         </div>
       </div>
       <button type="button" class="btn-apply-pid" onclick="sendPID()">Cap Nhat Tham So Xuong STM32</button>
+      <button type="button" class="btn-apply-pid" style="background:#ff9900; color:#001018; margin-top:8px;" onclick="sendCalib()">HIEU CHUAN LAI IMU ($CALIB)</button>
     </details>
 
     <div class="foot">ESP32-S3 Gateway &middot; UART 115200 (GPIO18 RX / GPIO17 TX)</div>
@@ -531,6 +532,12 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       var val = (parseFloat(el.value || "0") + delta).toFixed(2);
       el.value = val;
       sendRaw("$TRIM," + val + "*");
+    }
+
+    function sendCalib() {
+      if (confirm("Dat xe NAM YEN tren mat phang trong ~2.5 giay de hieu chuan lai Gyro. Tiep tuc?")) {
+        sendRaw("$CALIB*");
+      }
     }
 
     /* ---------------- Data Logger & Export TXT ---------------- */

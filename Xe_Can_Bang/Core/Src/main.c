@@ -103,9 +103,9 @@ int main(void)
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  /* [TEST RIÊNG CẢM BIẾN BMI160] 
-   * Bỏ dấu comment dòng dưới nếu muốn test cảm biến BMI160 xuất dữ liệu qua USART1 (PB6 TX, 115200) 
-   * mà không khởi động động cơ xe: */
+  /* [TEST RIÊNG CẢM BIẾN BMI160 — chạy độc lập, KHÔNG vào vòng lặp cân bằng]
+   * Bỏ dấu comment dòng dưới để quét I2C, đọc CHIP_ID và in dữ liệu IMU ra USART1 (PB6 TX, 115200).
+   * LƯU Ý: hàm này lặp vô hạn (blocking) — dùng khi test cảm biến riêng, không cần động cơ/web. */
   // BMI160_Test_Run();
 
   /* [CHẾ ĐỘ TEST ĐỘNG CƠ LIÊN TỤC & ĐO ÁP VOM]
@@ -133,10 +133,17 @@ int main(void)
     ESP32_Comm_Process();
     __enable_irq();
 
-    /* 2. Cập nhật hiệu ứng Còi và LED trạng thái (phi phong bế) */
+    /* 2. Xử lý yêu cầu hiệu chuẩn lại IMU từ web ($CALIB) — chạy NGOÀI ngắt 200Hz */
+    if (ESP32_Comm_GetCommand()->trigger_calib) {
+        ESP32_Comm_GetCommand()->trigger_calib = 0;
+        Robot_RecalibrateIMU();
+        ESP32_Comm_FlushRx();   /* Xóa byte tồn đọng trong lúc hiệu chuẩn */
+    }
+
+    /* 3. Cập nhật hiệu ứng Còi và LED trạng thái (phi phong bế) */
     BuzzerLED_Update(HAL_GetTick());
 
-    /* 3. Gửi gói tin Telemetry lên ESP32-S3 theo chu kỳ 50ms (20Hz) */
+    /* 4. Gửi gói tin Telemetry lên ESP32-S3 theo chu kỳ 50ms (20Hz) */
     if (HAL_GetTick() - last_telemetry_tick >= 50) {
         last_telemetry_tick = HAL_GetTick();
         Robot_Data_t* r = Robot_GetData();
@@ -198,17 +205,18 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 /**
-  * @brief  [ĐÃ VÔ HIỆU HÓA] printf redirect qua USART1
-  * LÝ DO: USART1 được dùng SONG SONG cho DMA TX Telemetry ($TEL) và DMA RX
-  *        lệnh điều khiển ($CMD). Hàm HAL_UART_Transmit() blocking sẽ xung đột
-  *        trạng thái gState với DMA, gây mất gói telemetry và lock TX channel.
-  * NẾU CẦN DEBUG: Hãy dùng bộ đệm ghi nội bộ hoặc LED/Buzzer thay thế.
+  * @brief  printf redirect qua USART1 — GHI TRỰC TIẾP THANH GHI, KHÔNG DÙNG HAL.
+  * LÝ DO: USART1 dùng chung cho DMA Telemetry ($TEL) và DMA RX lệnh ($CMD).
+  *        Nếu dùng HAL_UART_Transmit() sẽ xung đột trạng thái gState với DMA.
+  *        Ghi thẳng USART1->DR chỉ an toàn cho các hàm test blocking
+  *        (BMI160_Test_Run) chạy TRƯỚC vòng lặp chính, khi telemetry chưa hoạt động.
   */
-/* int __io_putchar(int ch)
+int __io_putchar(int ch)
 {
-  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 10);
+  while ((USART1->SR & USART_SR_TXE) == 0U) { }
+  USART1->DR = (uint8_t)(ch & 0xFFU);
   return ch;
-} */
+}
 
 /**
   * @brief  Ngắt tràn Timer định thời (Callback từ HAL_TIM_IRQHandler)

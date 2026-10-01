@@ -169,6 +169,20 @@ void ESP32_Comm_Process(void)
     }
 }
 
+void ESP32_Comm_FlushRx(void)
+{
+    uint16_t dma_counter = __HAL_DMA_GET_COUNTER(huart1.hdmarx);
+    uint16_t write_idx = (dma_counter <= ESP32_RX_BUF_SIZE) ? (ESP32_RX_BUF_SIZE - dma_counter) : 0;
+    if (write_idx >= ESP32_RX_BUF_SIZE) {
+        write_idx = 0;
+    }
+
+    /* Bỏ qua toàn bộ byte cũ, đồng bộ con trỏ đọc với vị trí DMA hiện tại */
+    s_rx_read_idx = write_idx;
+    s_packet_idx  = 0;
+    s_in_packet   = 0;
+}
+
 ESP32_Command_t* ESP32_Comm_GetCommand(void)
 {
     return &s_command;

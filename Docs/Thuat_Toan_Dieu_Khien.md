@@ -224,6 +224,10 @@ stateDiagram-v2
 > **Ngưỡng tự kích hoạt cân bằng trong code là `|pitch| < 15.0°`** (`robot_fsm.c`),
 > khớp với thông báo trên Web HUD và chú thích trong `robot_fsm.h`.
 > Việc có nên siết về `8–10°` hay không được bàn ở `Roadmap_Do_An.md`.
+>
+> Lệnh `$CALIB` (nút "HIỆU CHUẨN LẠI IMU" trên web) sẽ **tạm dừng vòng 200Hz**,
+> chạy lại `BMI160_Calibrate_Gyro(500)` + `Filter_Init()` rồi trở về `STANDBY`
+> (hàm `Robot_RecalibrateIMU()` trong `robot_fsm.c`) — phục vụ self-test/hiệu chuẩn lại mà không cần tắt nguồn.
 
 ### Chu trình khởi tạo `Robot_Init()`
 

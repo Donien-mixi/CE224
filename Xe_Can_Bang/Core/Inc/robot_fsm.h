@@ -50,6 +50,12 @@ typedef struct {
 void Robot_Init(void);
 
 /**
+  * @brief  Hiệu chuẩn lại Gyro Bias + khởi tạo lại bộ lọc khi nhận lệnh $CALIB
+  *         (chạy trong vòng lặp chính, tạm dừng ngắt TIM4 để tránh xung đột I2C)
+  */
+void Robot_RecalibrateIMU(void);
+
+/**
   * @brief  Vòng lặp điều khiển thời gian thực 200Hz (gọi trong ngắt TIM4 5ms)
   */
 void Robot_ControlLoop_200Hz(void);

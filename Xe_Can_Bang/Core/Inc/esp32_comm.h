@@ -42,6 +42,11 @@ void ESP32_Comm_Init(void);
 void ESP32_Comm_Process(void);
 
 /**
+  * @brief  Xóa/đồng bộ bộ đệm RX (dùng sau khi chạy tác vụ blocking như $CALIB)
+  */
+void ESP32_Comm_FlushRx(void);
+
+/**
   * @brief  Lấy con trỏ cấu trúc lệnh hiện tại
   */
 ESP32_Command_t* ESP32_Comm_GetCommand(void);
