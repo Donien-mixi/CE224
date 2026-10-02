@@ -11,8 +11,8 @@ Tài liệu hợp nhất toàn bộ thông số kỹ thuật, danh mục linh ki
 | **Vi điều khiển chính**           |               STM32F411CEU6 Black Pill               | ARM Cortex-M4F @ 100MHz, FPU Hard ABI                                  |
 | **Cảm biến góc nghiêng**          |               Bosch BMI160 (GY-BMI160)               | 6-DOF, Gyro$\pm 2000^\circ/s$, Accel $\pm 8g$, I2C 400kHz          |
 | **Chu kỳ điều khiển (Loop time)** |                   5.0 ms (200 Hz)                   | Định thời ngắt cứng TIM4 (NVIC Priority 0)                        |
-| **Động cơ & Hộp số**             |                   2x GA25-370 12V                   | Giảm tốc kim loại 1:30, tốc độ không tải ~300 RPM              |
-| **Encoder phản hồi**                |              Hall đĩa từ 2 kênh A/B              | 11 xung$\times$ 30 $\times$ 4 = **1320 xung/vòng bánh xe** |
+| **Động cơ & Hộp số**             |                   2x GA25-370 12V                   | Giảm tốc kim loại 21.3:1, không tải 280 RPM (có tải 215 RPM)              |
+| **Encoder phản hồi**                |              Hall đĩa từ 2 kênh A/B              | 11 xung$\times$ 21.3 $\times$ 4 $\approx$ **937 xung/vòng bánh xe** |
 | **Mạch công suất**                 |                  Dual A4950 Driver                  | Cầu H MOSFET 3.5A, PWM 20kHz Center-aligned, Slow Decay               |
 | **Kết nối không dây**             |                    ESP32-S3 N16R8                    | Wi-Fi SoftAP, WebSockets, giao diện Web HUD (điều khiển & telemetry) |
 | **Nguồn cấp**                       |               Pin LiPo 3S 11.1V (25C)               | Mạch Buck XL4015 hạ áp cố định 5.0V (5A) nuôi mạch số         |
@@ -27,7 +27,7 @@ Tài liệu hợp nhất toàn bộ thông số kỹ thuật, danh mục linh ki
 |  1  | **STM32F411CEU6 Black Pill**         |     01     | Bộ não xử lý trung tâm, ngắt 200Hz, tính Cascade PID bằng FPU              |
 |  2  | **Mạch nạp ST-Link V2**            |     01     | Nạp và gỡ lỗi chương trình qua cổng SWD (SWDIO, SWCLK)                     |
 |  3  | **Module Bosch BMI160**              |     01     | Đo gia tốc và vận tốc góc Pitch, dán đệm xốp chống rung                 |
-|  4  | **Động cơ GA25-370 (12V)**        |     02     | Động cơ DC giảm tốc 1:30 kèm Hall Encoder đĩa từ 11 xung                  |
+|  4  | **Động cơ GA25-370 (12V)**        |     02     | Động cơ DC giảm tốc 21.3:1, 12V 280 RPM kèm Hall Encoder đĩa từ 11 xung                  |
 |  5  | **Bánh xe cao su 65mm**             |     02     | Đường kính 65mm ($C \approx 0.2042\text{m}$), kèm khớp nối lục giác 4mm |
 |  6  | **Mạch Driver Dual A4950**          |     01     | Mạch công suất cầu H MOSFET 3.5A, điều khiển 2 motor                        |
 |  7  | **Board ESP32-S3 N16R8**             |     01     | Gateway không dây: phát Wi-Fi AP, chạy Web HUD điều khiển                   |
@@ -118,8 +118,9 @@ Bảng đấu nối chi tiết, không trùng lặp và không xung đột ngo�
 
 ### 4.3. Động cơ GA25-370 & Encoder
 
-* **Độ phân giải**: $11\text{ xung} \times 30 \times 4 = 1320\text{ xung/vòng bánh}$.
+* **Độ phân giải**: $11\text{ xung} \times 21.3 \times 4 \approx 937\text{ xung/vòng bánh}$ (hộp số 21.3:1).
 * **Chu vi bánh xe**: Đường kính 65mm $\to C \approx 0.2042\text{m}$.
+* **Tốc độ tối đa (không tải)**: $280\text{ RPM} \times 0.2042 \approx 0.95\text{ m/s}$ (có tải ~0.73 m/s) — nên đặt giới hạn tốc độ web phù hợp.
 * **Lọc vận tốc**: Vận tốc tức thời qua bộ lọc LPF ($\beta = 0.75$) để khử nhiễu lượng tử hóa ở tốc độ chậm.
 
 ### 4.4. Mạch công suất Dual A4950

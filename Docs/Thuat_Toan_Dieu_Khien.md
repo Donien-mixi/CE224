@@ -144,7 +144,7 @@ $$
    \end{cases}
    $$
    Với $\text{DEADBAND} = 250$ (trên thang $2499$). Giúp động cơ GA25 vượt qua lực ma sát tĩnh của
-   hộp số 1:30 ngay khi có sai số góc nhỏ, triệt tiêu hiện tượng xe đứng trơ khi nghiêng nhẹ.
+   hộp số 21.3:1 ngay khi có sai số góc nhỏ, triệt tiêu hiện tượng xe đứng trơ khi nghiêng nhẹ.
 
 ### 3.4. Khóa Hướng Chạy Thẳng Bằng Con Quay Hồi Chuyển (Yaw Lock Stabilization)
 
@@ -390,7 +390,7 @@ void Robot_ControlLoop_200Hz(void)
 * **`Core/Inc` & `Core/Src`**:
   * `tim.c`, `i2c.c`, `usart.c`, `gpio.c`, `dma.c`: Tầng khởi tạo ngoại vi phần cứng (CubeMX sinh).
   * `motor.c/.h`: Điều khiển PWM 20kHz Driver A4950 (slow decay, clamp ±2499, self-test).
-  * `encoder.c/.h`: Đếm xung Encoder (1320 xung/vòng) và lọc vận tốc m/s (LPF).
+  * `encoder.c/.h`: Đếm xung Encoder (≈937 xung/vòng, 11 × 21.3 × 4) và lọc vận tốc m/s (LPF).
   * `bmi160.c/.h`: Giao tiếp I2C đọc Burst 12 bytes dữ liệu IMU + hiệu chuẩn gyro bias.
   * `filter.c/.h`: Giải thuật Complementary Filter.
   * `pid.c/.h`: Cascade PID 2 vòng + bù phi tuyến (deadband, lái thích ứng, trim).
@@ -464,7 +464,7 @@ Giá trị thực tế đang nạp trong mã nguồn (làm mốc để tune theo
 | `MOTOR_MAX_PWM` | 2499 | Biên PWM cực đại (ARR TIM1) | `motor.h` |
 | `COMP_FILTER_ALPHA` | 0.98 | Hệ số bộ lọc bù | `filter.h` |
 | `ENCODER_LPF_BETA` | 0.75 | Hệ số lọc thông thấp vận tốc | `encoder.h` |
-| `ENCODER_PPR` | 1320 | Xung/vòng bánh xe (11 × 30 × 4) | `encoder.h` |
+| `ENCODER_PPR` | 937.2 | Xung/vòng bánh xe (11 × 21.3 × 4) | `encoder.h` |
 | β (steering) | 1.2 | Hệ số suy giảm lái theo vận tốc | `pid.c` |
 | Ngưỡng kích hoạt | 15.0° | Pitch để tự vào cân bằng | `robot_fsm.c` |
 | Ngưỡng ngã | 45.0° | Pitch để cắt động cơ | `robot_fsm.c` |

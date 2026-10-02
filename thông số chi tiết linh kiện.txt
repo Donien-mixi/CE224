@@ -1,0 +1,25 @@
+2 bánh xe 65mm: 70g
+2 khớp đồng lục giác 4mm: 30g
+2 động cơ ga25: 200g
+2 gá chữ động cơ: 20g
+3 tấm mica: 95g 
+8 cọc đồng hai tầng: 48g
+pin lipo 3s: 190g
+driver dual a4950: 3g
+mạch buck xl4015: 15g
+stm32: 7g
+esp32: 10g
+bmi160: 2g
+breadboard: 77g
+cút điện: 12g
+dây điện: 15g
+*lưu ý 4 linh kiện stm32 esp32 bmi160 driver và dây điện đều nằm trên breadboard
+thiết kê xe thực tế:
+- xe có 3 tấm mica có kích thước 80mm x 200mm chồng lên nhau tạo thành 2 tầng khoảng cách mỗi tầng là 55mm.khoảng cách từ tầng 1 đến mặt đất là 55mm
+- ở dưới tầng 1 tức là gầm xe gắn 2 bộ động cơ mỗi bộ động cơ gồm: động cơ ga25, gá động cơ, bánh xe, khớp đồng lục giác. vị trí đặt của 2 bộ động cơ là hai bên trái phải của xe, cạnh trái phải là chiều rộng 80mm của mica
+- tầng 1 chứa pin lipo 3s  và mạch buck xl4015, pin lipo đặt trung tâm tầng 1
+- tầng 1 nối lên tầng 2 bằng cách gắn 4 trụ đồng rồi gắn ốc để cố định tấm mica thứ 2 tạo thành tầng 2
+- dưới tầng 2 khoan ốc dính 2 wago đối diện nhau
+- tầng 2 chứa board test và trên board test chứa các linh kiện: stm32, esp32, driver dual a4950, bmi160 và dây điện.
+- tầng 2 gắn 4 trụ đồng nối lên để gắn miếng mica thứ 3 để làm mái che cho xe để bảo vệ boardtest dưới tầng 2
+- 4 trụ đồng ở tầng 1 và tầng 2 đều được đặt 4 góc rìa của tấm mica

@@ -39,9 +39,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  17 .debug_line   000197fe  00000000  00000000  0004394c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00093fe3  00000000  00000000  0005d14a  2**0
+ 18 .debug_str    00093fe2  00000000  00000000  0005d14a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000f112d  2**0
+ 19 .comment      00000043  00000000  00000000  000f112c  2**0
                   CONTENTS, READONLY
  20 .debug_frame  00005eb0  00000000  00000000  000f1170  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
@@ -2617,7 +2617,7 @@ void Encoder_Update(float dt)
  80018f4:	2000025e 	.word	0x2000025e
  80018f8:	2000023c 	.word	0x2000023c
  80018fc:	2000024c 	.word	0x2000024c
- 8001900:	392236de 	.word	0x392236de
+ 8001900:	3964788b 	.word	0x3964788b
 
 08001904 <Encoder_GetLeftVelocity>:
 

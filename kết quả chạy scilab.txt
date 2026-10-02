@@ -1,0 +1,68 @@
+=====================================================
+ BƯỚC 1. THÔNG SỐ TÍNH TỪ LINH KIỆN
+=====================================================
+ Linh kiện   m (kg)    x (m)    z (m)
+ Mica sàn 1   0.0317    0.000    0.022
+ Mica sàn 2   0.0317    0.000    0.077
+ Mica mái che   0.0317    0.000    0.133
+ Pin LiPo 3S   0.1900    0.000    0.022
+ Buck XL4015   0.0150    0.000    0.022
+ Breadboard   0.0770    0.000    0.077
+ Linh kiện trên board (STM32/ESP32/A4950/BMI160)   0.0220    0.000    0.077
+ Còi (ước lượng)   0.0020    0.000    0.077
+ WAGO (cút điện)   0.0120    0.000    0.070
+ Dây điện   0.0150    0.000    0.060
+ 2 Động cơ GA25   0.2000    0.000    0.000
+ 2 gá chữ động cơ   0.0200    0.000    0.010
+ Cọc đồng T1 (+x)   0.0120    0.090    0.050
+ Cọc đồng T1 (-x)   0.0120   -0.090    0.050
+ Cọc đồng T2 (+x)   0.0120    0.090    0.105
+ Cọc đồng T2 (-x)   0.0120   -0.090    0.105
+ -----------------------------------------------
+ Khối lượng thân      m   = 0.696 kg
+ Chiều cao trọng tâm  l   = 0.0366 m
+ Quán tính quanh t.tâm I  = 0.00205 kg.m^2
+ Khối lượng xe        M   = 0.100 kg  (tương đương 0.150 kg)
+ Lực động cơ tối đa  Fmax = 12.1 N   (kf = 0.00483 N/PWM)
+
+=====================================================
+ BƯỚC 2. MÔ HÌNH   theta' = 112.6*theta - 13.561*F
+=====================================================
+ Cực hệ hở (1 cực dương -> robot ngã, thời hằng 96 ms)
+ Điều kiện tối thiểu: Kp1 > 30  (PWM/do)
+
+=====================================================
+ BƯỚC 3. QUÉT 252 BỘ (nominal) + KIỂM BỀN 30 ỨNG VIÊN
+=====================================================
+ Cascade PI vận tốc + PD góc, deadband 250, 200Hz, trễ 1 chu kỳ, nhiễu IMU
+ Đạt khi: MỌI trường hợp không ngã, |F| <= 80% Fmax, rung <= 3.62 N
+ Chọn: bộ đạt bền vững có ITAE góc (danh nghĩa) nhỏ nhất
+
+ Ứng viên nominal đạt: 222 / 252 bộ. Năm bộ tốt nhất:
+
+   wn  zeta    Kp2    Ki2      Kp1     Kd1     ITAE   F max    rung
+    8   0.8    1.0   0.05       47    3.41   0.0175    2.5N   0.10N
+    8   1.0    1.0   0.05       47    4.26   0.0181    2.5N   0.06N
+    8   0.8    1.0   0.10       47    3.41   0.0182    2.5N   0.10N
+   12   0.8    1.0   0.05       68    5.12   0.0185    3.0N   0.15N
+    8   0.8    1.0   0.20       47    3.41   0.0185    2.5N   0.09N
+
+ Bộ ĐẠT bền vững qua 5 trường hợp: wn=8, zeta=0.8, Kp2=1, Ki2=0.05
+
+=====================================================
+ BƯỚC 4. KIỂM CHỨNG BỘ SỐ ĐƯỢC CHỌN
+=====================================================
+ Cực vòng kín (phần thực): 0.00  -38.84  -5.57  -5.57  -0.43  -0.06
+ (1 cực ~0 thuộc vị trí x: vòng vận tốc không giữ vị trí nên xe trôi.)
+ Danh nghĩa             góc max  5.08 độ, lực max   2.5 N, rung 0.10 N -> đứng vững
+ Thân nặng +20%         góc max  5.10 độ, lực max   2.5 N, rung 0.14 N -> đứng vững
+ Trọng tâm cao +20%     góc max  5.07 độ, lực max   2.4 N, rung 0.13 N -> đứng vững
+ Trọng tâm thấp -20%    góc max  5.10 độ, lực max   2.5 N, rung 0.11 N -> đứng vững
+ Động cơ chậm x2        góc max  5.18 độ, lực max   2.5 N, rung 0.91 N -> đứng vững
+
+=====================================================
+ KẾT QUẢ: BỘ PID FIRMWARE ĐỀ XUẤT
+=====================================================
+ Kp1 = 47.1;  Kd1 = 3.41;   // vòng góc PD (pid.h)
+ Kp2 = 1.00;  Ki2 = 0.050;  // vòng vận tốc PI (pid.h)
+ (Dán trực tiếp vào DEFAULT_KP_ANGLE / KD_ANGLE / KP_VELOCITY / KI_VELOCITY)

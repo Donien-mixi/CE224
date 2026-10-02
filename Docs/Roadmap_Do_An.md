@@ -24,7 +24,7 @@ Toàn bộ roadmap dưới đây là phần **còn thiếu** để xe *hoạt đ
 | :------------- | :-------------------------------- | :---------------------------------------------------------------- | :----------: | :---------------------------------------------------------- |
 | Ngoại vi      | CubeMX (clock/timer/I2C/UART DMA) | `Core/Src/tim.c`, `i2c.c`, `usart.c`, `dma.c`, `gpio.c` |      ✅      | 0 errors, 0 warnings                                        |
 | Chấp hành    | Động cơ Dual A4950             | `Core/Src/motor.c`                                              |      ✅      | Slow decay, clamp ±2499, self-test                         |
-| Phản hồi     | Encoder Hall 2 bánh              | `Core/Src/encoder.c`                                            |      ✅      | 1320 xung/vòng, LPF                                        |
+| Phản hồi     | Encoder Hall 2 bánh              | `Core/Src/encoder.c`                                            |      ✅      | 937 xung/vòng (11×21.3×4), LPF                                        |
 | Cảm biến     | Bosch BMI160                      | `Core/Src/bmi160.c`                                             |      ✅      | Burst 12B, calibrate 500 mẫu                               |
 | Thuật toán   | Lọc bù góc Pitch               | `Core/Src/filter.c`                                             |      ✅      | Complementary α = 0.98                                     |
 | Thuật toán   | Cascade PID 2 vòng               | `Core/Src/pid.c`                                                |   ✅ khung   | Có sẵn trim, deadband, bù lái                           |
@@ -39,7 +39,7 @@ Toàn bộ roadmap dưới đây là phần **còn thiếu** để xe *hoạt đ
 
 - [X] Firmware nạp chạy, `Motor_SelfTest()` quay nhẹ 2 bánh.
 - [X] BMI160 xác thực `CHIP_ID = 0xD1`, đọc ổn định.
-- [X] Encoder đọc đúng ≈ 1320 xung/vòng.
+- [X] Encoder đọc đúng ≈ 937 xung/vòng (11 × 21.3 × 4, motor GA25-370 hộp số 21.3:1).
 - [X] Web HUD hiển thị telemetry thời gian thực; logger xuất được file.
 - [X] Xe đã lắp khung 2 tầng, siết chặt, IMU dán đệm xốp chống rung.
 
@@ -158,10 +158,10 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 
 | # | Hạng mục                    | Tiêu chuẩn đạt                                         | Phương pháp          |
 | :-: | :---------------------------- | :--------------------------------------------------------- | :---------------------- |
-| 1 | Tự đứng thăng bằng tĩnh | Đứng yên**> 60 s**, trôi **< 10 cm**       | Sàn phẳng + telemetry |
+| 1 | Tự đứng thăng bằng tĩnh | Đứng yên**> 60 s**, trôi**< 10 cm**              | Sàn phẳng + telemetry |
 | 2 | Chống nhiễu                 | Đẩy 3 lần liên tiếp,**ts < 0.8 s**, không ngã | Tay đẩy nhẹ đầu xe |
 | 3 | Sai số góc tĩnh            | **\|e_ss\| ≤ ± 0.3°**                             | `$TEL` ghi ra file    |
-| 4 | Cắt an toàn khi ngã        | Cắt PWM**< 5 ms** khi > 45°                        | Nghiêng quá ngưỡng  |
+| 4 | Cắt an toàn khi ngã        | Cắt PWM**< 5 ms** khi > 45°                              | Nghiêng quá ngưỡng  |
 | 5 | Failsafe mất sóng           | Sau**1.0 s** ga/lái về 0, xe vẫn tự đứng       | Ngắt Wi-Fi/UART        |
 | 6 | Không lỗi tự phát         | Không`EMERGENCY`, không rung giật kéo dài           | Badge trạng thái web  |
 
@@ -169,7 +169,7 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 
 - [ ] **WP1.7 — Cân nhắc ngưỡng kích hoạt**: code và tài liệu hiện đang thống nhất `< 15°` (`robot_fsm.c:180`).
   Đề xuất cân nhắc siết về **`< 8–10°`** (dễ kích hoạt nhưng chưa ngã ngang) rồi đồng bộ code + tài liệu.
-- [x] **WP1.8 — Nút `$CALIB` trên web (đã xong ở GĐ0)**: web có nút "HIỆU CHUẨN LẠI IMU"; STM32 xử lý `$CALIB` bằng `Robot_RecalibrateIMU()` (`robot_fsm.c`).
+- [X] **WP1.8 — Nút `$CALIB` trên web (đã xong ở GĐ0)**: web có nút "HIỆU CHUẨN LẠI IMU"; STM32 xử lý `$CALIB` bằng `Robot_RecalibrateIMU()` (`robot_fsm.c`).
 - [ ] **WP1.9 (tùy chọn) — Lưu θ_trim + PID vào Flash**: tránh mất tham số sau khi tắt nguồn.
 - [ ] **WP1.10 — Đo lường & timestamp phần cứng** (xem §7.2): thêm `loop_count` vào `$TEL`, đo jitter/latency, nâng tần số telemetry khi tune.
 - [ ] **WP1.11 — An toàn phần cứng** (xem §9.3): watchdog độc lập `IWDG`, đọc điện áp pin thật qua ADC, cắt khi pin yếu, xử lý brown-out.
@@ -231,7 +231,7 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 | `$TRIM,value*`          | Web → STM32 | Bù trọng tâm               | `esp32_comm.c:89`  |             ✅             |
 | `$RACE,1/0*`            | Web → STM32 | Bật/tắt chế độ đua      | `esp32_comm.c:92`  |  ❌**thiếu nút**  |
 | `$BENCH,1/0*`           | Web → STM32 | Bật/tắt chế độ Test Bàn | `esp32_comm.c:94`  |    ✅ (nút Test Bàn)    |
-| `$CALIB*`               | Web → STM32 | Hiệu chuẩn lại IMU         | `esp32_comm.c:97`  |    ✅ (nút Hiệu chuẩn)    |
+| `$CALIB*`               | Web → STM32 | Hiệu chuẩn lại IMU         | `esp32_comm.c:97`  |   ✅ (nút Hiệu chuẩn)   |
 | `$STOP*`                | Web → STM32 | Dừng khẩn cấp              | `esp32_comm.c:99`  |             ✅             |
 | `$TEL,...\r\n`          | STM32 → Web | Telemetry 20Hz (10 trường)  | `esp32_comm.c:186` |         ✅ (nhận)         |
 
@@ -265,7 +265,7 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 | :-: | :------------------------- | :------------------------------------------------------------ | :----------------------------------- |
 | 1 | Điều hướng cơ bản    | Tiến/lùi mượt theo`v_target` 0 → 1.50 m/s (max slider) | Slider + giữ TIẾN/LÙI             |
 | 2 | Vừa chạy vừa cân bằng | Chạy 10 m liên tục không ngã                             | Quan sát + telemetry                |
-| 3 | Bẻ lái linh hoạt        | Bo cua bán kính**< 0.4 m**, không lật               | Lái zíc-zắc qua 5 chốt cách 1 m |
+| 3 | Bẻ lái linh hoạt        | Bo cua bán kính**< 0.4 m**, không lật                     | Lái zíc-zắc qua 5 chốt cách 1 m |
 | 4 | Vận tốc tối đa (đua)  | **≥ 1.8 m/s**                                          | Đo bằng xung Encoder               |
 | 5 | Chạy thẳng               | Lệch ngang nhỏ khi`steer = 0`                             | Chạy trên đường kẻ             |
 | 6 | An toàn                   | Ngã > 45° cắt PWM < 5 ms; mất sóng 1 s về 0             | Test có chủ đích                 |
@@ -297,12 +297,12 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 
 ## 4. ĐỒNG BỘ TÀI LIỆU & CODE (CẦN THỐNG NHẤT TRƯỚC KHI NGHIỆM THU)
 
-|  #  | Hạng mục                          | Code hiện tại                                           | Tài liệu/kế hoạch                       | Đề xuất                                              |
-| :-: | :---------------------------------- | :-------------------------------------------------------- | :------------------------------------------ | :------------------------------------------------------ |
+|  #  | Hạng mục                          | Code hiện tại                                           | Tài liệu/kế hoạch                       | Đề xuất                                        |
+| :-: | :---------------------------------- | :-------------------------------------------------------- | :------------------------------------------ | :------------------------------------------------ |
 | 4.1 | Ngưỡng tự kích hoạt cân bằng | `< 15.0°` (`robot_fsm.c:180`)                        | `< 15.0°` (`Thuat_Toan_Dieu_Khien.md`) | Đã khớp; cân nhắc siết về**`< 8–10°`** |
-| 4.2 | Kẹp anti-windup`Ki2`             | `±10.0°` (`pid.h:27`)                               | `±10°` (`Thuat_Toan_Dieu_Khien.md`)   | Đã khớp                                              |
-| 4.3 | Hệ số lọc vận tốc Encoder      | `β = 0.75` (`encoder.h:27`)                          | Khuyến nghị`β ≈ 0.65–0.75`           | Đang khớp; thử`0.70` nếu cần                     |
-| 4.4 | Hàm test động cơ                | `Motor_SelfTest()` + `Motor_Test_Run()` (`motor.c`) | (không còn xung đột)                    | Đã bổ sung`Motor_Test_Run()`                       |
+| 4.2 | Kẹp anti-windup`Ki2`             | `±10.0°` (`pid.h:27`)                               | `±10°` (`Thuat_Toan_Dieu_Khien.md`)   | Đã khớp                                        |
+| 4.3 | Hệ số lọc vận tốc Encoder      | `β = 0.75` (`encoder.h:27`)                          | Khuyến nghị`β ≈ 0.65–0.75`           | Đang khớp; thử`0.70` nếu cần               |
+| 4.4 | Hàm test động cơ                | `Motor_SelfTest()` + `Motor_Test_Run()` (`motor.c`) | (không còn xung đột)                    | Đã bổ sung`Motor_Test_Run()`                 |
 
 ---
 
@@ -326,30 +326,30 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 
 ### 5.2. Bảng work package (có điều kiện vào / ra)
 
-| WP     | Tên                                                                                                | GĐ | Điều kiện vào (Entry)                | File chạm tới                         | Điều kiện ra (Exit/DoD)                         |
-| :----- | :-------------------------------------------------------------------------------------------------- | :--: | :--------------------------------------- | :-------------------------------------- | :------------------------------------------------- |
-| WP0.0  | Self-test phối hợp linh kiện (GĐ0)                                                              | GĐ0 | Firmware nạp chạy                    | toàn hệ thống                         | Tick đủ checklist §0.4                      |
-| WP0    | Mô hình hóa & mô phỏng vòng kín                                                              | Nền | Có tham số cơ khí (M, L, R, ma sát) | `sim/` (Python/Simulink)              | Bộ gain gợi ý + đồ thị mô phỏng            |
-| WP1.0  | Xác thực IMU & chiều trục                                                                       | GĐ1 | Firmware chạy, telemetry sống          | `filter.c`, `bmi160.c`              | Pitch đúng dấu, ổn định, không nhiễu rác  |
-| WP1.1  | Tune`Kp1`                                                                                         | GĐ1 | WP1.0 xong;`Kp2=Ki2=0`                 | `pid.h`/web                           | Có lực chống ngã, chưa rung                   |
-| WP1.2  | Tune`Kd1`                                                                                         | GĐ1 | WP1.1 xong                               | `pid.h`/web                           | Buông tay xe tự đứng (còn trôi)              |
-| WP1.3  | Chốt Deadband                                                                                      | GĐ1 | WP1.2 xong                               | `motor.h`                             | Phản hồi tức thì, không giật                 |
-| WP1.4  | Chốt θ_trim                                                                                       | GĐ1 | WP1.3 xong                               | `pid.c`/web                           | Trôi một phía giảm hẳn                        |
-| WP1.5  | Tune`Kp2/Ki2` giữ vị trí                                                                       | GĐ1 | WP1.4 xong                               | `pid.h`/web                           | Đứng bất động, đẩy tự hồi                 |
-| WP1.6  | An toàn SW & Failsafe                                                                              | GĐ1 | Firmware ổn định                      | `robot_fsm.c`, `esp32_comm.c`       | Ngã cắt < 5 ms; mất sóng 1 s về 0             |
-| WP1.7  | Chốt ngưỡng kích hoạt                                                                          | GĐ1 | WP1.6 xong                               | `robot_fsm.c`                         | Code + tài liệu khớp                            |
-| WP1.8  | Nút `$CALIB` trên web *(tùy chọn)* | GĐ1 | — | `index_html.h`, `robot_fsm.c` | Gửi được `$CALIB*` và STM32 xử lý hiệu chuẩn lại |
-| WP1.9  | Lưu θ_trim + PID vào Flash*(tùy chọn)*                                                       | GĐ1 | —                                       | `flash_storage.*`                     | Tắt/bật nguồn không mất tham số              |
-| WP1.10 | Đo lường & timestamp phần cứng                                                                 | GĐ1 | WP1.0 xong                               | `esp32_comm.c`, `main.c`, web       | Có mốc thời gian HW; jitter/latency đo được |
-| WP1.11 | An toàn phần cứng                                                                                | GĐ1 | Có cầu phân áp + ADC                 | `main.c`, `adc.c`, `robot_fsm.c`  | IWDG chạy; cắt khi pin yếu/brown-out            |
-| WP2.0  | Tune vòng vận tốc bám tốc độ                                                                 | GĐ2 | GATE 1 đạt                             | `pid.h`/web                           | `v_actual ≈ v_target`, tách băng thông       |
-| WP2.1  | Nút/joystick lái trên web                                                                        | GĐ2 | WP2.0 xong                               | `index_html.h`                        | Gửi được`steer ≠ 0`                         |
-| WP2.2  | Nút RACE/CALIB                                                                                     | GĐ2 | —                                       | `index_html.h`                        | Gửi`$RACE,*` / `$CALIB*`                      |
-| WP2.3  | Yaw lock / cân bằng động                                                                        | GĐ2 | WP2.1 xong                               | `pid.c`, `robot_fsm.c`, `motor.c` | Đi thẳng không nhao                             |
-| WP2.4  | Chế độ đua ±15°                                                                               | GĐ2 | WP2.3 xong                               | `pid.h`, web                          | `v ≥ 1.8 m/s`, không ngã                      |
-| WP2.5  | Web nâng cao (chart realtime)                                                                      | GĐ2 | —                                       | `index_html.h`                        | Đồ thị realtime chạy ổn                       |
-| WP2.6  | Lưu Flash + Stall protection                                                                       | GĐ2 | —                                       | `flash_storage.*`, `robot_fsm.c`    | Tham số bền vững; cắt khi kẹt                 |
-| WP2.7  | Kiểm bền & Gain scheduling                                                                        | GĐ2 | WP2.4 xong                               | `pid.c`/web                           | Ổn định trên ≥3 mặt sàn & mức pin          |
+| WP     | Tên                                                                                                                                                     | GĐ | Điều kiện vào (Entry)                | File chạm tới                         | Điều kiện ra (Exit/DoD)                         |
+| :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :--: | :--------------------------------------- | :-------------------------------------- | :------------------------------------------------- |
+| WP0.0  | Self-test phối hợp linh kiện (GĐ0)                                                                                                                   | GĐ0 | Firmware nạp chạy                      | toàn hệ thống                        | Tick đủ checklist §0.4                          |
+| WP0    | Mô hình hóa & mô phỏng vòng kín                                                                                                                   | Nền | Có tham số cơ khí (M, L, R, ma sát) | `sim/` (Python/Simulink)              | Bộ gain gợi ý + đồ thị mô phỏng            |
+| WP1.0  | Xác thực IMU & chiều trục                                                                                                                            | GĐ1 | Firmware chạy, telemetry sống          | `filter.c`, `bmi160.c`              | Pitch đúng dấu, ổn định, không nhiễu rác  |
+| WP1.1  | Tune`Kp1`                                                                                                                                              | GĐ1 | WP1.0 xong;`Kp2=Ki2=0`                 | `pid.h`/web                           | Có lực chống ngã, chưa rung                   |
+| WP1.2  | Tune`Kd1`                                                                                                                                              | GĐ1 | WP1.1 xong                               | `pid.h`/web                           | Buông tay xe tự đứng (còn trôi)              |
+| WP1.3  | Chốt Deadband                                                                                                                                           | GĐ1 | WP1.2 xong                               | `motor.h`                             | Phản hồi tức thì, không giật                 |
+| WP1.4  | Chốt θ_trim                                                                                                                                            | GĐ1 | WP1.3 xong                               | `pid.c`/web                           | Trôi một phía giảm hẳn                        |
+| WP1.5  | Tune`Kp2/Ki2` giữ vị trí                                                                                                                            | GĐ1 | WP1.4 xong                               | `pid.h`/web                           | Đứng bất động, đẩy tự hồi                 |
+| WP1.6  | An toàn SW & Failsafe                                                                                                                                   | GĐ1 | Firmware ổn định                      | `robot_fsm.c`, `esp32_comm.c`       | Ngã cắt < 5 ms; mất sóng 1 s về 0             |
+| WP1.7  | Chốt ngưỡng kích hoạt                                                                                                                               | GĐ1 | WP1.6 xong                               | `robot_fsm.c`                         | Code + tài liệu khớp                            |
+| WP1.8  | Nút`$CALIB` trên web *(tùy chọn)* | GĐ1 | — | `index_html.h`, `robot_fsm.c` | Gửi được `$CALIB*` và STM32 xử lý hiệu chuẩn lại |      |                                          |                                         |                                                    |
+| WP1.9  | Lưu θ_trim + PID vào Flash*(tùy chọn)*                                                                                                              | GĐ1 | —                                       | `flash_storage.*`                     | Tắt/bật nguồn không mất tham số              |
+| WP1.10 | Đo lường & timestamp phần cứng                                                                                                                      | GĐ1 | WP1.0 xong                               | `esp32_comm.c`, `main.c`, web       | Có mốc thời gian HW; jitter/latency đo được |
+| WP1.11 | An toàn phần cứng                                                                                                                                     | GĐ1 | Có cầu phân áp + ADC                 | `main.c`, `adc.c`, `robot_fsm.c`  | IWDG chạy; cắt khi pin yếu/brown-out            |
+| WP2.0  | Tune vòng vận tốc bám tốc độ                                                                                                                      | GĐ2 | GATE 1 đạt                             | `pid.h`/web                           | `v_actual ≈ v_target`, tách băng thông       |
+| WP2.1  | Nút/joystick lái trên web                                                                                                                             | GĐ2 | WP2.0 xong                               | `index_html.h`                        | Gửi được`steer ≠ 0`                         |
+| WP2.2  | Nút RACE/CALIB                                                                                                                                          | GĐ2 | —                                       | `index_html.h`                        | Gửi`$RACE,*` / `$CALIB*`                      |
+| WP2.3  | Yaw lock / cân bằng động                                                                                                                             | GĐ2 | WP2.1 xong                               | `pid.c`, `robot_fsm.c`, `motor.c` | Đi thẳng không nhao                             |
+| WP2.4  | Chế độ đua ±15°                                                                                                                                    | GĐ2 | WP2.3 xong                               | `pid.h`, web                          | `v ≥ 1.8 m/s`, không ngã                      |
+| WP2.5  | Web nâng cao (chart realtime)                                                                                                                           | GĐ2 | —                                       | `index_html.h`                        | Đồ thị realtime chạy ổn                       |
+| WP2.6  | Lưu Flash + Stall protection                                                                                                                            | GĐ2 | —                                       | `flash_storage.*`, `robot_fsm.c`    | Tham số bền vững; cắt khi kẹt                 |
+| WP2.7  | Kiểm bền & Gain scheduling                                                                                                                             | GĐ2 | WP2.4 xong                               | `pid.c`/web                           | Ổn định trên ≥3 mặt sàn & mức pin          |
 
 ---
 

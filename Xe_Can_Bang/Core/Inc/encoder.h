@@ -3,7 +3,7 @@
   * @file    encoder.h
   * @brief   Driver đọc phản hồi vị trí và vận tốc từ 2 Hall Encoder động cơ GA25.
   *          Sử dụng Timer 2 (Bánh Trái) và Timer 3 (Bánh Phải) ở Mode TI12 (x4).
-  *          Độ phân giải: 1320 xung/vòng bánh xe, đường kính bánh xe 65mm.
+  *          Độ phân giải: 11 × 21.3 × 4 ≈ 937 xung/vòng bánh xe (GA25-370 hộp số 21.3:1), bánh 65mm.
   ******************************************************************************
   */
 
@@ -20,10 +20,10 @@ extern "C" {
 #include <stdint.h>
 
 /* Defines -------------------------------------------------------------------*/
-#define ENCODER_PPR                 1320.0f         // 11 xung đĩa từ * tỷ số 30 * 4 cạnh xung
+#define ENCODER_PPR                 937.2f          // 11 xung/kênh/vòng motor * 21.3 (hộp số) * 4 cạnh
 #define WHEEL_DIAMETER_M            0.065f          // Đường kính bánh xe cao su (65mm = 0.065m)
 #define WHEEL_CIRCUMFERENCE_M       0.204203522f    // Chu vi bánh: PI * D = 3.14159265 * 0.065
-#define METERS_PER_TICK             (WHEEL_CIRCUMFERENCE_M / ENCODER_PPR) // ~0.0001547m/xung
+#define METERS_PER_TICK             (WHEEL_CIRCUMFERENCE_M / ENCODER_PPR) // ~0.0002179m/xung
 #define ENCODER_LPF_BETA            0.75f           // Hệ số lọc thông thấp vận tốc
 
 /* Structs -------------------------------------------------------------------*/
