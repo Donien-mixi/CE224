@@ -59,6 +59,11 @@ void Motor_Brake(void);
 void Motor_SelfTest(void);
 
 /**
+  * @brief  Đo ngưỡng ma sát tĩnh (Deadband) của 2 động cơ
+  */
+void Motor_Find_Deadband(void);
+
+/**
   * @brief  Chế độ kiểm tra liên tục 2 động cơ và hỗ trợ đo điện áp VOM
   *         (Chạy vòng lặp vô hạn: Trái -> Phải -> Tiến -> Lùi)
   */

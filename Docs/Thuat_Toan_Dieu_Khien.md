@@ -453,10 +453,10 @@ Giá trị thực tế đang nạp trong mã nguồn (làm mốc để tune theo
 
 | Tham số | Giá trị | Định nghĩa | File |
 | :-- | :--: | :-- | :-- |
-| `DEFAULT_KP_ANGLE` | 350.0 | Tỉ lệ vòng góc $K_{p1}$ | `pid.h` |
-| `DEFAULT_KD_ANGLE` | 8.5 | Vi phân vòng góc $K_{d1}$ | `pid.h` |
-| `DEFAULT_KP_VELOCITY` | 2.5 | Tỉ lệ vòng vận tốc $K_{p2}$ | `pid.h` |
-| `DEFAULT_KI_VELOCITY` | 0.20 | Tích phân vòng vận tốc $K_{i2}$ | `pid.h` |
+| `DEFAULT_KP_ANGLE` | 98.2 | Tỉ lệ vòng góc $K_{p1}$ | `pid.h` |
+| `DEFAULT_KD_ANGLE` | 6.82 | Vi phân vòng góc $K_{d1}$ | `pid.h` |
+| `DEFAULT_KP_VELOCITY` | 4.0 | Tỉ lệ vòng vận tốc $K_{p2}$ | `pid.h` |
+| `DEFAULT_KI_VELOCITY` | 0.80 | Tích phân vòng vận tốc $K_{i2}$ | `pid.h` |
 | `MAX_TILT_NORMAL` | 8.0° | Giới hạn góc ngả chế độ thường | `pid.h` |
 | `MAX_TILT_RACE` | 15.0° | Giới hạn góc ngả chế độ đua | `pid.h` |
 | `MAX_INTEGRAL_VELOCITY` | 10.0° | Kẹp anti-windup tích phân vận tốc | `pid.h` |

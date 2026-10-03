@@ -143,10 +143,10 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 
 | Tham số                  | Định nghĩa                       | Giá trị hiện tại |   Khoảng tune   | File                |
 | :------------------------ | :---------------------------------- | :------------------: | :---------------: | :------------------ |
-| `Kp1`                   | Tỉ lệ vòng góc                  |   **350.0**   |    200 → 400    | `pid.h:20`        |
-| `Kd1`                   | Vi phân vòng góc                 |    **8.5**    |    3.0 → 9.0    | `pid.h:21`        |
-| `Kp2`                   | Tỉ lệ vòng vận tốc             |    **2.5**    |    1.0 → 3.0    | `pid.h:22`        |
-| `Ki2`                   | Tích phân vòng vận tốc         |    **0.20**    |   0.05 → 0.25   | `pid.h:23`        |
+| `Kp1`                   | Tỉ lệ vòng góc | **98.2**   |    200 → 400    | `pid.h:20`        |
+| `Kd1`                   | Vi phân vòng góc | **6.82**    |    3.0 → 9.0    | `pid.h:21`        |
+| `Kp2`                   | Tỉ lệ vòng vận tốc | **4.0**    |    1.0 → 3.0    | `pid.h:22`        |
+| `Ki2`                   | Tích phân vòng vận tốc | **0.80**    |   0.05 → 0.25   | `pid.h:23`        |
 | `MAX_TILT_NORMAL`       | Góc ngả đặt tối đa (thường) |   **8.0°**   |    cố định    | `pid.h:25`        |
 | `MAX_INTEGRAL_VELOCITY` | Kẹp anti-windup                    |   **10.0°**   |      xem 4.1      | `pid.h:27`        |
 | `MOTOR_DEADBAND`        | Bù ma sát hộp số                |    **250**    |    200 → 300    | `motor.h:24`      |

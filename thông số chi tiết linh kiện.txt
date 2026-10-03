@@ -23,3 +23,6 @@ thiết kê xe thực tế:
 - tầng 2 chứa board test và trên board test chứa các linh kiện: stm32, esp32, driver dual a4950, bmi160 và dây điện.
 - tầng 2 gắn 4 trụ đồng nối lên để gắn miếng mica thứ 3 để làm mái che cho xe để bảo vệ boardtest dưới tầng 2
 - 4 trụ đồng ở tầng 1 và tầng 2 đều được đặt 4 góc rìa của tấm mica
+
+-bonus: pwm để bánh trái hoạt động là 1340
+        pwm để bánh phải hoạt động là 1400

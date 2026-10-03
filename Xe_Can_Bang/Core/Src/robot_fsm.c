@@ -74,6 +74,9 @@ void Robot_Init(void)
     /* 6. Khởi động giao tiếp UART1 DMA với ESP32-S3 NGAY TRƯỚC KHI VÀO VÒNG LẶP CHÍNH
      * (Tránh tràn bộ đệm DMA và lỗi Overrun/Framing trong thời gian 5s chạy SelfTest và Calib) */
     ESP32_Comm_Init();
+
+    /* 7. Khởi động tính năng đo kiểm Deadband và gửi lên Web (Chỉ chạy 1 lần lúc bật nguồn) */
+    Motor_Find_Deadband();
 }
 
 void Robot_RecalibrateIMU(void)

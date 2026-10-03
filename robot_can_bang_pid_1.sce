@@ -16,6 +16,11 @@
 //        out = PID_Apply_Deadband(pwm, 250, 2499)         (bu vung chet + kep bien)
 //        PWM -> lực F = (out/2499)*Fmax ; dap ung dong co bac 1 (tau_m)
 //
+//    *** ĐÃ THÊM (sửa lỗi mô hình cũ): ***
+//        - MA SÁT TĨNH (Coulomb/Karnopp): bánh chỉ quay khi |lực| > Fc
+//          với Fc = kf*PWM_bua. Đây là nguyên nhân xe thật "cần góc cao mới chạy".
+//        - MÔ-MEN GIẢM THEO TỐC ĐỘ: F ∝ (1 - |v|/v_noload).
+//
 //  ***  Kết quả in ra  Kp1, Kd1, Kp2, Ki2 ĐÚNG ĐƠN VỊ FIRMWARE  ***
 //      -> dán thẳng vào pid.h, KHÔNG đổi code PID trong đồ án.
 //
@@ -117,6 +122,18 @@ tau_m  = 0.020;    // thời hằng đáp ứng lực (ước lượng ~ J.w0/ta
 Fmax   = so_dc*tau_dc/r;
 kf     = Fmax/2499;   // N trên 1 đơn vị PWM (đúng thang firmware 0..2499)
 
+// --- HIỆU CHỈNH THỰC TẾ QUAN TRỌNG (lần trước tôi đã quên) -----------------
+// 1) MA SÁT TĨNH: bánh KHÔNG nhích cho tới khi mô-men vượt ngưỡng bứt phá.
+//    Trên xe thật, PWM ~250 (deadband) KHÔNG đủ quay bánh; phải tới ~400-450.
+//    => mô hình hóa thành lực Coulomb tĩnh Fc = kf*PWM_bua (Karnopp).
+PWM_bua = 450;        // <<< ngưỡng bứt phá ĐO THỰC TẾ (sửa số này nếu bạn đo khác)
+Fc_stat = kf*PWM_bua; // lực ma sát tĩnh tương đương (N)
+v_eps   = 0.010;      // m/s: dưới ngưỡng này coi như "dính"
+
+// 2) MÔ-MEN GIẢM THEO TỐC ĐỘ: động cơ DC không thể giữ mô-men max khi quay nhanh.
+//    Tốc độ không tải 280 vòng/phút -> v_noload = 280/60*2*pi*r (m/s).
+v_noload = (280/60)*2*%pi*r;
+
 // ---------------------------------------------------------------------
 //  Tính thông số tổng hợp
 // ---------------------------------------------------------------------
@@ -131,7 +148,8 @@ M  = 2*m_banh + m_truc;
 Meq = M + 2*Iw/r^2;                        // khối lượng tương đương của xe
 
 P = struct("m",m, "l",l, "I",I, "Meq",Meq, "g",g, "bx",bx, "dth",d_th, ..
-           "Fmax",Fmax, "tau",tau_m);
+           "Fmax",Fmax, "tau",tau_m, "Fc",Fc_stat, "veps",v_eps, ..
+           "vnl",v_noload);
 
 mprintf("\n=====================================================\n");
 mprintf(" BƯỚC 1. THÔNG SỐ TÍNH TỪ LINH KIỆN\n");
@@ -146,6 +164,8 @@ mprintf(" Chiều cao trọng tâm  l   = %.4f m\n", l);
 mprintf(" Quán tính quanh t.tâm I  = %.5f kg.m^2\n", I);
 mprintf(" Khối lượng xe        M   = %.3f kg  (tương đương %.3f kg)\n", M, Meq);
 mprintf(" Lực động cơ tối đa  Fmax = %.1f N   (kf = %.5f N/PWM)\n", Fmax, kf);
+mprintf(" MA SÁT TĨNH         Fc   = %.2f N  (ngưỡng bứt phá ~%d PWM)\n", Fc_stat, PWM_bua);
+mprintf(" Tốc độ không tải     v_nl = %.2f m/s\n", v_noload);
 if abs(xc) > 1e-6 then
     mprintf(" !! Trọng tâm lệch %.1f mm theo x: robot sẽ đứng nghiêng %.2f độ\n", ..
             xc*1000, -atan(xc/l)*180/%pi);
@@ -200,7 +220,22 @@ function yd = f_robot(y, Fc, Fd, P)
     xd = y(2); th = y(3); thd = y(4); Fa = y(5);
     c = cos(th); s = sin(th);
     a11 = P.Meq + P.m;  a12 = P.m*P.l*c;  a22 = P.I + P.m*P.l^2;
-    r1 = Fa + Fd - P.bx*xd + P.m*P.l*thd^2*s;
+    // Lực "muốn" đẩy xe (motor + nhiễu + số hạng ly tâm), CHƯA kể ma sát
+    F_app = Fa + Fd + P.m*P.l*thd^2*s;
+    // --- MA SÁT COULOMB / STICTION (mô hình Karnopp) ---
+    //  - |v| dưới ngưỡng & |F_app| <= Fc : DÍNH, ma sát triệt tiêu hết lực -> đứng yên
+    //  - |v| dưới ngưỡng & |F_app| >  Fc : BỨT PHÁ, ma sát = Fc ngược chiều lực
+    //  - đang lăn                          : ma sát động = Fc ngược chiều vận tốc
+    if abs(xd) < P.veps then
+        if abs(F_app) <= P.Fc then
+            F_fric = -F_app;
+        else
+            F_fric = -P.Fc*sign(F_app);
+        end
+    else
+        F_fric = -P.Fc*sign(xd);
+    end
+    r1 = F_app + F_fric - P.bx*xd;
     r2 = P.m*P.g*P.l*s - P.dth*thd + Fd*P.l*c;
     dt_ = a11*a22 - a12^2;
     yd = [xd; (a22*r1 - a12*r2)/dt_; thd; (a11*r2 - a12*r1)/dt_; (Fc - Fa)/P.tau];
@@ -235,8 +270,10 @@ function [T, Y, F] = mo_phong(P, K, S, kf)
         pwm = K(1)*eth - K(2)*(thd_m/deg);       // PWM
 
         // --- Bù vùng chết + kẹp biên + quy đổi ra lực ---
-        out = pid_deadband(pwm, 250, 2499);
-        Fc  = -kf*out;
+        out = pid_deadband(pwm, S.DB, 2499);
+        // Mô-men khả dụng giảm dần khi bánh quay nhanh (giới hạn tốc độ không tải)
+        he_so_td = max(0, 1 - abs(y(2))/P.vnl);
+        Fc  = -kf*out*he_so_td;
 
         // --- Trễ 1 chu kỳ ---
         uc = u_ra;  u_ra = Fc;
@@ -244,7 +281,10 @@ function [T, Y, F] = mo_phong(P, K, S, kf)
         // --- Tích phân cơ hệ bằng RK4 ---
         for j = 1:S.nsub
             tj = t + (j-1)*h;
-            Fd = 0; if tj >= S.tp & tj < S.tp + S.wp then Fd = S.Fp; end
+            Fd = 0;
+            for ip = 1:size(S.pulses,"*")   // tổng hợp nhiều cú đẩy
+                if tj >= S.pulses(ip) & tj < S.pulses(ip) + S.wp then Fd = S.Fp; end
+            end
             k1 = f_robot(y, uc, Fd, P);
             k2 = f_robot(y + h/2*k1, uc, Fd, P);
             k3 = f_robot(y + h/2*k2, uc, Fd, P);
@@ -294,19 +334,20 @@ sig_v  = 0.01;                  // nhiễu vận tốc encoder (m/s)
 
 // Kịch bản: nghiêng sẵn 5 độ, t = 1.5 s bị huých 10 N trong 0.01 s.
 // GĐ1 (giữ vị trí): vt = 0.  GĐ2 (bám tốc độ): đặt vt = 0.5 (bước).
-S = struct("th0", 5*%pi/180, "tp", 1.5, "wp", 0.01, "Fp", 10, "tend", 3, ..
-           "Ts", Ts, "nsub", 4, "vt", 0.0, "tilt_max", 8.0, "trim", 0.0);
+S = struct("th0", 5*%pi/180, "tp", 1.5, "pulses", 1.5, "wp", 0.01, "Fp", 10, "tend", 3, ..
+           "Ts", Ts, "nsub", 4, "vt", 0.0, "tilt_max", 8.0, "trim", 0.0, ..
+           "DB", PWM_bua);   // <<< deadband phải >= ngưỡng bứt phá mới đủ sức quay bánh
 rand("seed", 1);
 Nn = round(S.tend/S.Ts);
 S.n_th = sig_th*rand(1, Nn, "normal");
 S.n_g  = sig_g*rand(1, Nn, "normal");
 S.n_v  = sig_v*rand(1, Nn, "normal");
 
-wn_list  = 8:4:32;                 // dải băng thông vòng góc: 8,12,...,32 rad/s
+wn_list  = 8:4:24;                 // dải băng thông vòng góc: 8,12,...,24 rad/s
 z_list   = [0.6 0.8 1.0];          // hệ số tắt vòng góc
-Kp2_list = [1 2 3 4];              // tỉ lệ vòng vận tốc (deg/(m/s))
-Ki2_list = [0.05 0.1 0.2];         // tích phân vòng vận tốc
-Ntop     = 30;                     // số ứng viên nominal tốt nhất đem kiểm bền
+Kp2_list = [2 3 4];                // tỉ lệ vòng vận tốc (deg/(m/s))
+Ki2_list = [0.3 0.5 0.8];          // tích phân vòng vận tốc (GĐ1: giữ vị trí, càng lớn càng kéo về)
+Ntop     = 120;                    // số ứng viên trôi ít nhất đem kiểm bền
 
 F_du_tru = 0.8;                    // chỉ dùng tối đa 80% lực động cơ
 rung_max = 0.30*Fmax;              // rung TẦN SỐ THẤP tối đa 30% Fmax (đã làm mượt lực)
@@ -319,12 +360,12 @@ mprintf("\n=====================================================\n");
 mprintf(" BƯỚC 3. QUÉT %d BỘ (nominal) + KIỂM BỀN %d ỨNG VIÊN\n", ..
         size(wn_list,"*")*size(z_list,"*")*size(Kp2_list,"*")*size(Ki2_list,"*"), Ntop);
 mprintf("=====================================================\n");
-mprintf(" Cascade PI vận tốc + PD góc, deadband 250, 200Hz, trễ 1 chu kỳ, nhiễu IMU\n");
+mprintf(" Cascade PI vận tốc + PD góc, deadband %d, 200Hz, trễ 1 chu kỳ, nhiễu IMU\n", S.DB);
 mprintf(" Đạt khi: MỌI trường hợp không ngã, |F| <= %.0f%% Fmax, rung <= %.2f N\n", 100*F_du_tru, rung_max);
-mprintf(" Chọn: bộ đạt bền vững có ITAE góc (danh nghĩa) nhỏ nhất\n");
+mprintf(" GĐ1: chọn bộ đạt bền vững có ĐỘ TRÔI VỊ TRÍ nhỏ nhất (giữ thăng bằng tại chỗ)\n");
 
-// --- PHA A: quét nominal, xếp hạng theo ITAE ---
-R = [];   // [wn zeta Kp2 Ki2 Kp1 Kd1 J Fpk thpk ts rung nga]
+// --- PHA A: quét nominal, xếp hạng theo MỤC TIÊU GĐ1 (trôi vị trí nhỏ) ---
+R = [];   // [wn zeta Kp2 Ki2 Kp1 Kd1 cost Jc Fpk xdrift ts rung nga]
 for z = z_list
     for wn = wn_list
         [Kp1, Kd1] = pid_goc(wn, z, al, be, kf);
@@ -333,21 +374,23 @@ for z = z_list
                 K = [Kp1 Kd1 Kp2 Ki2];
                 [T, Y, F] = mo_phong(P, K, S, kf);
                 [Jc, Fc, thc, tsc, ngac, rc, Jvc] = danh_gia(T, Y, F, S);
-                R = [R; wn, z, Kp2, Ki2, Kp1, Kd1, Jc, Fc, thc, tsc, rc, bool2s(ngac)];
+                xdrift = max(abs(Y(1,:)));       // trôi vị trí đỉnh trong 3 s (m)
+                cost   = xdrift;                  // GĐ1: tối thiểu độ trôi
+                R = [R; wn, z, Kp2, Ki2, Kp1, Kd1, cost, Jc, Fc, xdrift, tsc, rc, bool2s(ngac)];
             end
         end
     end
 end
-cand = find(R(:,12) == 0 & R(:,8) <= F_du_tru*Fmax & R(:,11) <= rung_max);
+cand = find(R(:,13) == 0 & R(:,9) <= F_du_tru*Fmax & R(:,12) <= rung_max);
 if cand == [] then
     error("Không bộ nào đạt ngay ở nominal. Hãy tăng lực động cơ (tau_dc) hoặc giảm tau_m.");
 end
-[tmp_, ordc] = gsort(-R(cand,7));  cand = cand(ordc);   // J tăng dần
-mprintf("\n Ứng viên nominal đạt: %d / %d bộ. Năm bộ tốt nhất:\n", size(cand,"*"), size(R,1));
-mprintf("\n %4s %5s %6s %6s %8s %7s %8s %7s %7s\n", ..
-        "wn", "zeta", "Kp2", "Ki2", "Kp1", "Kd1", "ITAE", "F max", "rung");
+[tmp_, ordc] = gsort(-R(cand,7));  cand = cand(ordc);   // cost tăng dần (trôi ít nhất trước)
+mprintf("\n Ứng viên nominal đạt: %d / %d bộ. Năm bộ trôi ít nhất:\n", size(cand,"*"), size(R,1));
+mprintf("\n %4s %5s %6s %6s %8s %7s %9s %9s\n", ..
+        "wn", "zeta", "Kp2", "Ki2", "Kp1", "Kd1", "ITAE", "troi(m)");
 for k = cand(1:min(5, size(cand,"*")))'
-    mprintf(" %4.0f %5.1f %6.1f %6.2f %8.0f %7.2f %8.4f %6.1fN %6.2fN\n", R(k,[1:6 7 8 11]));
+    mprintf(" %4.0f %5.1f %6.1f %6.2f %8.0f %7.2f %9.4f %9.4f\n", R(k,[1:6 8 10]));
 end
 
 // --- PHA B: kiểm bền các ứng viên tốt nhất, chọn bộ đầu tiên ĐẠT ---
@@ -404,6 +447,20 @@ for c = 1:size(ca_hs,1)
     mprintf(" %-22s góc max %5.2f độ, lực max %5.1f N, rung %4.2f N -> %s\n", ..
             ca_ten(c), thk*180/%pi, Fpk_k, rk, kq);
 end
+
+// --- BƯỚC 4b: TEST DÀI GIAI ĐOẠN 1 (12 s, 3 cú đẩy) ---
+S2 = S;  S2.tend = 12;  S2.pulses = [1.5 4.5 7.5];
+Nn2 = round(S2.tend/S2.Ts);
+S2.n_th = sig_th*rand(1, Nn2, "normal");
+S2.n_g  = sig_g*rand(1, Nn2, "normal");
+S2.n_v  = sig_v*rand(1, Nn2, "normal");
+[Tl, Yl, Fl] = mo_phong(P, K, S2, kf);
+[mJ, mF, mTh, mTs, mNg, mR, mJv] = danh_gia(Tl, Yl, Fl, S2);
+tt = "đứng vững";  if mNg then tt = "NGÃ";  end
+mprintf("\n--- TEST DÀI GĐ1 (12 s, 3 cú đẩy 10 N) ---\n");
+mprintf(" Trôi đỉnh = %.1f cm | trôi cuối = %.1f cm | góc max = %.2f độ | %s\n", ..
+        max(abs(Yl(1,:)))*100, Yl(1,$)*100, mTh*180/%pi, tt);
+mprintf(" (Mục tiêu GĐ1: đứng yên, trôi < 10 cm)\n");
 
 mprintf("\n=====================================================\n");
 mprintf(" KẾT QUẢ: BỘ PID FIRMWARE ĐỀ XUẤT\n");

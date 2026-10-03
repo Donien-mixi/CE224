@@ -285,19 +285,19 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       <div class="tune-grid">
         <div class="tune-field">
           <label>Kp Goc (Lo xo)</label>
-          <input type="number" id="kp1" value="350.0" step="10">
+          <input type="number" id="kp1" value="98.2" step="10">
         </div>
         <div class="tune-field">
           <label>Kd Goc (Giam chan)</label>
-          <input type="number" id="kd1" value="8.5" step="0.5">
+          <input type="number" id="kd1" value="6.82" step="0.1">
         </div>
         <div class="tune-field">
           <label>Kp Van Toc</label>
-          <input type="number" id="kp2" value="2.5" step="0.1">
+          <input type="number" id="kp2" value="4.0" step="0.1">
         </div>
         <div class="tune-field">
           <label>Ki Van Toc</label>
-          <input type="number" id="ki2" value="0.20" step="0.02">
+          <input type="number" id="ki2" value="0.80" step="0.02">
         </div>
         <div class="tune-field" style="grid-column: span 2;">
           <label>Bu Trong Tam Co Khi Pitch Trim (&deg;)</label>
@@ -620,10 +620,10 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         return;
       }
 
-      var kp1 = document.getElementById("kp1").value || "350.0";
-      var kd1 = document.getElementById("kd1").value || "8.5";
-      var kp2 = document.getElementById("kp2").value || "2.5";
-      var ki2 = document.getElementById("ki2").value || "0.20";
+      var kp1 = document.getElementById("kp1").value || "98.2";
+      var kd1 = document.getElementById("kd1").value || "6.82";
+      var kp2 = document.getElementById("kp2").value || "4.0";
+      var ki2 = document.getElementById("ki2").value || "0.80";
       var trim = document.getElementById("pitch-trim").value || "0.00";
 
       var now = new Date();

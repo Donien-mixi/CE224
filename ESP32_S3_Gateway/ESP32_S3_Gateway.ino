@@ -5,7 +5,7 @@
   *          Tạo Wi-Fi SoftAP + WebSockets Server + Cầu truyền thông USART1 với STM32
   ******************************************************************************
   * CẤU HÌNH TRÊN ARDUINO IDE:
-  *   - Board: "ESP32S3 Dev Module"
+  *   - Board: "ESP32S3 Dev Module" 
   *   - USB CDC On Boot: "Enabled"
   *   - Flash Size: "16MB (128Mb)"
   *   - Partition Scheme: "16M Flash (3MB APP/9.9MB FATFS)"

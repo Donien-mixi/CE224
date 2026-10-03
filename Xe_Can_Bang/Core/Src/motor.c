@@ -7,6 +7,8 @@
 
 #include "motor.h"
 #include "buzzer_led.h"
+#include "esp32_comm.h"
+#include <stdio.h>
 
 void Motor_Init(void)
 {
@@ -133,6 +135,58 @@ void Motor_SelfTest(void)
     HAL_Delay(60);
     Buzzer_Off();
     HAL_Delay(300);
+}
+
+void Motor_Find_Deadband(void)
+{
+    printf("\r\n[DEADBAND TEST] Cho 15s de ESP32 khoi dong va ban ket noi Web...\r\n");
+    
+    /* Dem nguoc 15 giay de nguoi dung co thoi gian mo Web */
+    for (int i = 0; i < 15; i++) {
+        Buzzer_On();
+        HAL_Delay(50);
+        Buzzer_Off();
+        HAL_Delay(950);
+    }
+
+    printf("\r\n[DEADBAND TEST] Bat dau tim nguong ma sat tinh (Deadband) cho 2 dong co...\r\n");
+    HAL_Delay(500);
+
+    // 1. Test động cơ Trái (Tăng tối đa lên 2400)
+    printf("[DEADBAND TEST] Dang test Dong co TRAI...\r\n");
+    for (int pwm = 0; pwm <= 2400; pwm += 20) 
+    {
+        Motor_SetDuty(pwm, 0);
+        printf(" -> TRAI PWM = %d\r\n", pwm);
+        /* Gửi Telemetry lên Web ESP32 (State = 99 để báo hiệu đang Test, truyền PWM trái) */
+        ESP32_Comm_SendTelemetry(0.0f, 0.0f, 0.0f, 0.0f, pwm, 0, 99, 12.0f, 0.0f, 0.0f);
+        HAL_Delay(250); // Cho 250ms de banh co thoi gian nhich
+    }
+    
+    Motor_Stop();
+    printf("[DEADBAND TEST] Ket thuc test Dong co TRAI. Dung 3s.\r\n");
+    Buzzer_On();
+    HAL_Delay(100);
+    Buzzer_Off();
+    HAL_Delay(3000);
+
+    // 2. Test động cơ Phải
+    printf("[DEADBAND TEST] Dang test Dong co PHAI...\r\n");
+    for (int pwm = 0; pwm <= 2400; pwm += 20) 
+    {
+        Motor_SetDuty(0, pwm);
+        printf(" -> PHAI PWM = %d\r\n", pwm);
+        /* Gửi Telemetry lên Web ESP32 (State = 99, truyền PWM phải) */
+        ESP32_Comm_SendTelemetry(0.0f, 0.0f, 0.0f, 0.0f, 0, pwm, 99, 12.0f, 0.0f, 0.0f);
+        HAL_Delay(250); 
+    }
+    
+    Motor_Stop();
+    printf("[DEADBAND TEST] Da hoan thanh viec test.\r\n");
+    
+    Buzzer_On();
+    HAL_Delay(500);
+    Buzzer_Off();
 }
 
 void Motor_Test_Run(void)
