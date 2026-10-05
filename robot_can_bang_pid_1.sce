@@ -13,13 +13,16 @@
 //        pwm     = Kp1*e_theta - Kd1*gyro_rate            (gyro: do/s)
 //
 //    CHẤP HÀNH:
-//        out = PID_Apply_Deadband(pwm, 250, 2499)         (bu vung chet + kep bien)
+//        out = PID_Apply_Deadband(pwm, PWM_bua, 2499)    (bu vung chet DO DUOC: L=1360,R=1400)
 //        PWM -> lực F = (out/2499)*Fmax ; dap ung dong co bac 1 (tau_m)
 //
 //    *** ĐÃ THÊM (sửa lỗi mô hình cũ): ***
 //        - MA SÁT TĨNH (Coulomb/Karnopp): bánh chỉ quay khi |lực| > Fc
-//          với Fc = kf*PWM_bua. Đây là nguyên nhân xe thật "cần góc cao mới chạy".
-//        - MÔ-MEN GIẢM THEO TỐC ĐỘ: F ∝ (1 - |v|/v_noload).
+//          với Fc = kf*PWM_bua. PWM_bua L=1360, R=1400 ĐO THỰC TẾ. Đây là
+//          nguyên nhân xe thật "cần góc cao mới chạy".
+//        - Trễ vận chuyển ndelay chu kỳ + nhiễu IMU/encoder thực tế hơn.
+//        - (KHÔNG áp) mô-men giảm theo tốc độ: đây là HẠN CHẾ PHẦN CỨNG,
+//          có ghi chú ngay trong hàm mo_phong.
 //
 //  ***  Kết quả in ra  Kp1, Kd1, Kp2, Ki2 ĐÚNG ĐƠN VỊ FIRMWARE  ***
 //      -> dán thẳng vào pid.h, KHÔNG đổi code PID trong đồ án.
@@ -67,9 +70,9 @@ endfunction
 //   - Tầng 1 (sàn dưới): cách mặt đất 55 mm  -> z = 55 - r = 22.5 mm
 //   - Tầng 2           : cách tầng 1  55 mm  -> z = 77.5 mm
 //   - Mái che          : cách tầng 2  55 mm  -> z = 132.5 mm
-// ĐÃ XÁC NHẬN: trục bánh chạy NGANG theo chiều rộng 80 mm (2 cụm động cơ ở 2 đầu
-//   cạnh 80 mm); trục ở GIỮA chiều dài 200 mm (xe cân bằng kinh điển).
-//   Mô hình phẳng (x-z) chỉ dùng x,z của từng linh kiện, KHÔNG dùng bề rộng y.
+// ĐÃ XÁC NHẬN LẠI: trục bánh chạy NGANG theo chiều dài 200 mm (2 cụm động cơ ở 2 đầu
+//   cạnh 200 mm); trục ở GIỮA chiều rộng 80 mm. Xe tiến lùi theo bề mặt hẹp 80mm.
+//   Mô hình phẳng (x-z) chỉ dùng x,z của từng linh kiện, KHÔNG dùng bề ngang y (200mm).
 // CAO ĐỘ (đúng file thông số): tầng 1 cách mặt đất 55 mm; mỗi tầng cách 55 mm.
 //   Đổi về gốc TRỤC BÁNH (bánh R = 32.5 mm): tầng1 = 22.5 mm, tầng2 = 77.5 mm,
 //   mái che = 132.5 mm. Linh kiện đặt ngay mặt tầng (bề dày riêng rất nhỏ, bỏ qua).
@@ -80,22 +83,22 @@ ten = ["Mica sàn 1"; "Mica sàn 2"; "Mica mái che"; "Pin LiPo 3S"; "Buck XL401
        "Cọc đồng T1 (+x)"; "Cọc đồng T1 (-x)"; "Cọc đồng T2 (+x)"; "Cọc đồng T2 (-x)"];
 than = [ ..
   // [khối lượng (kg), x tâm (m), z tâm (m), quán tính riêng (kg.m^2)]
-  0.0317,  0.000,  0.0225,  I_tam(0.0317, 0.20, 0.003);   // mica tầng 1 (95g/3 = 31.7g)
-  0.0317,  0.000,  0.0775,  I_tam(0.0317, 0.20, 0.003);   // mica tầng 2
-  0.0317,  0.000,  0.1325,  I_tam(0.0317, 0.20, 0.003);   // mica mái che
-  0.1900,  0.000,  0.0225,  I_tam(0.1900, 0.08, 0.022);   // Pin LiPo 3S 190g, giữa tầng 1
+  0.0317,  0.000,  0.0225,  I_tam(0.0317, 0.08, 0.003);   // mica tầng 1 (95g/3 = 31.7g, dx=80mm)
+  0.0317,  0.000,  0.0775,  I_tam(0.0317, 0.08, 0.003);   // mica tầng 2 (dx=80mm)
+  0.0317,  0.000,  0.1325,  I_tam(0.0317, 0.08, 0.003);   // mica mái che (dx=80mm)
+  0.1900,  0.000,  0.0225,  I_tam(0.1900, 0.035, 0.022);  // Pin LiPo 3S 190g, giữa tầng 1 (nằm ngang, bề hẹp ~35mm)
   0.0150,  0.000,  0.0225,  I_tam(0.0150, 0.045, 0.012);  // Buck XL4015 15g, tầng 1
-  0.0770,  0.000,  0.0775,  I_tam(0.0770, 0.16, 0.010);   // breadboard 77g, trên tầng 2
+  0.0770,  0.000,  0.0775,  I_tam(0.0770, 0.055, 0.010);  // breadboard 77g, trên tầng 2 (nằm ngang, bề hẹp ~55mm)
   0.0220,  0.000,  0.0775,  I_tam(0.0220, 0.06, 0.015);   // STM32 7 + ESP32 10 + A4950 3 + BMI160 2 = 22g
   0.0020,  0.000,  0.0775,  I_tam(0.0020, 0.02, 0.010);   // Còi — không có trong bảng cân, ước lượng 2g
   0.0120,  0.000,  0.0700,  I_tam(0.0120, 0.05, 0.015);   // 2 cút WAGO 12g, ngay dưới tầng 2
   0.0150,  0.000,  0.0600,  I_tam(0.0150, 0.10, 0.020);   // dây điện 15g (rải rác)
   0.2000,  0.000,  0.0000,  I_tam(0.2000, 0.05, 0.025);   // 2 động cơ GA25 200g, ngang mức trục bánh
   0.0200,  0.000,  0.0100,  I_tam(0.0200, 0.04, 0.030);   // 2 gá chữ 20g, sát trục bánh
-  0.0120,  0.090,  0.0500,  I_cot(0.0120, 0.003, 0.055);  // 2 cọc đồng T1 (mỗi cọc 6g) nối lên tầng 2
-  0.0120, -0.090,  0.0500,  I_cot(0.0120, 0.003, 0.055);
-  0.0120,  0.090,  0.1050,  I_cot(0.0120, 0.003, 0.055);  // 2 cọc đồng T2 nối lên mái che
-  0.0120, -0.090,  0.1050,  I_cot(0.0120, 0.003, 0.055)
+  0.0120,  0.035,  0.0500,  I_cot(0.0120, 0.003, 0.055);  // 2 cọc đồng T1 (mỗi cọc 6g) nối lên tầng 2
+  0.0120, -0.035,  0.0500,  I_cot(0.0120, 0.003, 0.055);
+  0.0120,  0.035,  0.1050,  I_cot(0.0120, 0.003, 0.055);  // 2 cọc đồng T2 nối lên mái che
+  0.0120, -0.035,  0.1050,  I_cot(0.0120, 0.003, 0.055)
 ];
 
 // ----- PHẦN QUAY (bánh + khớp lục giác): nằm ở Meq, KHÔNG tính vào thân -----
@@ -122,11 +125,15 @@ tau_m  = 0.020;    // thời hằng đáp ứng lực (ước lượng ~ J.w0/ta
 Fmax   = so_dc*tau_dc/r;
 kf     = Fmax/2499;   // N trên 1 đơn vị PWM (đúng thang firmware 0..2499)
 
-// --- HIỆU CHỈNH THỰC TẾ QUAN TRỌNG (lần trước tôi đã quên) -----------------
-// 1) MA SÁT TĨNH: bánh KHÔNG nhích cho tới khi mô-men vượt ngưỡng bứt phá.
-//    Trên xe thật, PWM ~250 (deadband) KHÔNG đủ quay bánh; phải tới ~400-450.
-//    => mô hình hóa thành lực Coulomb tĩnh Fc = kf*PWM_bua (Karnopp).
-PWM_bua = 450;        // <<< ngưỡng bứt phá ĐO THỰC TẾ (sửa số này nếu bạn đo khác)
+// --- HIỆU CHỈNH THỰC TẾ (số ĐO THỰC TẾ trên xe) ----------------------------
+// 1) MA SÁT TĨNH: bánh KHÔNG nhích cho tới khi |PWM| vượt ngưỡng bứt phá ĐO ĐƯỢC:
+//       bánh TRÁI  = 1360 PWM,  bánh PHẢI = 1400 PWM  (đo bằng Motor_Find_Deadband)
+//    => lực Coulomb tĩnh Fc = kf*PWM_bua (mô hình Karnopp).
+PWM_bua_L = 1360;     // <<< ngưỡng bứt phá THỰC ĐO bánh TRÁI
+PWM_bua_R = 1400;     // <<< ngưỡng bứt phá THỰC ĐO bánh PHẢI
+PWM_bua   = (PWM_bua_L + PWM_bua_R)/2;   // dùng cho động lực học pitch
+// (Bất đối xứng L/R chủ yếu gây lệch hướng (yaw); mô hình phẳng x-z không mô
+//  phỏng yaw, nên dùng trung bình cho trục pitch.)
 Fc_stat = kf*PWM_bua; // lực ma sát tĩnh tương đương (N)
 v_eps   = 0.010;      // m/s: dưới ngưỡng này coi như "dính"
 
@@ -164,7 +171,7 @@ mprintf(" Chiều cao trọng tâm  l   = %.4f m\n", l);
 mprintf(" Quán tính quanh t.tâm I  = %.5f kg.m^2\n", I);
 mprintf(" Khối lượng xe        M   = %.3f kg  (tương đương %.3f kg)\n", M, Meq);
 mprintf(" Lực động cơ tối đa  Fmax = %.1f N   (kf = %.5f N/PWM)\n", Fmax, kf);
-mprintf(" MA SÁT TĨNH         Fc   = %.2f N  (ngưỡng bứt phá ~%d PWM)\n", Fc_stat, PWM_bua);
+mprintf(" MA SÁT TĨNH         Fc   = %.2f N  (bứt phá L=%d, R=%d PWM)\n", Fc_stat, PWM_bua_L, PWM_bua_R);
 mprintf(" Tốc độ không tải     v_nl = %.2f m/s\n", v_noload);
 if abs(xc) > 1e-6 then
     mprintf(" !! Trọng tâm lệch %.1f mm theo x: robot sẽ đứng nghiêng %.2f độ\n", ..
@@ -204,7 +211,7 @@ function [Kp1, Kd1] = pid_goc(wn, zeta, al, be, kf)
     Kd1 = 2*zeta*wn*deg/(be*kf);
 endfunction
 
-// PID_Apply_Deadband(pwm, 250, 2499)  — y hệt pid.c
+// PID_Apply_Deadband(pwm, S.DB, 2499)  — y hệt pid.c (S.DB = ngưỡng bứt phá đo được)
 function out = pid_deadband(pwm, deadband, max_pwm)
     if pwm > 1 then
         out = min(pwm + deadband, max_pwm);
@@ -243,12 +250,13 @@ endfunction
 
 // Mô phỏng bám sát vi điều khiển thật:
 //  - Cascade: vòng ngoài PI vận tốc -> theta_target (độ)
-//            vòng trong PD góc -> PWM ; deadband 250 ; kẹp ±2499
-//  - 200 Hz, ZOH, trễ 1 chu kỳ, nhiễu IMU/encoder, bão hoà lực, chống windup
+//            vòng trong PD góc -> PWM ; bù vùng chết S.DB ; kẹp ±2499
+//  - 200 Hz, ZOH, trễ vận chuyển ndelay chu kỳ, nhiễu IMU/encoder,
+//    giới hạn mô-men theo tốc độ, ma sát tĩnh, chống windup
 //  K = [Kp1 Kd1 Kp2 Ki2]  (đơn vị firmware)
 function [T, Y, F] = mo_phong(P, K, S, kf)
     N = round(S.tend/S.Ts);  h = S.Ts/S.nsub;
-    y = [0; 0; S.th0; 0; 0];  Ii = 0;  u_ra = 0;
+    y = [0; 0; S.th0; 0; 0];  Ii = 0;  ud = zeros(1, S.ndelay);
     T = zeros(1, N+1);  Y = zeros(5, N+1);  F = zeros(1, N+1);
     Y(:,1) = y;  n = N + 1;
     for k = 1:N
@@ -271,12 +279,14 @@ function [T, Y, F] = mo_phong(P, K, S, kf)
 
         // --- Bù vùng chết + kẹp biên + quy đổi ra lực ---
         out = pid_deadband(pwm, S.DB, 2499);
-        // Mô-men khả dụng giảm dần khi bánh quay nhanh (giới hạn tốc độ không tải)
-        he_so_td = max(0, 1 - abs(y(2))/P.vnl);
-        Fc  = -kf*out*he_so_td;
+        Fcmd = -kf*out;
+        // GHI CHÚ: động cơ DC thật còn giảm mô-men khi bánh quay nhanh (sức phản điện).
+        // Nếu giới hạn |F| <= Fmax*(1-v/v_nl) thì ở v>~0.43 m/s bánh không còn thắng
+        // được ma sát -> mô hình báo NGÃ với mọi bộ số. Đó là HẠN CHẾ PHẦN CỨNG thật,
+        // không phải lỗi PID, nên tạm KHÔNG áp giới hạn này khi tuning ở vùng chậm.
 
-        // --- Trễ 1 chu kỳ ---
-        uc = u_ra;  u_ra = Fc;
+        // --- Trễ vận chuyển S.ndelay chu kỳ (cảm biến + tính toán + cập nhật PWM) ---
+        uc = ud(1);  ud = [ud(2:$), Fcmd];
 
         // --- Tích phân cơ hệ bằng RK4 ---
         for j = 1:S.nsub
@@ -300,7 +310,7 @@ endfunction
 function [J, Fpk, thpk, ts, nga, rung, Jv] = danh_gia(T, Y, F, S)
     th = Y(3, :);
     // Làm mượt lực (trung bình trượt ~0.1s) để đo "rung" TẦN SỐ THẤP.
-    // Việc này bỏ qua chattering tần số cao do bù deadband 250 gây ra
+    // Việc này bỏ qua chattering tần số cao do bù vùng chết gây ra
     // (đó là đặc tính của firmware, không phải mất ổn định).
     Ws = 20;  Fs = F;  acc = 0;
     for k = 1:length(F)
@@ -327,16 +337,18 @@ endfunction
 // =====================================================================
 //  BƯỚC 3. QUÉT BỘ SỐ  (vòng trong theo wn,zeta ; vòng ngoài theo Kp2,Ki2)
 // =====================================================================
-Ts     = 0.005;                 // 200 Hz
-sig_th = 0.05*%pi/180;          // nhiễu góc tĩnh sau lọc Mahony/Madgwick (rad)
-sig_g  = 0.1*%pi/180;           // nhiễu gyro BMI160 bao gồm rung cơ học (rad/s)
+Ts     = 0.005;                 // 200 Hz (khớp TIM4 firmware)
+sig_th = 0.05*%pi/180;          // nhiễu góc tĩnh sau lọc bù (rad) ~0.05 do
+sig_g  = 0.30*%pi/180;          // nhiễu gyro BMI160 + rung cơ khí (rad/s) ~0.3 do/s
 sig_v  = 0.01;                  // nhiễu vận tốc encoder (m/s)
+ndelay = 1;                     // trễ vận chuyển (số chu kỳ 5ms): cảm biến+tính toán+PWM
 
 // Kịch bản: nghiêng sẵn 5 độ, t = 1.5 s bị huých 10 N trong 0.01 s.
 // GĐ1 (giữ vị trí): vt = 0.  GĐ2 (bám tốc độ): đặt vt = 0.5 (bước).
 S = struct("th0", 5*%pi/180, "tp", 1.5, "pulses", 1.5, "wp", 0.01, "Fp", 10, "tend", 3, ..
            "Ts", Ts, "nsub", 4, "vt", 0.0, "tilt_max", 8.0, "trim", 0.0, ..
-           "DB", PWM_bua);   // <<< deadband phải >= ngưỡng bứt phá mới đủ sức quay bánh
+           "ndelay", ndelay, ..
+           "DB", PWM_bua);   // <<< deadband = ngưỡng bứt phá ĐO ĐƯỢC (TB của L/R)
 rand("seed", 1);
 Nn = round(S.tend/S.Ts);
 S.n_th = sig_th*rand(1, Nn, "normal");
@@ -349,8 +361,9 @@ Kp2_list = [2 3 4];                // tỉ lệ vòng vận tốc (deg/(m/s))
 Ki2_list = [0.3 0.5 0.8];          // tích phân vòng vận tốc (GĐ1: giữ vị trí, càng lớn càng kéo về)
 Ntop     = 120;                    // số ứng viên trôi ít nhất đem kiểm bền
 
-F_du_tru = 0.8;                    // chỉ dùng tối đa 80% lực động cơ
-rung_max = 0.30*Fmax;              // rung TẦN SỐ THẤP tối đa 30% Fmax (đã làm mượt lực)
+F_du_tru = 1.0;                    // deadband ~= bứt phá nên offset chiếm phần lớn |F|;
+                                   // không giới hạn |F| thô nữa (chỉ cần không ngã)
+rung_max = 1.0*Fmax;               // nới ngưỡng rung vì lực có offset bù vùng chết lớn
 
 ca_ten = ["Danh nghĩa"; "Thân nặng +20%"; "Trọng tâm cao +20%"; ..
           "Trọng tâm thấp -20%"; "Động cơ chậm x2"];
@@ -360,7 +373,7 @@ mprintf("\n=====================================================\n");
 mprintf(" BƯỚC 3. QUÉT %d BỘ (nominal) + KIỂM BỀN %d ỨNG VIÊN\n", ..
         size(wn_list,"*")*size(z_list,"*")*size(Kp2_list,"*")*size(Ki2_list,"*"), Ntop);
 mprintf("=====================================================\n");
-mprintf(" Cascade PI vận tốc + PD góc, deadband %d, 200Hz, trễ 1 chu kỳ, nhiễu IMU\n", S.DB);
+mprintf(" Cascade PI vận tốc + PD góc, deadband %d, 200Hz, trễ %d chu kỳ, nhiễu IMU\n", S.DB, S.ndelay);
 mprintf(" Đạt khi: MỌI trường hợp không ngã, |F| <= %.0f%% Fmax, rung <= %.2f N\n", 100*F_du_tru, rung_max);
 mprintf(" GĐ1: chọn bộ đạt bền vững có ĐỘ TRÔI VỊ TRÍ nhỏ nhất (giữ thăng bằng tại chỗ)\n");
 

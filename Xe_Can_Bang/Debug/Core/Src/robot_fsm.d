@@ -29,9 +29,9 @@ Core/Src/robot_fsm.o: ../Core/Src/robot_fsm.c ../Core/Inc/robot_fsm.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/motor.h ../Core/Inc/tim.h ../Core/Inc/encoder.h \
- ../Core/Inc/bmi160.h ../Core/Inc/i2c.h ../Core/Inc/filter.h \
- ../Core/Inc/pid.h ../Core/Inc/buzzer_led.h ../Core/Inc/esp32_comm.h \
+ ../Core/Inc/bmi160.h ../Core/Inc/i2c.h ../Core/Inc/buzzer_led.h \
+ ../Core/Inc/encoder.h ../Core/Inc/tim.h ../Core/Inc/esp32_comm.h \
+ ../Core/Inc/filter.h ../Core/Inc/motor.h ../Core/Inc/pid.h \
  ../Core/Inc/tim.h
 ../Core/Inc/robot_fsm.h:
 ../Core/Inc/main.h:
@@ -65,13 +65,13 @@ Core/Src/robot_fsm.o: ../Core/Src/robot_fsm.c ../Core/Inc/robot_fsm.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
-../Core/Inc/motor.h:
-../Core/Inc/tim.h:
-../Core/Inc/encoder.h:
 ../Core/Inc/bmi160.h:
 ../Core/Inc/i2c.h:
-../Core/Inc/filter.h:
-../Core/Inc/pid.h:
 ../Core/Inc/buzzer_led.h:
+../Core/Inc/encoder.h:
+../Core/Inc/tim.h:
 ../Core/Inc/esp32_comm.h:
+../Core/Inc/filter.h:
+../Core/Inc/motor.h:
+../Core/Inc/pid.h:
 ../Core/Inc/tim.h:

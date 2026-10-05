@@ -17,8 +17,8 @@ extern "C" {
 #include <math.h>
 
 /* Thông số mặc định ban đầu */
-#define DEFAULT_KP_ANGLE        98.2f   // Hệ số tỉ lệ vòng góc  (từ mô phỏng GĐ1, wn=16)
-#define DEFAULT_KD_ANGLE        6.82f   // Hệ số vi sai vòng góc
+#define DEFAULT_KP_ANGLE        54.1f   // Hệ số tỉ lệ vòng góc  (mô phỏng GĐ1, wn=12, zeta=1)
+#define DEFAULT_KD_ANGLE        4.02f   // Hệ số vi sai vòng góc
 #define DEFAULT_KP_VELOCITY     4.0f    // Hệ số tỉ lệ vòng vận tốc
 #define DEFAULT_KI_VELOCITY     0.80f   // Hệ số tích phân vòng vận tốc (giữ vị trí)
 
