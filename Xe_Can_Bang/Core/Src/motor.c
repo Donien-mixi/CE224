@@ -35,48 +35,56 @@ void Motor_SetDuty(int16_t pwm_left, int16_t pwm_right)
     if (pwm_right > MOTOR_MAX_PWM)  pwm_right = MOTOR_MAX_PWM;
     if (pwm_right < -MOTOR_MAX_PWM) pwm_right = -MOTOR_MAX_PWM;
 
-    // 2. Điều khiển Động cơ Trái (Kênh 1 & Kênh 2 - Slow Decay)
+    // 2. Điều khiển Động cơ Trái (Kênh 1 & Kênh 2 - Thực sự dùng Slow Decay)
     if (pwm_left > 0)
     {
-        // Quay tiến: IN1 phát xung PWM, IN2 giữ mức 0
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint16_t)pwm_left);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+        // Quay tiến Slow Decay: IN1 = 1 (2499), IN2 = PWM đảo
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, MOTOR_MAX_PWM);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, MOTOR_MAX_PWM - (uint16_t)pwm_left);
     }
     else if (pwm_left < 0)
     {
-        // Quay lùi: IN1 giữ mức 0, IN2 phát xung PWM
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, (uint16_t)(-pwm_left));
+        // Quay lùi Slow Decay: IN1 = PWM đảo, IN2 = 1 (2499)
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, MOTOR_MAX_PWM - (uint16_t)(-pwm_left));
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, MOTOR_MAX_PWM);
     }
     else
     {
-        // Thả trôi / phanh nhẹ: Cả 2 chân giữ mức 0
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+        // Phanh (Brake) - Slow Decay: Cả 2 chân giữ mức 1
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, MOTOR_MAX_PWM);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, MOTOR_MAX_PWM);
     }
 
-    // 3. Điều khiển Động cơ Phải (Kênh 3 & Kênh 4 - Slow Decay)
+    // 3. Điều khiển Động cơ Phải (Kênh 3 & Kênh 4 - Thực sự dùng Slow Decay)
     if (pwm_right > 0)
     {
-        // Quay tiến: IN3 phát xung PWM, IN4 giữ mức 0
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, (uint16_t)pwm_right);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
+        // Quay tiến Slow Decay: IN3 = 1, IN4 = PWM đảo
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, MOTOR_MAX_PWM);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, MOTOR_MAX_PWM - (uint16_t)pwm_right);
     }
     else if (pwm_right < 0)
     {
-        // Quay lùi: IN3 giữ mức 0, IN4 phát xung PWM
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, (uint16_t)(-pwm_right));
+        // Quay lùi Slow Decay: IN3 = PWM đảo, IN4 = 1
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, MOTOR_MAX_PWM - (uint16_t)(-pwm_right));
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, MOTOR_MAX_PWM);
     }
     else
     {
-        // Thả trôi / phanh nhẹ: Cả 2 chân giữ mức 0
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
-        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
+        // Phanh (Brake) - Slow Decay: Cả 2 chân giữ mức 1
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, MOTOR_MAX_PWM);
+        __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, MOTOR_MAX_PWM);
     }
 }
 
 void Motor_Stop(void)
+{
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, MOTOR_MAX_PWM);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, MOTOR_MAX_PWM);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, MOTOR_MAX_PWM);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, MOTOR_MAX_PWM);
+}
+
+void Motor_Coast(void)
 {
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);

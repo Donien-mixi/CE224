@@ -31,6 +31,7 @@
 #include "esp32_comm.h"
 #include "bmi160.h"
 #include "motor.h"
+#include "hardware_test.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -122,16 +123,17 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint32_t last_telemetry_tick = 0;
+
 
   while (1)
   {
     /* 1. Xử lý giải mã lệnh UART từ ESP32-S3 qua DMA buffer
      * CRITICAL: Tắt ngắt TIM4 tạm thời để tránh race condition khi
      * Robot_ControlLoop_200Hz() đọc s_command đang được cập nhật giữa chừng. */
-    __disable_irq();
+    if (!HardwareTest_IsLocked()) __disable_irq();
     ESP32_Comm_Process();
-    __enable_irq();
+    if (!HardwareTest_IsLocked()) __enable_irq();
+    HardwareTest_Service();
 
     /* 2. Xử lý yêu cầu hiệu chuẩn lại IMU từ web ($CALIB) — chạy NGOÀI ngắt 200Hz */
     if (ESP32_Comm_GetCommand()->trigger_calib) {
@@ -143,14 +145,7 @@ int main(void)
     /* 3. Cập nhật hiệu ứng Còi và LED trạng thái (phi phong bế) */
     BuzzerLED_Update(HAL_GetTick());
 
-    /* 4. Gửi gói tin Telemetry lên ESP32-S3 theo chu kỳ 50ms (20Hz) */
-    if (HAL_GetTick() - last_telemetry_tick >= 50) {
-        last_telemetry_tick = HAL_GetTick();
-        Robot_Data_t* r = Robot_GetData();
-        ESP32_Comm_SendTelemetry(r->pitch, r->gyro_rate, r->v_actual, r->v_target,
-                                 r->pwm_left, r->pwm_right, (uint8_t)r->state, r->batt_voltage,
-                                 r->v_left, r->v_right);
-    }
+    Robot_BalanceService();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

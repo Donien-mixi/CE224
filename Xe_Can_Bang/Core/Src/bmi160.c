@@ -15,6 +15,9 @@ static float gyro_bias_x = 0.0f;
 static float gyro_bias_y = 0.0f;
 static float gyro_bias_z = 0.0f;
 static uint8_t s_bmi160_i2c_addr = (0x68 << 1);
+static BMI160_RawData_t s_last_raw;
+static bool calibration_ok;
+bool BMI160_CalibrationOK(void) { return calibration_ok; }
 
 /* Hàm phụ trợ ghi 1 byte vào thanh ghi I2C */
 static bool BMI160_WriteReg(uint8_t reg, uint8_t value)
@@ -91,8 +94,7 @@ bool BMI160_Init(void)
     // Accel: +-8g (Ghi 0x08 vào 0x41)
     BMI160_WriteReg(BMI160_REG_ACC_RANGE, 0x08);
 
-    // 6. Cấu hình ODR 200Hz và bộ lọc số triệt tiêu rung cao tần:
-    // 0x28 = ODR 200Hz (0x08) kết hợp bộ lọc chuẩn Normal (0x20)
+    // 0x28 = ODR 100Hz (0x08), normal bandwidth (0x20).
     BMI160_WriteReg(BMI160_REG_ACC_CONF, 0x28);
     BMI160_WriteReg(BMI160_REG_GYR_CONF, 0x28);
 
@@ -117,6 +119,7 @@ bool BMI160_Read_All(BMI160_Data_t *data)
     int16_t ax_raw = (int16_t)(((uint16_t)raw_buf[7]  << 8) | raw_buf[6]);
     int16_t ay_raw = (int16_t)(((uint16_t)raw_buf[9]  << 8) | raw_buf[8]);
     int16_t az_raw = (int16_t)(((uint16_t)raw_buf[11] << 8) | raw_buf[10]);
+    s_last_raw = (BMI160_RawData_t){gx_raw, gy_raw, gz_raw, ax_raw, ay_raw, az_raw};
 
     // Chuyển đổi sang đơn vị vật lý và trừ giá trị lệch tĩnh Gyro Bias
     data->gx = ((float)gx_raw * BMI160_GYRO_SCALE_2000DPS) - gyro_bias_x;
@@ -132,6 +135,8 @@ bool BMI160_Read_All(BMI160_Data_t *data)
 
 void BMI160_Calibrate_Gyro(uint16_t samples)
 {
+    uint16_t valid = 0;
+    float sq[3]={0}; bool moved=false; calibration_ok=false;
     float sum_x = 0.0f, sum_y = 0.0f, sum_z = 0.0f;
     uint8_t raw[12];
 
@@ -150,13 +155,31 @@ void BMI160_Calibrate_Gyro(uint16_t samples)
             sum_x += (float)gx * BMI160_GYRO_SCALE_2000DPS;
             sum_y += (float)gy * BMI160_GYRO_SCALE_2000DPS;
             sum_z += (float)gz * BMI160_GYRO_SCALE_2000DPS;
+            float rates[3]={gx*BMI160_GYRO_SCALE_2000DPS,gy*BMI160_GYRO_SCALE_2000DPS,gz*BMI160_GYRO_SCALE_2000DPS};
+            for(unsigned j=0;j<3;j++) {sq[j]+=rates[j]*rates[j];if(fabsf(rates[j])>3.0f)moved=true;}
+            valid++;
         }
-        HAL_Delay(5); // Lấy mẫu mỗi 5ms
+        HAL_Delay(10); // ODR 100 Hz: avoid counting the same update twice.
     }
 
-    gyro_bias_x = sum_x / (float)samples;
-    gyro_bias_y = sum_y / (float)samples;
-    gyro_bias_z = sum_z / (float)samples;
+    if (valid) {
+        gyro_bias_x = sum_x / (float)valid;
+        gyro_bias_y = sum_y / (float)valid;
+        gyro_bias_z = sum_z / (float)valid;
+        float means[3]={gyro_bias_x,gyro_bias_y,gyro_bias_z};
+        calibration_ok=valid==samples && samples>=200 && !moved;
+        for(unsigned j=0;j<3;j++) if(sq[j]/valid-means[j]*means[j]>.04f)calibration_ok=false;
+    }
+}
+
+void BMI160_GetLastRaw(BMI160_RawData_t *raw) { *raw = s_last_raw; }
+void BMI160_GetBias(float bias[3]) {
+    bias[0] = gyro_bias_x; bias[1] = gyro_bias_y; bias[2] = gyro_bias_z;
+}
+bool BMI160_GetConfig(uint8_t config[6]) {
+    config[0] = s_bmi160_i2c_addr >> 1;
+    return BMI160_ReadReg(BMI160_REG_CHIP_ID, config + 1, 1) &&
+           BMI160_ReadReg(BMI160_REG_ACC_CONF, config + 2, 4);
 }
 
 void BMI160_Test_Run(void)
@@ -205,7 +228,7 @@ void BMI160_Test_Run(void)
     }
 
     // 3. Khởi tạo chip
-    printf("\r\n[3] Khoi tao BMI160 (ODR 200Hz, Accel +-8g, Gyro +-2000 dps)...\r\n");
+    printf("\r\n[3] Khoi tao BMI160 (ODR 100Hz, Accel +-8g, Gyro +-2000 dps)...\r\n");
     if (BMI160_Init()) {
         printf("  -> [PASS] Khoi tao thanh cong!\r\n");
     } else {

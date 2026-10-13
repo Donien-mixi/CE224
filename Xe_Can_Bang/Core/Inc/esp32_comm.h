@@ -27,6 +27,8 @@ typedef struct {
     uint8_t is_racing;      // 1: Chế độ đua (góc nghiêng tối đa 15 deg), 0: Thường (8 deg)
     uint8_t trigger_calib;  // Cờ yêu cầu hiệu chuẩn IMU
     uint8_t emergency_stop; // Cờ dừng khẩn cấp
+    uint8_t arm_request, diag_request, pulse_request;
+    int8_t pulse_direction;
     uint8_t bench_test;     // 1: Chế độ test quay bánh trực tiếp trên bàn, 0: Cân bằng tự động
     uint32_t last_cmd_time; // Thời điểm nhận gói tin cuối (dùng cho Failsafe timeout)
 } ESP32_Command_t;
@@ -45,6 +47,7 @@ void ESP32_Comm_Process(void);
   * @brief  Xóa/đồng bộ bộ đệm RX (dùng sau khi chạy tác vụ blocking như $CALIB)
   */
 void ESP32_Comm_FlushRx(void);
+bool ESP32_Comm_SendBytes(const void *data, uint16_t length);
 
 /**
   * @brief  Lấy con trỏ cấu trúc lệnh hiện tại

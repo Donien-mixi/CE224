@@ -86,12 +86,16 @@ bool BMI160_Init(void);
   * @retval true nếu đọc thành công, false nếu I2C timeout
   */
 bool BMI160_Read_All(BMI160_Data_t *data);
+void BMI160_GetLastRaw(BMI160_RawData_t *raw);
+bool BMI160_GetConfig(uint8_t config[6]); /* addr, chip_id, ACC_CONF/RANGE, GYR_CONF/RANGE */
+void BMI160_GetBias(float bias[3]);
 
 /**
   * @brief  Hiệu chuẩn bù độ trôi tĩnh con quay hồi chuyển (Zero-rate Bias)
-  * @param  samples: Số mẫu lấy trung bình (khuyến nghị 500 mẫu trong 2.5s khi xe nằm yên)
+  * @param  samples: Read attempts at 100 Hz (500 attempts take about 5 seconds).
   */
 void BMI160_Calibrate_Gyro(uint16_t samples);
+bool BMI160_CalibrationOK(void);
 
 /**
   * @brief  Chạy quy trình kiểm tra toàn diện cảm biến BMI160 trên STM32

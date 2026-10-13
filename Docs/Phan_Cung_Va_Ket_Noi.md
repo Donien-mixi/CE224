@@ -1,3 +1,5 @@
+> Bản bàn giao hiện hành: xem [Phát triển tiếp](Phat_Trien_Tiep.md) và [Thông số xe](Thong_So_Xe_Hien_Tai.md). Một số ví dụ/giá trị trong tài liệu nền tảng này thuộc phiên bản trước; mã nguồn quyết định hành vi firmware hiện tại.
+
 # PHẦN CỨNG & KẾT NỐI HỆ THỐNG — XE CÂN BẰNG 2 BÁNH
 
 Tài liệu hợp nhất toàn bộ thông số kỹ thuật, danh mục linh kiện (BOM), sơ đồ đấu nối chân (Pinout) và bố trí cơ khí 2 tầng cho dự án Xe Cân Bằng 2 Bánh Tốc Độ Cao.
@@ -33,7 +35,7 @@ Tài liệu hợp nhất toàn bộ thông số kỹ thuật, danh mục linh ki
 |  7  | **Board ESP32-S3 N16R8**             |     01     | Gateway không dây: phát Wi-Fi AP, chạy Web HUD điều khiển                   |
 |  8  | **Pin LiPo 3S 11.1V (XT60)**         |     01     | Cấp nguồn động lực 12V cho động cơ qua giắc XT60                          |
 |  9  | **Mạch Buck XL4015 (5A)**           |     01     | Hạ áp từ 12V về 5.0V cấp nguồn cho STM32, ESP32, Buzzer (BMI160 dùng 3.3V từ STM32) |
-| 10 | **Khung Mica 2 tầng + Cọc đồng** |   01 bộ   | 2 tấm mica DIY, 2 gá chữ L (25mm), 4 cọc đồng M3 dài 6cm                    |
+| 10 | **Khung Mica 3 tấm + Cọc đồng** |   01 bộ   | 3 tấm mica 80×200×1.6mm, 2 gá chữ động cơ, 8 cọc đồng M3 dài 55mm                  |
 | 11 | **Còi Buzzer + Công tắc nguồn**  |   01 bộ   | Còi chíp 5V (PB12), công tắc bập bênh ngắt nguồn pin                       |
 
 ---
@@ -126,7 +128,7 @@ Bảng đấu nối chi tiết, không trùng lặp và không xung đột ngo�
 ### 4.4. Mạch công suất Dual A4950
 
 * **Chế độ Slow Decay**: 1 chân cấp PWM 20kHz, chân còn lại nối 0V.
-* **Bù vùng chết ma sát hộp số (Deadband)**: Cộng/trừ $250$ xung vào PWM để thắng lực ma sát tĩnh của hộp số GA25.
+* **Bù vùng chết ma sát hộp số (Deadband)**: Cộng/trừ $240$ xung vào PWM (đo thực tế ở chế độ Slow Decay) để thắng lực ma sát tĩnh của hộp số GA25.
 
 ### 4.5. Gateway không dây ESP32-S3 N16R8
 

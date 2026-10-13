@@ -15,16 +15,21 @@ extern "C" {
 
 #include <stdint.h>
 #include <math.h>
+#include "balance_profile.h"
 
 /* Thông số mặc định ban đầu */
-#define DEFAULT_KP_ANGLE        54.1f   // Hệ số tỉ lệ vòng góc  (mô phỏng GĐ1, wn=12, zeta=1)
-#define DEFAULT_KD_ANGLE        4.02f   // Hệ số vi sai vòng góc
-#define DEFAULT_KP_VELOCITY     4.0f    // Hệ số tỉ lệ vòng vận tốc
-#define DEFAULT_KI_VELOCITY     0.80f   // Hệ số tích phân vòng vận tốc (giữ vị trí)
+#define DEFAULT_KP_ANGLE        BALANCE_KP_ANGLE  // Conditional simulation candidate, not hardware certified.
+#define DEFAULT_KD_ANGLE        BALANCE_KD_ANGLE
+#define DEFAULT_KP_VELOCITY     BALANCE_KP_VELOCITY    // Vòng vận tốc êm ái
+#define DEFAULT_KI_VELOCITY     BALANCE_KI_VELOCITY    // Tích phân
+#define DEFAULT_KP_POSITION     BALANCE_KP_POSITION    // Vòng vị trí mềm mại
+/* Positive PWM rolls forward. With forward-positive control pitch, forward
+ * lean/rate must request positive PWM to catch the chassis. */
+#define PID_ANGLE_OUTPUT_SIGN   (-1.0f)
 
 #define MAX_TILT_NORMAL         8.0f    // Giới hạn góc ngả chế độ thường (độ)
 #define MAX_TILT_RACE           15.0f   // Giới hạn góc ngả chế độ đua (độ)
-#define MAX_INTEGRAL_VELOCITY   10.0f   // Kẹp tích phân chống bão hòa Anti-windup (độ)
+#define MAX_INTEGRAL_VELOCITY   BALANCE_INTEGRAL_LIMIT
 
 typedef struct {
     float Kp;
@@ -37,10 +42,16 @@ typedef struct {
     float integral;
 } PID_Velocity_t;
 
+typedef struct {
+    float Kp;
+} PID_Position_t;
+
 /**
   * @brief  Khởi tạo các tham số PID ban đầu
   */
 void PID_Init(void);
+float PID_GetVelocityIntegral(void);
+void PID_EnableVelocityIntegration(uint8_t enabled);
 
 /**
   * @brief  Cập nhật tham số PID trực tiếp từ lệnh tune ($PID,kp1,kd1,kp2,ki2*)
@@ -57,6 +68,14 @@ void PID_SetTrim(float trim);
   * @brief  Lấy góc bù trọng tâm hiện tại (độ)
   */
 float PID_GetTrim(void);
+
+/**
+  * @brief  Tính toán vòng ngoài cùng (Position Loop P) sinh ra vận tốc đặt
+  * @param  target_pos: Vị trí đặt (m)
+  * @param  actual_pos: Vị trí đo từ Encoder (m)
+  * @retval Vận tốc đặt v_target (m/s)
+  */
+float PID_Position_Compute(float target_pos, float actual_pos);
 
 /**
   * @brief  Tính toán vòng ngoài (Velocity Loop PI) sinh ra góc nghiêng đặt

@@ -1,46 +1,39 @@
-# DỰ ÁN XE HAI BÁNH TỰ CÂN BẰNG TỐC ĐỘ CAO (TWIP ROBOT)
-### Môn học: Thiết Kế Hệ Thống Nhúng (CE224) — ĐH Công Nghệ Thông Tin (UIT)
+# Xe hai bánh tự cân bằng — CE224
 
----
+Đồ án STM32F411 + ESP32-S3. Nhánh `main` chứa mã nguồn và tài liệu để nhóm tự build, vận hành và phát triển tiếp; không cần log hoặc bản build trên máy người viết.
 
-## 📂 CẤU TRÚC THƯ MỤC DỰ ÁN
+## Bắt đầu
 
-Toàn bộ dự án được tổ chức thành 3 phân vùng độc lập, rõ ràng và chuẩn mực công nghiệp:
+1. **STM32:** mở STM32CubeIDE → File → Import → Existing Projects into Workspace → chọn `Xe_Can_Bang`. Build cấu hình Debug rồi nạp qua ST-Link. `Debug/` sẽ được IDE tạo lại; không dùng thư mục gốc repo làm workspace. Đã build với CubeIDE 2.1.1.
+2. **ESP32:** mở `ESP32_S3_Gateway/ESP32_S3_Gateway.ino` bằng Arduino IDE, cài ESP32 core và WebSockets. Cấu hình ESP32-S3 N16R8/OPI PSRAM theo [hướng dẫn gateway](ESP32_S3_Gateway/README.md). Đã build với ESP32 core 3.3.11 và WebSockets 2.7.2.
+3. **Web:** kết nối Wi-Fi `TWIP_RACER_S3`, mật khẩu `12345678`, mở `http://192.168.4.1`. Firmware không tự chạy motor khi cấp nguồn. Chọn thử bánh khi kê cao, hoặc cân bằng khi bánh đã trên nền.
+4. **Mô phỏng:** mở Scilab/SciNotes và Execute `robot_can_bang_pid_1.sce`. Xem [hướng dẫn mô phỏng](Simulation/README.md). Không cần Python, DLL hoặc dữ liệu test cũ.
 
-```
-d:\DA_HTN\
-│
-├── 📁 Docs/                     # Toàn bộ tài liệu kỹ thuật của đồ án
-│   ├── Phan_Cung_Va_Ket_Noi.md  # Phần cứng, danh mục linh kiện (BOM), ma trận Pinout, bố trí 2 tầng
-│   ├── Thuat_Toan_Dieu_Khien.md # Động lực học TWIP, bộ lọc bù, Cascade PID & mã nguồn C 200Hz
-│   ├── Roadmap_Do_An.md         # Roadmap 2 giai đoạn: tự cân bằng & điều hướng web, quy trình tune PID
-│   └── linh kiện hệ thống nhúng.xlsx # File bảng tính dự trù chi phí & thông số
-│
-├── 📁 Xe_Can_Bang/              # Firmware điều khiển thời gian thực STM32F411 (Cortex-M4F)
-│   ├── Xe_Can_Bang.ioc          # File cấu hình STM32CubeMX gốc
-│   ├── Core/
-│   │   ├── Inc/                 # Header ngoại vi CubeMX và Header Driver linh kiện
-│   │   │   ├── motor.h          # Driver Dual A4950 (PWM 20kHz Center-aligned)
-│   │   │   ├── encoder.h        # Driver Hall Encoder x4 (TIM2 + TIM3)
-│   │   │   ├── bmi160.h         # Driver cảm biến IMU Bosch 6 trục (I2C1 Fast Mode 400kHz)
-│   │   │   ├── filter.h         # Complementary Filter ước lượng góc Pitch
-│   │   │   ├── pid.h            # Bộ điều khiển Cascade PID 2 vòng + Deadband
-│   │   │   ├── esp32_comm.h     # Giao tiếp UART1 DMA Circular với ESP32-S3
-│   │   │   ├── buzzer_led.h     # Điều khiển Còi PB12 và LED PC13 phi phong bế
-│   │   │   └── robot_fsm.h      # Máy trạng thái hữu hạn FSM & ngắt cứng 200Hz (5ms)
-│   │   └── Src/                 # Hiện thực mã nguồn C của các module tương ứng
-│   └── Drivers/                 # STM32 HAL Driver và CMSIS Cortex-M4
-│
-└── 📁 ESP32_S3_Gateway/         # Firmware Gateway Không dây ESP32-S3 N16R8 (Arduino IDE)
-    ├── ESP32_S3_Gateway.ino     # Cầu nối Wi-Fi SoftAP, WebSockets Server và Hardware Serial1
-    ├── index_html.h             # Giao diện Cyber Dark HUD nhúng trực tiếp trong Flash
-    └── README.md                # Hướng dẫn cài thư viện, nạp code và vận hành qua Web
-```
+## Mã nguồn và tài liệu
 
----
+| Đường dẫn | Mục đích |
+|---|---|
+| `Xe_Can_Bang/Core` | Driver, lọc IMU, PID, FSM, giao tiếp và bài đo linh kiện |
+| `Xe_Can_Bang/Drivers` | HAL/CMSIS kèm giấy phép; cần cho build STM32 |
+| `Xe_Can_Bang/.project`, `.cproject`, `.ioc`, linker scripts | Import/build bằng CubeIDE và cấu hình CubeMX |
+| `ESP32_S3_Gateway` | Gateway Wi-Fi/UART, web vận hành, đo linh kiện và tải log |
+| `Simulation/model` | Phương trình cơ khí, cảm biến và điều khiển |
+| `Simulation/config` | Bộ thông số và cấu hình lượt mô phỏng nhóm có thể chỉnh |
+| `Simulation/scripts/run_team.sce` | Điểm chạy mô phỏng độc lập với dữ liệu cá nhân |
+| `Simulation/tools` | Mã C tăng tốc tùy chọn và script biên dịch thư viện |
+| `Docs/Phat_Trien_Tiep.md` | Trạng thái hiện hành, vị trí sửa code và giao thức |
+| `Docs/Thong_So_Xe_Hien_Tai.md` | Tổng hợp thông số mô hình và những phần còn giả định |
+| `Docs/Phan_Cung_Va_Ket_Noi.md`, `Huong_Dan_Di_Day_Toan_Bo_He_Thong.md` | Phần cứng, đấu nối |
+| `Docs/Roadmap_Do_An.md`, `Docs/Thuat_Toan_Dieu_Khien.md` | Mục tiêu và nền tảng thuật toán |
 
-## ⚡ HƯỚNG DẪN KHỞI CHẠY NHANH
+## Trạng thái bàn giao
 
-1. **Firmware STM32**: Mở thư mục `Xe_Can_Bang/` bằng **STM32CubeIDE**. Cắm mạch nạp **ST-Link V2** vào 4 chân `3.3V`, `GND`, `SWDIO (PA13)`, `SWCLK (PA14)` của Black Pill *(không cần bấm BOOT0, không cần rút dây PA11)*, rồi nhấn **Run/Debug** để build và nạp (`0 errors, 0 warnings`).
-2. **Firmware ESP32-S3**: Mở file `ESP32_S3_Gateway/ESP32_S3_Gateway.ino` bằng **Arduino IDE**, cài thư viện `WebSockets` của Markus Sattler, chọn Board `ESP32S3 Dev Module` và nạp vào board.
-3. **Điều Khiển & Tuning PID**: Kết nối Wi-Fi `TWIP_RACER_S3` (mật khẩu `12345678`), mở trình duyệt truy cập `http://192.168.4.1`. Dùng **chế độ Test Bàn** để quay thử 2 bánh, chọn tốc độ bằng thanh trượt rồi **giữ nút TIẾN/LÙI** (hoặc phím `W`/`S`) để xe chạy, theo dõi bảng Telemetry, chẩn đoán FSM, tinh chỉnh trực tiếp tham số PID và bấm **XUẤT FILE TXT** sau mỗi lượt chạy để tải log đo đạc về máy tính/điện thoại.
+Mã firmware hiện hành là **BAL-20261012-R10S1**; web **TWIP-WEB-20261012-BAL-R10S1**. R10S1 giữ vòng cân bằng R10, thay điều kiện bắt đầu và lưu thêm dữ liệu trước ARM. R10 từng có lượt tự cân bằng khoảng165 giây, nhưng vẫn có trôi và quay; R10S1 chưa được xác nhận tốt hơn trên xe. Đây chưa phải bản nghiệm thu tự cân bằng ổn định.
+
+PID nền `[48, 3.6, 32, 0.5, 0.3]`; giá trị firmware chính thức nằm trong `Xe_Can_Bang/Core/Inc/balance_profile.h`. Mô phỏng không tự sửa hoặc nạp firmware. Nhóm có thể thay phương pháp điều khiển, hiệu chuẩn và điều kiện thử theo mục tiêu của mình; không bắt buộc tiếp tục quy trình tuning trước đây.
+
+## Dữ liệu không đưa lên Git
+
+Không commit workspace `.metadata`, thư mục build `Debug/Release/.build`, binary, log xe, ảnh/báo cáo/kết quả mô phỏng và lịch sử thử nghiệm. Các file này được giữ tại máy thực nghiệm; lần chạy mới tự sinh lại đầu ra. `.gitignore` đã khai báo các nhóm đó.
+
+Các tài liệu thiết kế gốc có một số con số/đoạn mô tả từ phiên bản trước. Khi đối chiếu cách firmware hiện hành hoạt động, dùng mã nguồn và `Docs/Phat_Trien_Tiep.md`; không xem các ví dụ PID trong tài liệu thuật toán là thông số đang nạp.

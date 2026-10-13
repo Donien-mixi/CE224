@@ -1,3 +1,5 @@
+> Bản bàn giao hiện hành: xem [Phát triển tiếp](Phat_Trien_Tiep.md) và [Thông số xe](Thong_So_Xe_Hien_Tai.md). Một số ví dụ/giá trị trong tài liệu nền tảng này thuộc phiên bản trước; mã nguồn quyết định hành vi firmware hiện tại.
+
 # THUẬT TOÁN ĐIỀU KHIỂN & MÃ NGUỒN — XE CÂN BẰNG 2 BÁNH (TWIP ROBOT)
 
 > **Tài liệu hợp nhất** mô tả mô hình toán học con lắc ngược (TWIP), bộ lọc bù góc nghiêng,
@@ -60,19 +62,28 @@ triệt tiêu độ trễ và độ trôi góc.
 
 ---
 
-## 3. CẤU TRÚC CASCADE PID 2 VÒNG LỒNG NHAU
+## 3. CẤU TRÚC CASCADE PID 3 VÒNG LỒNG NHAU
+
+Giải thuật đã được nâng cấp lên 3 vòng (Cách 1) để giải quyết triệt để hiện tượng trôi vị trí (drift) khi xe cần đứng yên tuyệt đối.
 
 ```mermaid
 flowchart LR
-    subgraph VelLoop ["VÒNG NGOÀI: VẬN TỐC (PI @ 200Hz)"]
-        V_tgt["V_target"] --> Sub_V(( - ))
+    subgraph PosLoop ["VÒNG 1: VỊ TRÍ (P @ 200Hz)"]
+        X_tgt["X_target"] --> Sub_X(( - ))
+        X_act["X_actual"] --> Sub_X
+        Sub_X -->|e_x| P_X["Kp_pos * e_x"]
+        P_X --> Clamp_V["V_target: ±1.5 m/s"]
+    end
+
+    subgraph VelLoop ["VÒNG 2: VẬN TỐC (PI @ 200Hz)"]
+        Clamp_V --> Sub_V(( - ))
         V_act["V_actual"] --> Sub_V
         Sub_V -->|e_v| PI_V["Kp2 * e_v + Ki2 * ∫e_v"]
         PI_V --> AntiWind["Anti-windup (±10°)"]
         AntiWind --> Clamp_Th["Góc đặt: ±8° (thường) / ±15° (đua)"]
     end
 
-    subgraph AngLoop ["VÒNG TRONG: GÓC NGHIÊNG (PD @ 200Hz)"]
+    subgraph AngLoop ["VÒNG 3: GÓC NGHIÊNG (PD @ 200Hz)"]
         Clamp_Th -->|Theta_target| Sub_A(( - ))
         Th_act["Theta_actual"] --> Sub_A
         Sub_A -->|e_th| P_A["Kp1 * e_th"]
@@ -80,11 +91,13 @@ flowchart LR
         P_A & D_A --> Sum_PWM(( + ))
         Sum_PWM -->|PWM_Base| Mix["Bộ trộn kênh"]
     end
+    
+    PosLoop -. "Chỉ bật khi v_tgt=0 & steer=0" .-> VelLoop
 
     subgraph NonLinear ["BÙ PHI TUYẾN & CHẤP HÀNH"]
         Steer["Lệnh bẻ lái"] --> Steer_Adapt["Suy giảm: 1 / (1 + 1.2*|v|)"]
         Steer_Adapt -->|± Diff_PWM| Mix
-        Mix --> Deadband["Bù vùng chết: ±250 xung"]
+        Mix --> Deadband["Bù vùng chết: ±240 xung"]
         Deadband --> Output["Xuất TIM1 PWM -> Dual A4950"]
     end
 ```
@@ -102,9 +115,9 @@ $$
   để triệt tiêu hiện tượng *Derivative Kick* và khử nhiễu vi phân số.
 * *Không dùng khâu $K_i$ ở vòng góc* để tránh trễ pha $90^\circ$ làm mất ổn định hệ con lắc ngược.
 
-### 3.2. Vòng Ngoài — Điều khiển Vận tốc (Velocity Loop PI)
+### 3.2. Vòng Giữa — Điều khiển Vận tốc (Velocity Loop PI)
 
-Đảm bảo xe chạy theo tốc độ mong muốn hoặc đứng yên tại chỗ không trôi:
+Đảm bảo xe chạy theo tốc độ mong muốn hoặc phản hồi lại sai lệch vị trí:
 
 $$
 e_v[k] = v_{\text{target}}[k] - v_{\text{actual}}[k]
@@ -119,14 +132,30 @@ $$
 $$
 
 * **Vai trò của khâu $I_v$**: Tự động học điểm cân bằng tĩnh thực tế ($\theta_{\text{trim}}$),
-  bù trừ sai số trọng tâm cơ khí (lệch vị trí pin, dây điện) để xe đứng bất động tại chỗ.
+  bù trừ sai số trọng tâm cơ khí (lệch vị trí pin, dây điện).
 * **Bù trọng tâm tường minh $\theta_{\text{trim}}$** (biến `s_pitch_trim` trong `pid.c`, lệnh `$TRIM,value*`):
   được cộng vào sai số góc ở vòng trong: $e_\theta = (\theta_{\text{target}} + \theta_{\text{trim}}) - \theta_{\text{actual}}$.
 * **Giới hạn góc nghiêng $\theta_{\max}$**:
   * Chế độ thường: $\theta_{\max} = \pm 8.0^\circ$.
   * Chế độ đua (Racing Mode): $\theta_{\max} = \pm 15.0^\circ$ (tạo gia tốc cực đại $a_x \approx 2.6\text{ m/s}^2$).
 
-### 3.3. Bù Phi Tuyến Thực Tế
+### 3.3. Vòng Ngoài Cùng — Điều khiển Vị trí (Position Loop P)
+
+Được tự động kích hoạt ở **Chế độ 1 (Đứng yên)** khi không có lệnh điều hướng từ Web (`v_target = 0` và `steer_cmd = 0`).
+
+$$
+e_x[k] = x_{\text{target}}[k] - x_{\text{actual}}[k]
+$$
+
+$$
+v_{\text{target}}[k] = K_{p\_pos} \cdot e_x[k]
+$$
+
+* **Vấn đề**: Vòng PI vận tốc 2 vòng truyền thống bị lỗi khi vận tốc đạt 0, khâu Tích phân ($I_v$) sẽ không còn "nhớ" tọa độ gốc ($x=0$), dẫn tới xe bị trôi hàng chục mét do nhiễu hoặc sai số góc tĩnh.
+* **Giải pháp**: Dùng thêm 1 vòng P vị trí đo khoảng cách tịnh tiến thực tế ($x_{\text{actual}}$ tích phân từ $v_{\text{actual}}$) để tạo vận tốc bù trừ ($v_{\text{target}}$) ép xe quay đúng về vị trí ban đầu.
+* Khâu này được bỏ qua khi người dùng điều khiển xe chạy qua Web, nhường toàn quyền `v_target` cho Joystick.
+
+### 3.4. Bù Phi Tuyến Thực Tế
 
 1. **Bù lái thích ứng theo vận tốc (Speed-Adaptive Steering)**:
    $$
@@ -143,7 +172,7 @@ $$
    0, & \text{khi } -1 \le u \le 1
    \end{cases}
    $$
-   Với $\text{DEADBAND} = 250$ (trên thang $2499$). Giúp động cơ GA25 vượt qua lực ma sát tĩnh của
+   Với $\text{DEADBAND} = 240$ (trên thang $2499$, đo thực tế ở chế độ Slow Decay). Giúp động cơ GA25 vượt qua lực ma sát tĩnh của
    hộp số 21.3:1 ngay khi có sai số góc nhỏ, triệt tiêu hiện tượng xe đứng trơ khi nghiêng nhẹ.
 
 ### 3.4. Khóa Hướng Chạy Thẳng Bằng Con Quay Hồi Chuyển (Yaw Lock Stabilization)
@@ -246,8 +275,8 @@ BuzzerLED_Init() → Motor_Init() → Motor_Stop() → Encoder_Init() → PID_In
 ## 5. MÃ NGUỒN C HIỆN THỰC THỜI GIAN THỰC (200Hz)
 
 Toàn bộ thuật toán được thực thi trong hàm `Robot_ControlLoop_200Hz()` tại file
-[`robot_fsm.c`](file:///d:/DA_HTN/Xe_Can_Bang/Core/Src/robot_fsm.c),
-được gọi từ ngắt cứng TIM4 (chu kỳ 5ms) trong [`main.c`](file:///d:/DA_HTN/Xe_Can_Bang/Core/Src/main.c):
+[`robot_fsm.c`](../Xe_Can_Bang/Core/Src/robot_fsm.c),
+được gọi từ ngắt cứng TIM4 (chu kỳ 5ms) trong [`main.c`](../Xe_Can_Bang/Core/Src/main.c):
 
 ```c
 void Robot_ControlLoop_200Hz(void)
@@ -363,8 +392,22 @@ void Robot_ControlLoop_200Hz(void)
     if (s_robot.state == ROBOT_STATE_BALANCING || s_robot.state == ROBOT_STATE_RACING) {
         uint8_t is_race = (s_robot.state == ROBOT_STATE_RACING) ? 1 : 0;
 
-        // Vòng ngoài PI: Vận tốc -> Theta_target
-        float theta_target = PID_Velocity_Compute(s_robot.v_target, s_robot.v_actual, is_race, 0.005f);
+        float final_v_target = s_robot.v_target;
+
+        /* Chế độ 1: Tự động giữ vị trí nếu không có lệnh điều hướng từ Web */
+        if (s_robot.v_target == 0.0f && s_robot.steer_cmd == 0.0f) {
+            // Tích phân vận tốc để ra vị trí thực tế
+            s_robot.x_actual += s_robot.v_actual * 0.005f;
+            // Vòng ngoài cùng P: Vị trí -> V_target bù trừ
+            final_v_target = PID_Position_Compute(s_robot.x_target, s_robot.x_actual);
+        } else {
+            // Chế độ 2: Chạy theo Web, cập nhật lại x_target để khi nhả cần xe đứng tại chỗ mới
+            s_robot.x_actual += s_robot.v_actual * 0.005f;
+            s_robot.x_target = s_robot.x_actual;
+        }
+
+        // Vòng giữa PI: Vận tốc -> Theta_target
+        float theta_target = PID_Velocity_Compute(final_v_target, s_robot.v_actual, is_race, 0.005f);
 
         // Vòng trong PD: Góc nghiêng -> Base PWM
         float pwm_base = PID_Angle_Compute(theta_target, s_robot.pitch, s_robot.gyro_rate);
@@ -453,14 +496,15 @@ Giá trị thực tế đang nạp trong mã nguồn (làm mốc để tune theo
 
 | Tham số | Giá trị | Định nghĩa | File |
 | :-- | :--: | :-- | :-- |
-| `DEFAULT_KP_ANGLE` | 98.2 | Tỉ lệ vòng góc $K_{p1}$ | `pid.h` |
-| `DEFAULT_KD_ANGLE` | 6.82 | Vi phân vòng góc $K_{d1}$ | `pid.h` |
-| `DEFAULT_KP_VELOCITY` | 4.0 | Tỉ lệ vòng vận tốc $K_{p2}$ | `pid.h` |
+| `DEFAULT_KP_ANGLE` | 126.6 | Tỉ lệ vòng góc $K_{p1}$ | `pid.h` |
+| `DEFAULT_KD_ANGLE` | 9.66 | Vi phân vòng góc $K_{d1}$ | `pid.h` |
+| `DEFAULT_KP_VELOCITY` | 2.5 | Tỉ lệ vòng vận tốc $K_{p2}$ | `pid.h` |
 | `DEFAULT_KI_VELOCITY` | 0.80 | Tích phân vòng vận tốc $K_{i2}$ | `pid.h` |
+| `DEFAULT_KP_POSITION` | 0.6 | Tỉ lệ vòng vị trí $K_{p\_pos}$ | `pid.h` |
 | `MAX_TILT_NORMAL` | 8.0° | Giới hạn góc ngả chế độ thường | `pid.h` |
 | `MAX_TILT_RACE` | 15.0° | Giới hạn góc ngả chế độ đua | `pid.h` |
 | `MAX_INTEGRAL_VELOCITY` | 10.0° | Kẹp anti-windup tích phân vận tốc | `pid.h` |
-| `MOTOR_DEADBAND` | 250 | Bù vùng chết ma sát hộp số | `motor.h` |
+| `MOTOR_DEADBAND_L/R` | 240 | Bù vùng chết ma sát hộp số (đo thực tế Slow Decay) | `motor.h` |
 | `MOTOR_MAX_PWM` | 2499 | Biên PWM cực đại (ARR TIM1) | `motor.h` |
 | `COMP_FILTER_ALPHA` | 0.98 | Hệ số bộ lọc bù | `filter.h` |
 | `ENCODER_LPF_BETA` | 0.75 | Hệ số lọc thông thấp vận tốc | `encoder.h` |

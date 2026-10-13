@@ -1,7 +1,0 @@
-../Core/Src/esp32_comm.c:35:6:ESP32_Comm_Init	1
-../Core/Src/esp32_comm.c:57:6:HAL_UART_ErrorCallback	2
-../Core/Src/esp32_comm.c:70:13:Parse_Packet	13
-../Core/Src/esp32_comm.c:107:6:ESP32_Comm_Process	14
-../Core/Src/esp32_comm.c:172:6:ESP32_Comm_FlushRx	3
-../Core/Src/esp32_comm.c:186:18:ESP32_Comm_GetCommand	1
-../Core/Src/esp32_comm.c:191:6:ESP32_Comm_SendTelemetry	5

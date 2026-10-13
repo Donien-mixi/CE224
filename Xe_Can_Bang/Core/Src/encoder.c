@@ -90,3 +90,9 @@ float Encoder_GetAverageVelocity(void)
 {
     return (enc_left.velocity_filtered + enc_right.velocity_filtered) * 0.5f;
 }
+
+void Encoder_GetHardwareTicks(int32_t *left, int32_t *right)
+{
+    *left = enc_left.total_ticks;
+    *right = -enc_right.total_ticks;
+}

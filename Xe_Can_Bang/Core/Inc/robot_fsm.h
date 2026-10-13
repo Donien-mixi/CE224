@@ -27,12 +27,17 @@ typedef enum {
     ROBOT_STATE_EMERGENCY,      // Lỗi khẩn cấp (I2C đứt, quá dòng, mất cảm biến)
     ROBOT_STATE_BENCH_TEST = 7  // Chế độ thử nghiệm quay động cơ trực tiếp trên bàn
 } Robot_State_t;
+#define ROBOT_STATE_DIAGNOSTIC ((Robot_State_t)8)
+#define ROBOT_STATE_TEST_DONE ((Robot_State_t)9)
+#define ROBOT_STATE_TEST_ABORTED ((Robot_State_t)10)
 
 /* Cấu trúc dữ liệu trạng thái toàn cục của robot */
 typedef struct {
     Robot_State_t state;
     float   pitch;              // Góc nghiêng Pitch hiện tại (độ)
     float   gyro_rate;          // Vận tốc góc Pitch (deg/s)
+    float   x_actual;           // Vị trí thực tế tịnh tiến (m)
+    float   x_target;           // Vị trí đặt mục tiêu (m)
     float   v_actual;           // Vận tốc tịnh tiến thực tế trung bình (m/s)
     float   v_left;             // Vận tốc thực tế bánh trái (m/s)
     float   v_right;            // Vận tốc thực tế bánh phải (m/s)
@@ -40,6 +45,9 @@ typedef struct {
     float   steer_cmd;          // Lực rẽ
     int16_t pwm_left;           // PWM bánh trái (-2499 đến +2499)
     int16_t pwm_right;          // PWM bánh phải (-2499 đến +2499)
+    uint16_t fault;
+    uint8_t ready;
+    float v_control, theta_control, pwm_base;
     float   batt_voltage;       // Điện áp pin ước tính hoặc đo qua ADC (V)
     uint32_t loop_count;        // Đếm chu kỳ 200Hz
 } Robot_Data_t;
@@ -48,6 +56,7 @@ typedef struct {
   * @brief  Khởi tạo toàn bộ hệ thống robot, cảm biến, thuật toán
   */
 void Robot_Init(void);
+void Robot_BalanceService(void);
 
 /**
   * @brief  Hiệu chuẩn lại Gyro Bias + khởi tạo lại bộ lọc khi nhận lệnh $CALIB

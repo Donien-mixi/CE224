@@ -3,7 +3,7 @@
   * @file    encoder.h
   * @brief   Driver đọc phản hồi vị trí và vận tốc từ 2 Hall Encoder động cơ GA25.
   *          Sử dụng Timer 2 (Bánh Trái) và Timer 3 (Bánh Phải) ở Mode TI12 (x4).
-  *          Độ phân giải: 11 × 21.3 × 4 ≈ 937 xung/vòng bánh xe (GA25-370 hộp số 21.3:1), bánh 65mm.
+  *          Độ phân giải: Đã đo: L898.45, R898.00 xung/vòng bánh xe (GA25-370 hộp số 21.3:1), bánh 65mm.
   ******************************************************************************
   */
 
@@ -18,9 +18,10 @@ extern "C" {
 #include "main.h"
 #include "tim.h"
 #include <stdint.h>
+#include "balance_profile.h"
 
 /* Defines -------------------------------------------------------------------*/
-#define ENCODER_PPR                 937.2f          // 11 xung/kênh/vòng motor * 21.3 (hộp số) * 4 cạnh
+#define ENCODER_PPR                 BALANCE_PPR      // Measured 10 wheel turns: L898.45, R898.00; same mean as model.
 #define WHEEL_DIAMETER_M            0.065f          // Đường kính bánh xe cao su (65mm = 0.065m)
 #define WHEEL_CIRCUMFERENCE_M       0.204203522f    // Chu vi bánh: PI * D = 3.14159265 * 0.065
 #define METERS_PER_TICK             (WHEEL_CIRCUMFERENCE_M / ENCODER_PPR) // ~0.0002179m/xung
@@ -61,6 +62,7 @@ float Encoder_GetRightVelocity(void);
   * @brief  Lấy vận tốc tịnh tiến trung bình của robot (m/s)
   */
 float Encoder_GetAverageVelocity(void);
+void Encoder_GetHardwareTicks(int32_t *left, int32_t *right);
 
 /**
   * @brief  Reset biến đếm và thanh ghi Encoder về 0

@@ -1,3 +1,5 @@
+> Bản bàn giao hiện hành: xem [Phát triển tiếp](Phat_Trien_Tiep.md) và [Thông số xe](Thong_So_Xe_Hien_Tai.md). Một số ví dụ/giá trị trong tài liệu nền tảng này thuộc phiên bản trước; mã nguồn quyết định hành vi firmware hiện tại.
+
 # ROADMAP THỰC THI ĐỒ ÁN — XE CÂN BẰNG HAI BÁNH (TWIP ROBOT)
 
 > **Phạm vi tài liệu:** Roadmap **phần mềm, phương pháp & quản trị** để đưa xe hoạt động tốt qua **2 giai đoạn lớn**:
@@ -80,7 +82,7 @@ Toàn bộ roadmap dưới đây là phần **còn thiếu** để xe *hoạt đ
 | **Câu hỏi**      | *"Xe có tự đứng và tự hồi khi bị tác động không?"* | *"Xe có chạy/bẻ lái mà không ngã không?"*  |
 | **Mục tiêu**     | Tự cân bằng + chống nhiễu tại chỗ                         | Điều hướng web + vừa chạy vừa cân bằng      |
 | **Đầu vào**     | Nền tảng đã xong (mục 0)                                    | Đạt**GATE 1**                                |
-| **Lõi thực thi** | Tune vòng Góc PD + Vòng Vận tốc giữ vị trí               | Tune Vòng Vận tốc bám tốc độ + bù lái + Yaw |
+| **Lõi thực thi** | Tune vòng Góc PD + Vòng Vị trí P giữ vị trí               | Tune Vòng Vận tốc bám tốc độ + bù lái + Yaw |
 | **Trạng thái**   | Khung xong,**chưa tune & nghiệm thu**                    | Khung xong,**chưa thực thi**                 |
 
 ```
@@ -111,15 +113,20 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 ### 2.2. Kiến trúc điều khiển GĐ1
 
 ```
-  Encoder v_actual ──┐   ┌──────── VÒNG NGOÀI: GIỮ VỊ TRÍ (PI) ────────┐
-                     └──►│ e_v = 0 − v_actual                          │
+  Encoder x_actual ──┐   ┌──────── VÒNG 1: GIỮ VỊ TRÍ (P) ─────────────┐
+                     └──►│ e_x = x_target − x_actual                   │
+                         │ v_target = Kp_pos · e_x                     │
+                         └───────────────────────┬─────────────────────┘
+                                                 ▼
+  Encoder v_actual ──┐   ┌──────── VÒNG 2: VẬN TỐC (PI) ───────────────┐
+                     └──►│ e_v = v_target − v_actual                   │
   Gyro ω ─────────────┐  │ θ_target = clamp(Kp2·e_v + ∫Ki2·e_v·dt, ±8°)│
   θ_actual (Filter) ──┼─►└───────────────────────┬─────────────────────┘
                       │                          ▼
-                      │  ┌──────── VÒNG TRONG: GIỮ GÓC (PD) ─────────┐
+                      │  ┌──────── VÒNG 3: GIỮ GÓC (PD) ───────────────┐
                       └─►│ e_θ = (θ_target + θ_trim) − θ_actual       │
                          │ PWM_base = Kp1·e_θ − Kd1·ω_gyro             │
-                         └───────────────────────┬────────────────────┘
+                         └───────────────────────┬─────────────────────┘
                                                  ▼
                          Bù Deadband ±250 · clamp ±2499 · Motor_SetDuty() (steer = 0)
 ```
@@ -136,7 +143,7 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 | **2** | **Tune `Kd1`** (giảm chấn): tăng `3.0 → 8.5` dập rung; tinh chỉnh `Kp1 ↔ Kd1` 2–3 lượt                                                                                                                           | Buông tay xe tự đứng (còn trôi)            |
 | **3** | **Chốt `MOTOR_DEADBAND`**: nghiêng ~0.5° xem bánh có nhích; "trơ" thì tăng `250 → 300`, giật cục thì giảm                                                                                                      | Phản hồi tức thì, không giật               |
 | **4** | **Chốt `θ_trim`**: dùng nút `±0.1° / ±0.02°` trên web gửi `$TRIM,value*` để triệt xu hướng trôi một phía                                                                                                 | Trôi một phía giảm hẳn                      |
-| **5** | **Bật vòng vận tốc PI giữ vị trí** (`v_target = 0`): tăng `Kp2` (`1.0 → 2.5`) và `Ki2` (`0.05 → 0.20`) để xe tự học góc bù và đứng bất động                                                     | Đẩy nhẹ, xe tự quay về vị trí cũ         |
+| **5** | **Bật vòng Vận tốc (PI) và Vị trí (P)**: tăng `Kp2` (`1.0 → 2.5`) và `Ki2` (`0.05 → 0.20`), sau đó tăng `Kp_pos` (`0.5 → 2.0`) để xe tự học góc bù và đứng bất động tuyệt đối | Đẩy nhẹ, xe tự quay về vị trí cũ (không trôi) |
 | **6** | **An toàn & Failsafe**: ngã > 45° cắt PWM + còi; dựng lại tự về BALANCING; rút UART 1.0s ga/lái về 0                                                                                                                 | Không rung giật, không EMERGENCY              |
 
 ### 2.4. Thông số GĐ1 & khoảng tune
@@ -147,6 +154,7 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 | `Kd1`                   | Vi phân vòng góc | **6.82**    |    3.0 → 9.0    | `pid.h:21`        |
 | `Kp2`                   | Tỉ lệ vòng vận tốc | **4.0**    |    1.0 → 3.0    | `pid.h:22`        |
 | `Ki2`                   | Tích phân vòng vận tốc | **0.80**    |   0.05 → 0.25   | `pid.h:23`        |
+| `Kp_pos`                | Tỉ lệ vòng vị trí | **1.5**     |   0.5 → 2.5     | `pid.h:24`        |
 | `MAX_TILT_NORMAL`       | Góc ngả đặt tối đa (thường) |   **8.0°**   |    cố định    | `pid.h:25`        |
 | `MAX_INTEGRAL_VELOCITY` | Kẹp anti-windup                    |   **10.0°**   |      xem 4.1      | `pid.h:27`        |
 | `MOTOR_DEADBAND`        | Bù ma sát hộp số                |    **250**    |    200 → 300    | `motor.h:24`      |
@@ -200,15 +208,18 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
   Web HUD ──ws──► ESP32-S3 ──UART1──► STM32
     ▲                ▲                  │
     │  $TEL 20Hz     │                  ▼
-    └────────────────┘   ┌──────── VÒNG NGOÀI: BÁM VẬN TỐC (PI) ────────┐
-                         │ e_v = v_target − v_actual                    │
-                         │ θ_target = clamp(Kp2·e_v + ∫Ki2·e_v·dt,     │
-                         │            ±8° thường / ±15° đua)           │
+    └────────────────┘   [VÒNG 1: VỊ TRÍ (P) BỊ VÔ HIỆU HÓA KHI ĐIỀU HƯỚNG]
+                                        │ v_target = lệnh từ Web
+                                        ▼
+                         ┌──────── VÒNG 2: BÁM VẬN TỐC (PI) ───────────┐
+                         │ e_v = v_target − v_actual                   │
+                         │ θ_target = clamp(Kp2·e_v + ∫Ki2·e_v·dt,    │
+                         │            ±8° thường / ±15° đua)          │
                          └───────────────────────┬─────────────────────┘
                                                  ▼
-                         ┌──────── VÒNG TRONG: GÓC (PD) ───────────────┐
-                         │ e_θ = (θ_target + θ_trim) − θ_actual        │
-                         │ PWM_base = Kp1·e_θ − Kd1·ω_gyro             │
+                         ┌──────── VÒNG 3: GÓC (PD) ───────────────────┐
+                         │ e_θ = (θ_target + θ_trim) − θ_actual       │
+                         │ PWM_base = Kp1·e_θ − Kd1·ω_gyro            │
                          └───────────────────────┬─────────────────────┘
   Lệnh lái ─► steer_eff = steer / (1 + β·|v_actual|)   (β = 1.2)
                          ┌───────────────────────▼─────────────────────┐
@@ -357,9 +368,9 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 
 ### Bảng A — Giai đoạn 1
 
-|     Kp1     |     Kd1     |     Kp2     |     Ki2     |   Deadband   |   θ_trim   | Ngày | Người tune |
-| :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :---: | :----------- |
-| _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ |      |              |
+|     Kp1     |     Kd1     |     Kp2     |     Ki2     |    Kp_pos   |   Deadband   |   θ_trim   | Ngày | Người tune |
+| :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :---: | :----------- |
+| _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ |      |              |
 
 ### Bảng B — Giai đoạn 2
 

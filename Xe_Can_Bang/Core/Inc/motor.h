@@ -21,10 +21,10 @@ extern "C" {
 
 /* Defines -------------------------------------------------------------------*/
 #define MOTOR_MAX_PWM 2499 // Giá trị ARR cực đại của Timer 1 (100% công suất)
-/* Ngưỡng bứt phá ma sát tĩnh ĐO THỰC TẾ (Motor_Find_Deadband):
- *   Bánh TRÁI ~1340 PWM, Bánh PHẢI ~1400 PWM. Bù riêng từng bánh để tránh lệch hướng. */
-#define MOTOR_DEADBAND_L 1360 // Bù vùng chết bánh TRÁI (đo thực tế trên web)
-#define MOTOR_DEADBAND_R 1400 // Bù vùng chết bánh PHẢI (đo thực tế)
+/* Ngưỡng bứt phá ma sát tĩnh ĐO THỰC TẾ (Motor_Find_Deadband) ở chế độ Slow Decay:
+ *   Bánh TRÁI ~240 PWM, Bánh PHẢI ~240 PWM. Bù riêng từng bánh để tránh lệch hướng. */
+#define MOTOR_DEADBAND_L 240 // Bù vùng chết bánh TRÁI (đo thực tế Slow Decay)
+#define MOTOR_DEADBAND_R 240 // Bù vùng chết bánh PHẢI (đo thực tế Slow Decay)
 
 /* Function Prototypes -------------------------------------------------------*/
 
@@ -36,13 +36,13 @@ void Motor_Init(void);
 /**
  * @brief  Cài đặt tốc độ và chiều quay cho 2 động cơ (Chế độ Slow Decay)
  * @param  pwm_left:  Giá trị PWM bánh trái (-2499 đến +2499)
- *                    > 0: Quay tiến (IN1 = PWM, IN2 = GND)
- *                    < 0: Quay lùi  (IN1 = GND, IN2 = PWM)
- *                    = 0: Phanh nhẹ (IN1 = GND, IN2 = GND)
+ *                    > 0: Quay tiến (IN1 = 1, IN2 = PWM đảo)
+ *                    < 0: Quay lùi  (IN1 = PWM đảo, IN2 = 1)
+ *                    = 0: Phanh nhẹ (IN1 = 1, IN2 = 1)
  * @param  pwm_right: Giá trị PWM bánh phải (-2499 đến +2499)
- *                    > 0: Quay tiến (IN3 = PWM, IN4 = GND)
- *                    < 0: Quay lùi  (IN3 = GND, IN4 = PWM)
- *                    = 0: Phanh nhẹ (IN3 = GND, IN4 = GND)
+ *                    > 0: Quay tiến (IN3 = 1, IN4 = PWM đảo)
+ *                    < 0: Quay lùi  (IN3 = PWM đảo, IN4 = 1)
+ *                    = 0: Phanh nhẹ (IN3 = 1, IN4 = 1)
  */
 void Motor_SetDuty(int16_t pwm_left, int16_t pwm_right);
 
@@ -50,6 +50,7 @@ void Motor_SetDuty(int16_t pwm_left, int16_t pwm_right);
  * @brief  Dừng khẩn cấp cả 2 động cơ (Cắt xung PWM về 0)
  */
 void Motor_Stop(void);
+void Motor_Coast(void); /* Encoder hand-turn only; both bridge inputs LOW. */
 
 /**
  * @brief  Hãm phanh cứng cả 2 động cơ (Kéo cả 2 chân IN lên mức 1)
