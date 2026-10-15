@@ -22,8 +22,7 @@
 #include "hardware_test.h"
 #include "balance_profile.h"
 #include "balance_wire.h"
-#include "balance_assist.h"
-#include "balance_capture.h"
+#include "phase1_catalog_control.h"
 
 /* IRQ produces fixed-size samples; main sends them using UART DMA. */
 #include "wheel_measurement.h"
@@ -489,7 +488,6 @@ void HardwareTest_Service(void) {
     }
 }
 
-static void BalanceStart_Reset(void);
 void Robot_Init(void) {
   /* 1. Khởi tạo còi, LED, cơ cấu chấp hành */
   BuzzerLED_Init();
@@ -544,8 +542,6 @@ void Robot_Init(void) {
   /* Discard commands accumulated during the blocking startup calibration. */
   ESP32_Comm_FlushRx();
 
-  BalanceStart_Reset();
-
   /* Replace the old blind deadband ramp with measured, bounded diagnostics. */
   if (HARDWARE_TEST_ON_BOOT) TestBegin(true);
 }
@@ -585,10 +581,6 @@ void Robot_RecalibrateIMU(void) {
   PID_Reset_Integral();
   Encoder_Reset();
 
-  /* Old READY and commands must not survive blocking gyro calibration. */
-  ESP32_Comm_FlushRx();
-  BalanceStart_Reset();
-
   s_robot.state = ROBOT_STATE_STANDBY;
   LED_SetPattern(LED_PATTERN_SLOW_BLINK);
   Buzzer_BeepAsync(200);
@@ -608,20 +600,12 @@ static uint32_t pulse_started;
 static uint8_t pulse_wheel;
 static int8_t pulse_dir;
 static float pulse_reference;
-static uint32_t bal_armed_ms;
-static BalanceHeading bal_heading;
-static uint32_t bal_ready_after;
-static void BalanceStart_Reset(void) {
-    bal_still=0;bal_last_cycle=0;s_robot.ready=0;
-    bal_ready_after=HAL_GetTick()+BALANCE_ARM_SETTLE_MS;
-    ESP32_Command_t *cmd=ESP32_Comm_GetCommand();
-    cmd->arm_request=cmd->pulse_request=0;
-}
+static float bal_catalog[CAT_N+3];
 static void BalanceStop(uint16_t reason) {
     s_robot.fault|=reason; s_robot.state=ROBOT_STATE_FALLEN;pulse_wheel=0;
     Motor_Stop();s_robot.pwm_left=s_robot.pwm_right=0;
     s_robot.v_control=s_robot.theta_control=s_robot.pwm_base=0;
-    PID_Reset_Integral();BalanceHeading_Reset(&bal_heading);bal_still=0;
+    PID_Reset_Integral();cat_reset(bal_catalog,0);bal_still=0;
 }
 void Robot_BalanceService(void) {
     if(test_locked)return;
@@ -635,7 +619,7 @@ void Robot_BalanceService(void) {
         float bias[3];BMI160_GetBias(bias);
         char meta[256];
         int n=snprintf(meta,sizeof(meta),"$BINFO,%s,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.9f,1\r\n",
-            BALANCE_BUILD,DEFAULT_KP_ANGLE,DEFAULT_KD_ANGLE,DEFAULT_KP_VELOCITY,DEFAULT_KI_VELOCITY,DEFAULT_KP_POSITION,
+            BALANCE_BUILD,CAT_K[0],CAT_K[1],CAT_K[2],CAT_K[3],CAT_PARAM[11],
             BALANCE_PPR,BALANCE_DB_L_POS,BALANCE_DB_L_NEG,BALANCE_DB_R_POS,BALANCE_DB_R_NEG,
             bias[0],bias[1],bias[2],BALANCE_RAW_ZERO_DEG);
         if(n>0&&n<(int)sizeof(meta)&&ESP32_Comm_SendBytes(meta,n))bal_meta_ms=HAL_GetTick();
@@ -673,15 +657,14 @@ void Robot_ControlLoop_200Hz(void) {
         isfinite(s_robot.v_actual)&&isfinite(s_robot.x_actual);
     if(!finite)BalanceStop(512);
     if(valid&&finite&&BMI160_CalibrationOK()&&bal_config_ok&&
-       s_robot.state!=ROBOT_STATE_EMERGENCY && (int32_t)(HAL_GetTick()-bal_ready_after)>=0 &&
-       BalanceCapture_Settled(s_robot.pitch,s_robot.gyro_rate,
-           PITCH_ACC_SIGN*Filter_CalibratedRawPitch(imu.ax,imu.az),s_robot.v_left,s_robot.v_right)&&
+       s_robot.state!=ROBOT_STATE_EMERGENCY && fabsf(s_robot.pitch)<=BALANCE_ARM_ANGLE&&
        fabsf(imu.gx)<BALANCE_ARM_GYRO && fabsf(imu.gy)<BALANCE_ARM_GYRO && fabsf(imu.gz)<BALANCE_ARM_GYRO &&
        fabsf(s_robot.v_left)<BALANCE_ARM_WHEEL_SPEED && fabsf(s_robot.v_right)<BALANCE_ARM_WHEEL_SPEED &&
        norm>.72f&&norm<1.32f && spacing>=4000&&spacing<=6000) {
         if(bal_still<BALANCE_ARM_STILL_CYCLES)bal_still++;
     } else bal_still=0;
     s_robot.ready=bal_still>=BALANCE_ARM_STILL_CYCLES;
+    bool just_armed=false;
     if(cmd->pulse_request) {
         uint8_t wheel=cmd->pulse_request;cmd->pulse_request=0;
         if(valid && finite && bal_config_ok && s_robot.state!=ROBOT_STATE_EMERGENCY &&
@@ -695,9 +678,9 @@ void Robot_ControlLoop_200Hz(void) {
         cmd->arm_request=0;
         if(s_robot.ready && s_robot.state!=ROBOT_STATE_BALANCING && s_robot.state!=ROBOT_STATE_BENCH_TEST) {
             PID_Reset_Integral();Encoder_Reset();s_robot.x_actual=s_robot.x_target=0;
-            BalanceHeading_Reset(&bal_heading);bal_armed_ms=HAL_GetTick();
+            cat_reset(bal_catalog,s_robot.pitch*DEG_TO_RAD);
             s_robot.v_actual=s_robot.v_left=s_robot.v_right=0;
-            s_robot.fault=0;s_robot.state=ROBOT_STATE_BALANCING;
+            s_robot.fault=0;s_robot.state=ROBOT_STATE_BALANCING;just_armed=true;
         }
     }
     if(s_robot.state==ROBOT_STATE_BALANCING) {
@@ -721,20 +704,28 @@ void Robot_ControlLoop_200Hz(void) {
             Motor_SetDuty(s_robot.pwm_left,s_robot.pwm_right);
         }
     } else if(s_robot.state==ROBOT_STATE_BALANCING) {
-        s_robot.v_control=PID_Position_Compute(0,s_robot.x_actual);
-        PID_EnableVelocityIntegration(HAL_GetTick()-bal_armed_ms>=BALANCE_INTEGRAL_DELAY_MS &&
-          fabsf(s_robot.pitch)<BALANCE_INTEGRAL_GATE_ANGLE && fabsf(s_robot.v_actual)<BALANCE_INTEGRAL_GATE_SPEED);
-        s_robot.theta_control=PID_Velocity_Compute(s_robot.v_control,s_robot.v_actual,0,.005f);
-        s_robot.pwm_base=PID_Angle_Compute(s_robot.theta_control,s_robot.pitch,s_robot.gyro_rate);
-        s_robot.pwm_base*=BalanceCapture_Gain(s_robot.pitch);
-        float pwm=s_robot.pwm_base;
-        s_robot.pwm_left=PID_Apply_Deadband(pwm,pwm>0?BALANCE_DB_L_POS:BALANCE_DB_L_NEG,MOTOR_MAX_PWM);
-        s_robot.pwm_right=PID_Apply_Deadband(pwm,pwm>0?BALANCE_DB_R_POS:BALANCE_DB_R_NEG,MOTOR_MAX_PWM);
-        int32_t heading_l,heading_r;Encoder_GetHardwareTicks(&heading_l,&heading_r);
-        float delta=(-(float)heading_r-(float)heading_l)*METERS_PER_TICK;
-        if(!BalanceHeading_Apply(&bal_heading,delta,s_robot.v_right-s_robot.v_left,
-                                &s_robot.pwm_left,&s_robot.pwm_right,MOTOR_MAX_PWM))BalanceStop(512);
-        else Motor_SetDuty(s_robot.pwm_left,s_robot.pwm_right);
+        /* Frozen R12 float32 law; same header as Scilab native experiment.
+         * Raw ticks are L forward-positive, R forward-negative. No extra DB. */
+        int32_t ticks_l,ticks_r;Encoder_GetHardwareTicks(&ticks_l,&ticks_r);
+        float input[7]={s_robot.pitch*DEG_TO_RAD,s_robot.gyro_rate*DEG_TO_RAD,
+            PITCH_ACC_SIGN*Filter_CalibratedRawPitch(imu.ax,imu.az)*DEG_TO_RAD,
+            .5f*((float)ticks_l-(float)ticks_r)*METERS_PER_TICK,
+            s_robot.v_left,s_robot.v_right,
+            (-(float)ticks_r-(float)ticks_l)*METERS_PER_TICK};
+        float output[4];
+        if(!cat_step(input,bal_catalog,output))BalanceStop(512);
+        else if(just_armed) {
+            /* Observer updates once; first ARM tick still holds brake. */
+            bal_catalog[CAT_N]=bal_catalog[CAT_N+2]=0;
+            Motor_Stop();s_robot.pwm_left=s_robot.pwm_right=0;
+            s_robot.pwm_base=0;
+            s_robot.v_control=bal_catalog[1];s_robot.theta_control=bal_catalog[2]*RAD_TO_DEG;
+        } else {
+            s_robot.pwm_left=(int16_t)output[0];s_robot.pwm_right=(int16_t)output[1];
+            s_robot.pwm_base=.5f*(output[0]+output[1]);
+            s_robot.v_control=bal_catalog[1];s_robot.theta_control=bal_catalog[2]*RAD_TO_DEG;
+            Motor_SetDuty(s_robot.pwm_left,s_robot.pwm_right);
+        }
     } else {
         Motor_Stop();s_robot.pwm_left=s_robot.pwm_right=0;
         s_robot.v_control=s_robot.theta_control=s_robot.pwm_base=0;
@@ -753,7 +744,7 @@ void Robot_ControlLoop_200Hz(void) {
         f.pitch=s_robot.pitch;f.gyro=s_robot.gyro_rate;
         f.v_l=s_robot.v_left;f.v_r=s_robot.v_right;f.x=s_robot.x_actual;
         f.v_cmd=s_robot.v_control;f.theta_cmd=s_robot.theta_control;f.pwm_base=s_robot.pwm_base;
-        f.integral=PID_GetVelocityIntegral();f.fault=s_robot.fault;
+        f.integral=bal_catalog[CAT_N]; /* R12 yaw integral Nm, NOT velocity integral deg. */f.fault=s_robot.fault;
         f.state=s_robot.state;f.ready=s_robot.ready;f.dropped=bal_drops;
         f.crc=TestCRC((uint8_t*)&f,sizeof(f)-2);
         uint8_t next=(bal_head+1)%BAL_QUEUE;

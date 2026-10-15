@@ -182,13 +182,13 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
 
     <div class="card"><a href="/">← TRỞ VỀ TRANG VẬN HÀNH XE</a><p>Kê chắc xe, bánh quay tự do. Chỉ mở chế độ này khi cần đo linh kiện; muốn trở lại vận hành phải khởi động lại STM32.</p><label><input id="advanced-fixture" type="checkbox"> Tôi đã kê chắc xe, hai bánh không chạm đất.</label><button class="action" onclick="if(document.getElementById('advanced-fixture').checked)sendRaw('$DIAG*')">MỞ CHẾ ĐỘ HIỆU CHUẨN</button><p>Chuỗi kiểm tra nhanh sẽ chờ ổn định trước khi quay motor, sau đó mới chọn được các bài đo bên dưới.</p></div>
     <div class="card" id="balance-panel" style="display:none">
-      <div class="card-title">THỬ CÂN BẰNG · R10S1 · thông số thực bên dưới</div>
-      <p>Dùng trang vận hành chính để bấm trước và xem thanh dựng xe. R10S1 bắt đầu trong ±2°, gyro dưới3°/s, bánh dưới0,02m/s, giữ điều kiện0,3 giây và chờ bộ lọc sau đo gyro. Giữ vòng điều khiển R10; chưa xác nhận khởi động trên xe.</p>
+      <div class="card-title">THỬ CÂN BẰNG · R12 THỬ NGHIỆM</div>
+      <p>R12 dùng phản hồi trạng thái, chưa xác nhận trên xe. Vận hành và tải log tại trang chính <a href="/ui/bal-r12">R12</a>. Giữ xe gần thẳng ±3° và yên 0,2 giây trước khi bật.</p>
       <p>Khởi động: giữ xe yên 5 giây để đo gyro. Không tự quay bánh, không tự bật cân bằng. Không điều khiển tiến/lùi ở bản thử này.</p>
       <button class="action" id="balance-arm" disabled onclick="balanceArm()">BẬT CÂN BẰNG</button>
       <button class="action btn-estop" onclick="sendRaw('$STOP*')">DỪNG MOTOR</button>
       <button class="action" id="balance-calib" onclick="sendRaw('$CALIB*')">ĐO LẠI GYRO · GIỮ XE YÊN 5 GIÂY</button>
-      <pre id="balance-live" style="white-space:pre-wrap;font-size:13px;line-height:1.7">Chờ STM32 BAL-20261012-R10S1…</pre>
+      <pre id="balance-live" style="white-space:pre-wrap;font-size:13px;line-height:1.7">Chờ STM32 BAL-20261015-R12…</pre>
       <canvas id="balance-chart" width="700" height="180" style="width:100%;background:#0d1424"></canvas>
       <p>Đồ thị: pitch điều khiển (xanh, ±10°) và quãng đường encoder (cam, ±10 cm), 60 giây gần nhất.</p>
       <button class="action" onclick="location.href='/balance-log'">TẢI LOG CÂN BẰNG 100 Hz</button>
@@ -725,6 +725,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
     }
 
     function sendPID() {
+      alert("R12 dùng bộ điều khiển cố định từ mô phỏng. Mục PID cũ không áp dụng."); return;
       var kp1 = parseFloat(document.getElementById("kp1").value);
       var kd1 = parseFloat(document.getElementById("kd1").value);
       var kp2 = parseFloat(document.getElementById("kp2").value);
@@ -733,6 +734,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
     }
 
     function adjustTrim(delta) {
+      alert("R12 không sử dụng pitch trim của giao diện cũ."); return;
       var el = document.getElementById("pitch-trim");
       var val = (parseFloat(el.value || "0") + delta).toFixed(2);
       el.value = val;
@@ -1277,15 +1279,15 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         }
         document.getElementById('balance-live').textContent=
           'STM32: '+(m[1]||'Chờ thông tin cấu hình')+' · XYZ hiệu chuẩn tạm, chưa xác nhận tải thật\n'+
-          'PID từ STM32: '+m.slice(2,7).join(' / ')+' · PPR: '+(m[7]||'?')+' · deadband L+/L−/R+/R−: '+m.slice(8,12).join(' / ')+'\n'+
+          'R12 Kx/Kv/Kθ/Kω/blend (không phải PID): '+m.slice(2,7).join(' / ')+' · PPR: '+(m[7]||'?')+'\n'+
           'Bias gyro XYZ: '+m.slice(12,15).join(' / ')+' °/s · mốc pitch lắp đặt: '+(m[15]||'?')+'°\n'+
           'Trạng thái: '+(a[4]===3?'ĐANG CÂN BẰNG':a[5]?'SẴN SÀNG BẤM BẬT':'ĐÃ DỪNG / CHỜ DỰNG XE')+
           (d.age_ms>=500?' · MẤT DỮ LIỆU MỚI':'')+'\n'+
           'Lý do dừng / kiểm tra: '+balanceFault(a[6])+'\n'+
           'Pitch điều khiển: '+a[17].toFixed(3)+'° · gyro Y đã trừ bias: '+a[18].toFixed(3)+' °/s\n'+
           'Vận tốc L/R: '+a[19].toFixed(4)+' / '+a[20].toFixed(4)+' m/s · quãng đường encoder: '+(a[21]*100).toFixed(2)+' cm\n'+
-          'Vòng vị trí → vận tốc: '+a[22].toFixed(4)+' m/s · vòng vận tốc → góc: '+a[23].toFixed(4)+'°\n'+
-          'PWM cơ sở: '+a[24].toFixed(2)+' · PWM L/R: '+a[7]+' / '+a[8]+' · tích phân: '+a[25].toFixed(4)+'°\n'+
+          'Vận tốc thân ước lượng: '+a[22].toFixed(4)+' m/s · góc thân ước lượng: '+a[23].toFixed(4)+'°\n'+
+          'PWM trung bình: '+a[24].toFixed(2)+' · PWM L/R: '+a[7]+' / '+a[8]+' · tích phân hướng: '+a[25].toFixed(4)+' N·m\n'+
           'Encoder thô L/R: '+a[9]+' / '+a[10]+' ticks (R chưa đảo dấu)\n'+
           'Accel thô XYZ (g): '+a.slice(14,17).map(function(v){return(v/4096).toFixed(4);}).join(' / ')+'\n'+
           'Accel đã hiệu chuẩn XYZ (g): '+acc.map(function(v){return v.toFixed(4);}).join(' / ')+'\n'+

@@ -1,7 +1,8 @@
 #pragma once
-/* Floor-log candidate from Simulation/config/floor_model_20261011.sce.
- * Not a hardware certification. Raw test data must never use these corrections. */
-#define BALANCE_BUILD "BAL-20261012-R10S1"
+/* R12 hardware trial: frozen STATE4_OBS14 law in phase1_catalog_control.h.
+ * BALANCE_KP/KD/KI below are legacy defaults, NOT the active R12 controller.
+ * Raw test data must never use the following sensor corrections. */
+#define BALANCE_BUILD "BAL-20261015-R12"
 #define BALANCE_PPR 898.225f
 #define BALANCE_KP_ANGLE 48.0f
 #define BALANCE_KD_ANGLE 3.6f
@@ -20,16 +21,10 @@
 #define BALANCE_ACC_SZ 1.00929388014f
 #define BALANCE_RAW_ZERO_DEG 2.16694264915f
 /* Trial interlocks, separate from the simulated controller and acceptance bands. */
-#define BALANCE_ARM_ANGLE 2.0f
-#define BALANCE_ARM_GYRO 3.0f
-#define BALANCE_ARM_WHEEL_SPEED 0.02f
-#define BALANCE_ARM_STILL_CYCLES 60U //300ms at200Hz; no PID/output ramp
-#define BALANCE_ARM_SETTLE_MS 1500U
-#define BALANCE_ARM_ACC_AGREEMENT 0.75f
-#define BALANCE_ARM_LOOKAHEAD_S 0.15f
-#define BALANCE_CAPTURE_BEGIN 3.0f
-#define BALANCE_CAPTURE_FULL 6.0f
-#define BALANCE_CAPTURE_MAX_GAIN 1.75f
+#define BALANCE_ARM_ANGLE 3.0f
+#define BALANCE_ARM_GYRO 6.0f
+#define BALANCE_ARM_WHEEL_SPEED 0.05f
+#define BALANCE_ARM_STILL_CYCLES 40U // 200ms at200Hz; request still checked on STM32
 #define BALANCE_INTEGRAL_DELAY_MS 3000U
 #define BALANCE_INTEGRAL_LIMIT 2.0f
 #define BALANCE_INTEGRAL_GATE_ANGLE 5.0f

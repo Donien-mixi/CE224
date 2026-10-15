@@ -5,7 +5,7 @@
   *          Tạo Wi-Fi SoftAP + WebSockets Server + Cầu truyền thông USART1 với STM32
   ******************************************************************************
   * CẤU HÌNH TRÊN ARDUINO IDE:
-  *   - Board: "ESP32S3 Dev Module"           
+  *   - Board: "ESP32S3 Dev Module"
   *   - USB CDC On Boot: "Enabled"
   *   - Flash Size: "16MB (128Mb)"
   *   - Partition Scheme: "16M Flash (3MB APP/9.9MB FATFS)"
@@ -44,8 +44,6 @@ struct __attribute__((packed)) TestFrame {
 };
 static_assert(sizeof(TestFrame) == 42, "STM32 test protocol v1");
 #include "balance_wire.h"
-#include "balance_preroll.h"
-static BalancePreRoll balancePreRoll;
 static BalanceFrame balanceLatest,*balanceFrames;
 static size_t balanceCount,balanceCapacity;
 static uint32_t balanceReceived,balanceCRC,balanceGaps,balanceOverflow,balanceResets,balancePostUntil;
@@ -93,19 +91,16 @@ uint16_t testCRC(const uint8_t *bytes, unsigned length) {
 bool acceptBalanceFrame() {
   BalanceFrame f;memcpy(&f,testPacket,sizeof(f));
   if(testCRC(testPacket,sizeof(f)-2)!=f.crc){balanceCRC++;return false;}
-  bool wasRunning=balanceSeen&&(balanceLatest.state==3||balanceLatest.state==7);
   if(balanceSeen) {
     if(f.sequence>balanceLatest.sequence+1)balanceGaps+=f.sequence-balanceLatest.sequence-1;
-    if(f.sequence<=balanceLatest.sequence){balanceResets++;balancePreRoll.clear();}
+    if(f.sequence<=balanceLatest.sequence)balanceResets++;
   }
   balanceLatest=f;balanceSeen=true;balanceReceived=millis();
-  if((f.state==3||f.state==7)&&!wasRunning)
-    balanceCount=balancePreRoll.appendTo(balanceFrames,balanceCount,balanceCapacity,f.t_ms);
   if(f.state==3 || f.state==7)balancePostUntil=millis()+2000;
   if((f.state==3 || f.state==7 || (balancePostUntil && (int32_t)(balancePostUntil-millis())>0))) {
     if(balanceFrames && balanceCount<balanceCapacity)balanceFrames[balanceCount++]=f;
     else balanceOverflow++;
-  } else balancePreRoll.push(f);
+  }
   return true;
 }
 
@@ -297,8 +292,6 @@ void setup() {
     server.sendHeader("Cache-Control","no-store");server.sendHeader("X-TWIP-Build",TWIP_WEB_BUILD);
     server.send_P(200,"text/html",WHEEL_TESTS_HTML);
   });
-  server.on("/ui/bal-r7",HTTP_GET,serveDashboard);
-  server.on("/ui/bal-r8",HTTP_GET,serveDashboard);
   server.on("/ui/bal-r6",HTTP_GET,serveDashboard);
   server.on("/calibration", HTTP_GET, serveMeasurementPage);
   server.on("/", HTTP_GET, serveDashboard);
