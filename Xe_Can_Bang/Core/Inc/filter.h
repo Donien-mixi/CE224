@@ -14,10 +14,14 @@ extern "C" {
 #endif
 
 #include <math.h>
+#include <stdint.h>
 
 #define RAD_TO_DEG          57.295779513f
 #define DEG_TO_RAD          0.0174532925f
-#define COMP_FILTER_ALPHA   0.998f          // R12: same fixed alpha as catalog experiment
+#define COMP_FILTER_ALPHA_R7 0.98f
+#define COMP_FILTER_ALPHA_R12 0.998f
+void Filter_SelectController(uint8_t controller);
+float Filter_GetAlpha(void);
 /* Forward = battery WAGO. User observed raw accel pitch falls on forward tilt.
  * Control pitch is forward-positive. Raw gyro Y is retained; verify in tilt log. */
 #define PITCH_ACC_SIGN      (-1.0f)

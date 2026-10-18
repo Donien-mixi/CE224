@@ -30,6 +30,8 @@ __pycache__/
 Simulation/tools/*.dll
 Simulation/tools/*.so
 Simulation/tools/pair_native_build.json
+Simulation/current/*.dll
+Simulation/current/*_path.txt
 
 # Local measurement campaigns and automatically generated review material.
 Simulation/data/

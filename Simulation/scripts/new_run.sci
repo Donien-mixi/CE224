@@ -12,10 +12,13 @@ function folder=simulation_new_run(simroot,label)
     copyfile(simroot+"config/run_settings.sce",folder+"/inputs/run_settings.sce");
     extra=["config/load_native_kernel.sce";"config/vehicle_baseline.sce";"config/team_run.sce"; ..
            "config/startup_r10s1.sce";"scripts/run_team.sce";"model/capture_authority.sci"; ..
+           "model/geometry_uncertainty.sci";"model/guarded_heading.sci"; ..
+           "experiments/two_bugs/run.sce";"experiments/two_bugs/profiles.sce"; ..
            "model/pair_coupled.sci";"tools/twip_integrate.c";"tools/twip_pair_integrate.c"; ..
            "tools/build_native_kernel.ps1";"tools/build_pair_kernel.ps1"; ..
            "../Xe_Can_Bang/Core/Inc/balance_profile.h";"../Xe_Can_Bang/Core/Inc/balance_capture.h"; ..
-           "../Xe_Can_Bang/Core/Inc/balance_assist.h";"../Xe_Can_Bang/Core/Src/pid.c"];
+           "../Xe_Can_Bang/Core/Inc/balance_assist.h";"../Xe_Can_Bang/Core/Src/pid.c"; ..
+           "../Xe_Can_Bang/Core/Inc/filter.h";"../Xe_Can_Bang/Core/Src/filter.c"];
     for j=1:size(extra,"*")
         if isfile(simroot+extra(j)) then copyfile(simroot+extra(j),folder+"/inputs/"+basename(extra(j))+fileext(extra(j)));end
     end

@@ -3,8 +3,8 @@
 // Cap nhat kich thuoc/toa do trong "thông số cần thiết 1.txt" (09/10/2026).
 // Execute trong SciNotes. x: tien/lui 80mm; y: trai/phai 200mm; z: len.
 // Goc tai truc banh; theta>0 nga ve +x. Mo hinh pitch phang, than cung,
-// lan khong truot; khong mo phong yaw/roll. Dau sensor/motor can kiem tren xe.
-// Khoi luong do 888g; +94g o hai motor theo user; PWM bu240 la firmware.
+// lan khong truot; mac dinh pitch, co nhanh yaw hai banh tuy chon; chua co roll.
+// Khoi luong do 888g; +94g o hai motor theo user; PWM bu theo profile.
 // Latest: 56 jobs10/10; per-wheel encoder, four no-load speed curves and noise.
 // Jobs8..12 ruler references confirmed; local installed-angle error modeled.
 // Repeated jobs2..7: provisional positive XYZ scale/bias; motion flags remain.
@@ -304,17 +304,18 @@ tau_dinh_muc=0.4*9.80665/100; rpm_co_tai=215; I_khong_tai=.07; I_tai_max=1.8;
 encoder_ppr=11*21.3*4; // TI12 quadrature x4; do not multiply the 22AB count by4 again.
 if co_measurement_plan then encoder_ppr=mean(measurement_ppr); end
 // Wiring confirmed: VM follows LiPo3S directly; XL4015 supplies the 5V logic rail.
-// Correct wiring does not specify battery charge voltage; retain 11.1V nominal
-// and the existing 12.6V stress case without inventing a measured value.
-V_nom=12.0; V_pin=11.1;
+// 15/10 operator reports VM=11.7V now, recharges near11.2V; full3S=12.6V.
+// Historical bench VM was not measured: retain its old11.1V reference separately.
+exec(simulation_root+"config/motor_supply.sce",-1);
+V_nom=12.0; V_pin=motor_vm_reference; bench_voltage_reference=motor_bench_reference;
 Fstall_nom=so_dc*tau_dc/r; voltage_scale=V_pin/V_nom;
 Fmax=Fstall_nom*voltage_scale; kf=Fmax/2499;
 v_noload=(280/60)*2*%pi*r; // tai 12V; model tu ap voltage_scale
 if co_motor_bench then
     // Fit only the speed/back-EMF slope at the unknown voltage of this capture.
-    // V_pin remains a nominal assumption; this vnl is an effective coefficient,
+    // The historical capture voltage is assumed; vnl is an effective coefficient,
     // not a measured 12V RPM. Absolute torque/friction/current remain unidentified.
-    v_noload=speed_slope*2499/voltage_scale;
+    v_noload=speed_slope*2499/(bench_voltage_reference/V_nom);
 end
 PWM_bua_L=240; PWM_bua_R=240; PWM_bua=(PWM_bua_L+PWM_bua_R)/2;
 if co_measurement_plan then
@@ -333,7 +334,7 @@ P=struct("m",m,"l",l,"xc",xc,"I",I,"Meq",Meq,"g",g,"r",r, ..
          "ximu",lk(10,2),"zimu",lk(10,4));
 P.directional=co_motor_bench; P.emf_sign=motor_sign_thuc; P.speed_scale=1;
 P.solver=1; // Dissipative endpoint friction; h/2 convergence remains mandatory.
-if co_motor_bench then P.drive_vnl=drive_slopes*2499/voltage_scale; end
+ if co_motor_bench then P.drive_vnl=drive_slopes*2499/(bench_voltage_reference/V_nom); end
 exec(simulation_root+"config/load_native_kernel.sce",-1);
 mprintf("Native interval accelerator=%d; equations/parameters unchanged.\n",bool2s(native_available));
 theta_eq=-atan(xc/l);
@@ -506,9 +507,15 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
     initial_omega=0;if isfield(S,"initial_omega") then initial_omega=S.initial_omega;end
     initial_velocity=0;if isfield(S,"initial_velocity") then initial_velocity=S.initial_velocity;end
     y=[0;initial_velocity;S.th0;initial_omega;0]; Ii=0; vf=0; xhat=0;
+    // Optional restart diagnostics: initial conditions only, never future log
+    // states. Force and absolute attitude remain unknown without extra sensors.
+    if isfield(S,"initial_force_N") then y(5)=S.initial_force_N;end
+    if isfield(S,"initial_integral_deg") then Ii=S.initial_integral_deg;end
+    if isfield(S,"initial_encoder_speed") then vf=S.initial_encoder_speed;end
+    if isfield(S,"initial_encoder_position") then xhat=S.initial_encoder_position;end
     pair_state=[0;0]; // Optional historical R8 command.
     coupled=%f;if isfield(S,"coupled_pair") then coupled=%t;end
-    pair=[0;0;0;0];lz=0;old_drive=[0;0];vfLR=[0;0];heading_state=zeros(6,1);heading_limit=8;
+    pair=[0;0;0;0];lz=0;old_drive=[0;0];vfLR=[vf;vf];heading_state=zeros(7,1);heading_limit=8;
     if coupled then
         if ~isfield(S,"allow_unvalidated_pair_diagnostic") then error("Coupled diagnostic requires explicit acknowledgement: loaded model is NOT identified.");end
         if ~S.allow_unvalidated_pair_diagnostic then error("Coupled diagnostic not enabled");end
@@ -516,13 +523,27 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
     end
     thhat=S.acc_mult*S.raw_acc_sign*S.th0;
     if isfield(S,"pitch_est0") then thhat=S.pitch_est0;end
+    // Isolated literature experiment. Inputs are sensor/encoder estimates only.
+    // Absent by default: the restored R7 path remains numerically unchanged.
+    research=%f;research_state=[0;thhat;0;0];research_irow=1;
+    if isfield(S,"research_control") then research=%t;end
+    if research & ~coupled then error("Literature control requires the explicitly unvalidated two-wheel plant, not a mean-PWM proxy");end
+    if research then
+        if isfield(S.research_control,"observer") then
+            research_state=observer_initial(thhat,S.research_control);research_irow=S.research_control.nobs+1;
+        end
+    end
     phase=[0.25;-0.25]; // GIA DINH pha encoder hai banh
     actual_ppr=[S.ppr;S.ppr];
-    if isfield(S,"actual_ppr") then actual_ppr=S.actual_ppr; end
+    if isfield(S,"actual_ppr") then actual_ppr=matrix(S.actual_ppr,-1,1); end
+    // Canonical two-wheel column. A row silently broadcasts against travel,
+    // creating four counts/velocities and corrupting the native input packet.
+    if size(actual_ppr,"*")<>2 | or(actual_ppr<=0) then error("Expected two positive per-wheel PPR values");end
     cnt_prev=round(-y(3)*actual_ppr/(2*%pi)+phase);
     if ~quant_sensor then cnt_prev=-y(3)*actual_ppr/(2*%pi)+phase; end
     cnt_zero=cnt_prev;
     u_prev=0; n=N+1;
+    if isfield(S,"initial_drive") then u_prev=S.initial_drive;end
     T=zeros(1,n); Y=zeros(5,n); F=zeros(1,n); U=zeros(1,n); Y(:,1)=y;
     // Raw accel pitch = raw_acc_sign*theta; raw gyroY = -raw_acc_sign*omega.
     // Run7 slow tilts verify raw_acc_sign=-1, raw gyroY positive on forward tilt.
@@ -555,9 +576,24 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
     E=zeros(4,n); E(:,1)=[thhat;0;S.acc_mult*acc_hold;0];
     audit_control=%f;
     if isfield(S,"audit_control") then audit_control=S.audit_control;end
-    if audit_control then E=[E;zeros(6,n)];end
+    if audit_control then
+        E=[E;zeros(6,n)];E(5:6,1)=[vf;xhat];E(10,1)=Ii;
+    end
     if coupled then
         if ~audit_control then error("Coupled diagnostic requires audit_control=true");end
+        E=[E;zeros(5,n)];
+    end
+    recovering=%f;recovery_quiet=0;recovery_vmean=0;recovery_enter_time=0;audit_recovery=%f;
+    if isfield(S,"audit_recovery") then audit_recovery=S.audit_recovery;end
+    if audit_recovery then E=[E;zeros(1,n)];end
+    audit_motor=%f;if isfield(S,"audit_motor") then audit_motor=S.audit_motor;end
+    if audit_motor then
+        if ~coupled | audit_recovery then error("Motor force audit requires coupled plant without recovery-mode audit");end
+        E=[E;zeros(2,n)];
+    end
+    audit_observer=%f;if isfield(S,"audit_observer") then audit_observer=S.audit_observer;end
+    if audit_observer then
+        if ~audit_motor then error("Observer audit requires motor audit");end
         E=[E;zeros(5,n)];
     end
     external_stopped=%f; // Latched gateway/operator STOP, independent of PID stability.
@@ -606,7 +642,22 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         end
         acc_queue=[acc_queue(2:$),acc_hold];gyro_queue=[gyro_queue(2:$),gyro_hold];
         th_acc=S.acc_mult*acc_queue(1); gyro=S.gyro_sign*gyro_queue(1);
-        thhat=S.imu_alpha*(thhat+gyro*S.Ts)+(1-S.imu_alpha)*th_acc;
+        alpha=S.imu_alpha;
+        if recovering & isfield(S,"recovery_alpha") then alpha=S.recovery_alpha;end
+        // Diagnostic adaptive weighting: reduce accel correction during rotation
+        // or large innovation. No signal is replaced by recorded future angles.
+        if isfield(S,"adaptive_imu") then
+            cfg=S.adaptive_imu;pred=thhat+gyro*S.Ts;
+            enable_adaptive=%t;
+            // Optional catch-only gate preserves fixed R7 filtering near upright.
+            if size(cfg,"*")>=4 then
+                risk=abs(thhat/rad);
+                if size(cfg,"*")>=5 & thhat*gyro>0 then risk=max(risk,abs(thhat/rad+cfg(5)*gyro/rad));end
+                enable_adaptive=risk>cfg(4);
+            end
+            if enable_adaptive & (abs(gyro/rad)>cfg(1) | abs((th_acc-pred)/rad)>cfg(2)) then alpha=cfg(3);end
+        end
+        thhat=alpha*(thhat+gyro*S.Ts)+(1-alpha)*th_acc;
         // Cat theo GOC UOC LUONG nhu FSM; 45do that la gioi han mo hinh.
         if abs(thhat)>=45*rad then n=k; break; end
         travel=[y(1);y(1)];
@@ -618,6 +669,17 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         delta=((count(2)-cnt_zero(2))-(count(1)-cnt_zero(1)))*(2*%pi*P.r/S.ppr);
         vraw=mean(vrLR);cnt_prev=count;
         vf=(1-S.enc_beta)*vraw+S.enc_beta*vf; xhat=xhat+vf*S.Ts;
+        if isfield(S,"recovery_controller") then
+            rc=S.recovery_controller;risk=abs(thhat/rad);
+            recovery_vmean=.95*recovery_vmean+.05*vf;
+            if thhat*gyro>0 then risk=max(risk,abs(thhat/rad+rc(4)*gyro/rad));end
+            if ~recovering & (risk>rc(1) | abs(vf)>rc(2) | abs(gyro/rad)>rc(3)) then recovering=%t;recovery_quiet=0;recovery_enter_time=t;end
+            if recovering then
+                quiet=abs(thhat/rad)<rc(7) & abs(recovery_vmean)<rc(8) & abs(gyro/rad)<rc(9);
+                if quiet then recovery_quiet=recovery_quiet+S.Ts;else recovery_quiet=0;end
+                if recovery_quiet>=rc(10) then recovering=%f;recovery_quiet=0;end
+            end
+        end
         if isfield(S,"external_stop_at") then
             if t+1e-10>=S.external_stop_at then external_stopped=%t;end
         end
@@ -642,7 +704,23 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         end
         theta_t=max(min(K(3)*ev+Ii,outer_limit),-outer_limit);
         pwm=S.pid_sign*(K(1)*(theta_t+S.trim-thhat/rad)-K(2)*gyro/rad);
-        if isfield(S,"capture_angle_gain") then pwm=pwm*capture_angle_gain(thhat/rad,S.capture_angle_gain);end
+        if recovering then
+            blend=1;
+            if isfield(S,"recovery_blend") then
+                // Return toward the R7 gains once mean drift disappears, rather
+                // than requiring a high-gain oscillation to satisfy quiet gates.
+                blend=min(1,abs(recovery_vmean)/.08);
+                if t-recovery_enter_time<.15 then blend=1;end
+            end
+            pwm=S.pid_sign*(K(1)*(1+blend*(rc(5)-1))*(theta_t+S.trim-thhat/rad)-K(2)*(1+blend*(rc(6)-1))*gyro/rad);
+        end
+        if isfield(S,"capture_angle_gain") then
+            catch_angle=thhat/rad;
+            if isfield(S,"capture_angle_prediction_s") & thhat*gyro>0 then
+                catch_angle=catch_angle+S.capture_angle_prediction_s*gyro/rad;
+            end
+            pwm=pwm*capture_angle_gain(catch_angle,S.capture_angle_gain);
+        end
         if isfield(S,"first_armed_zero") then
             if S.first_armed_zero & k==1 then pwm=0;Ii=0;theta_t=0;end
         end
@@ -659,9 +737,31 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
             // Mirror firmware Motor_Stop: both PWM=0 selects electrical brake.
             // No modeled hand catch; post-STOP falling cannot identify the PID.
             outL=0;outR=0;pwm=0;Ii=0;theta_t=0;v_cmd=0;
+            if research then research_state(research_irow)=0;heading_state(2)=0;end
         end
-        if coupled then
-            [outL,outR,heading_state,heading_limit]=pair_heading(outL,outR,delta,vfLR(2)-vfLR(1),thhat/rad,gyro/rad,theta_t,vf,t,heading_state,S.heading_policy);
+        if research & ~external_stopped then
+            if isfield(S.research_control,"observer") then
+                xcounter=mean(count-cnt_zero)*(2*%pi*P.r/S.ppr);
+                [outL,outR,research_state]=observer_control(thhat,gyro,th_acc,xcounter,vfLR,delta,research_state,S.research_control,S.Ts);
+            else
+                [outL,outR,research_state]=literature_control(thhat,gyro,xhat,vfLR,delta,research_state,S.research_control,S.Ts);
+            end
+            pwm=(outL+outR)/2;theta_t=0;Ii=research_state(research_irow);
+            heading_state(2)=(outL-outR)/2;heading_limit=2499;
+            if isfield(S,"first_armed_zero") then
+                if S.first_armed_zero & k==1 then
+                    outL=0;outR=0;pwm=0;research_state(research_irow)=0;
+                    if isfield(S.research_control,"observer") then research_state($)=0;end
+                end
+            end
+        end
+        if coupled & ~research then
+            if S.heading_policy==4 then
+                hc=[];if isfield(S,"guarded_heading_cfg") then hc=S.guarded_heading_cfg;end
+                [outL,outR,heading_state,heading_limit]=guarded_heading(outL,outR,delta,vfLR(2)-vfLR(1),thhat/rad,gyro/rad,theta_t,vf,t,heading_state,hc);
+            else
+                [outL,outR,heading_state,heading_limit]=pair_heading(outL,outR,delta,vfLR(2)-vfLR(1),thhat/rad,gyro/rad,theta_t,vf,t,heading_state,S.heading_policy);
+            end
         end
         command=S.motor_sign*(outL+outR)/(2*2499);
         // Optional per-wheel loaded-effort sensitivity, NOT a fitted torque model.
@@ -678,7 +778,12 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         fsum=0;
         if coupled then
             drive=S.motor_sign*[outL;outR]/2499;
-            [y,pair,la,lg,lz,fsum]=pair_interval(y,pair,la,lg,lz,Ppacked,S,t,drive,old_drive);old_drive=drive;
+            if isfield(S,"catalog_friction") then
+                [y,pair,la,lg,lz,fsum]=catalog_interval(y,pair,la,lg,lz,Ppacked,S,t,drive,old_drive);
+            else
+                [y,pair,la,lg,lz,fsum]=pair_interval(y,pair,la,lg,lz,Ppacked,S,t,drive,old_drive);
+            end
+            old_drive=drive;
         elseif use_native then
             [y,la,lg,fsum]=native_interval(y,la,lg,Ppacked,S,t,command,u_prev);
         else
@@ -708,6 +813,13 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         E(1:4,k+1)=[thhat;gyro;th_acc;pwm];
         if audit_control then E(5:10,k+1)=[vf;xhat;theta_t;outL;outR;Ii];end
         if coupled then E(11:15,k+1)=[pair(1);pair(2);delta;heading_state(2);heading_limit];end
+        if audit_recovery then E($,k+1)=bool2s(recovering);end
+        if audit_motor then E(16:17,k+1)=pair(3:4);end
+        if audit_observer then
+            if research then
+                if isfield(S.research_control,"observer") then E(18:22,k+1)=research_state(1:5);end
+            end
+        end
         if abs(y(3))>=45*rad | or(isnan(y)) | or(isinf(y)) then n=k+1; break; end
     end
     T=T(1:n); Y=Y(:,1:n); F=F(1:n); U=U(1:n); E=E(:,1:n);
@@ -987,7 +1099,7 @@ end
 mputl(S.objective_profile,out_dir+"/objective_profile.txt");
 csvWrite([S.angle_band,S.xmax,S.xendmax,S.vendmax,S.rungmax],out_dir+"/objective_limits.csv");
 if co_measurement_plan then
- S.actual_ppr=measurement_ppr';S.DB_direction=measurement_db;
+ S.actual_ppr=matrix(measurement_ppr,-1,1);S.DB_direction=measurement_db;
  S.gyro_adc_bias=hw_bias_y;
  if measurement_angle(6)==1 then S.angle_model=measurement_angle;end
  // Diagnostic conditional profile: applying XYZ correction and ruler-derived

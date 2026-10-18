@@ -4,6 +4,7 @@
 static uint32_t controlTokens[WEBSOCKETS_SERVER_CLIENT_MAX]={};
 static uint32_t controlPings[WEBSOCKETS_SERVER_CLIENT_MAX]={};
 static uint32_t controlGeneration=0;
+static uint32_t controlDriveEpoch=0,controlMoveSequence=0;
 // Reject a delayed HTTP motor request if any STOP arrived since it was created.
 static uint32_t controlRevision=0;
 static int controlOwner=-1;
@@ -26,9 +27,11 @@ static void controlClaim(long client) {
   controlOwner=(int)client;controlStopLatched=false;
   controlClaimUntil=millis()+2000;
   strcpy(controlLastStop,"none");
+  controlDriveEpoch=controlDriveEpoch%1000000000U+1U;controlMoveSequence=0;
 }
 static void controlStop(const char *source) {
   controlRevision=(controlRevision%2000000000u)+1;
+  controlDriveEpoch=controlDriveEpoch%1000000000U+1U;controlMoveSequence=0;
   // The first gateway STOP per arm/pulse is retained; duplicate WS+HTTP STOP
   // still brakes, but cannot replace the original reason in the log.
   if(!controlStopLatched) {
@@ -67,6 +70,28 @@ static bool controlMessage(uint8_t client,const String &command) {
     return controlOwner==-1 || controlOwner==client;
   }
   if(command=="$STOP*") {controlStop("stop_button_ws");return false;}
+  if(!strncmp(command.c_str(),"$MOVE,",6)) {
+    int direction=0;unsigned epoch=0,sequence=0,preset=0;char end,canonical[72];
+    bool extended=sscanf(command.c_str(),"$MOVE,%d,%u,%u,%u%c",&direction,&epoch,&sequence,&preset,&end)==5 && end=='*';
+    if((!extended&&(sscanf(command.c_str(),"$MOVE,%d,%u,%u%c",&direction,&epoch,&sequence,&end)!=4||end!='*')) || preset>1 ||
+       direction<-1||direction>1||epoch==0||epoch!=controlDriveEpoch ||
+       sequence==0||sequence>1000000000U||sequence<=controlMoveSequence ||
+       controlOwner!=client||controlStopLatched)return false;
+    if(extended)snprintf(canonical,sizeof(canonical),"$MOVE,%d,%u,%u,%u*",direction,epoch,sequence,preset);
+    else snprintf(canonical,sizeof(canonical),"$MOVE,%d,%u,%u*",direction,epoch,sequence);
+    if(command!=canonical)return false;
+    if(direction!=0){
+      xSemaphoreTake(captureMutex,portMAX_DELAY);
+      bool ok=balanceSeen&&millis()-balanceReceived<300&&balanceLatest.state==3&&
+        balanceLatest.controller==12&&balanceLatest.capture==0&&(balanceLatest.motion_flags&1U)&&
+        balanceLatest.drive_epoch==epoch&&balanceLatest.fault==0&&
+        !strncmp(balanceMeta,"$BINFO,BAL-20261018-R12-SPEED2,",sizeof("$BINFO,BAL-20261018-R12-SPEED2,")-1)&&
+        balanceCapacity&&millis()-controlPings[client]<600;
+      xSemaphoreGive(captureMutex);
+      if(!ok)return false;
+    }
+    controlMoveSequence=sequence;return true;
+  }
   if(command=="$BACKGROUND*" || command=="$LEAVE*") {
     if(controlOwner==client)
       controlStop(command=="$BACKGROUND*"?"controller_background":"controller_page_left");

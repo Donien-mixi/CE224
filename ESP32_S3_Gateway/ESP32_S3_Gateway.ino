@@ -90,7 +90,7 @@ uint16_t testCRC(const uint8_t *bytes, unsigned length) {
 
 bool acceptBalanceFrame() {
   BalanceFrame f;memcpy(&f,testPacket,sizeof(f));
-  if(testCRC(testPacket,sizeof(f)-2)!=f.crc){balanceCRC++;return false;}
+  if(f.sync!=0x5ea5 || f.controller!=12 || testCRC(testPacket,sizeof(f)-2)!=f.crc){balanceCRC++;return false;}
   if(balanceSeen) {
     if(f.sequence>balanceLatest.sequence+1)balanceGaps+=f.sequence-balanceLatest.sequence-1;
     if(f.sequence<=balanceLatest.sequence)balanceResets++;
@@ -296,6 +296,7 @@ void setup() {
   server.on("/calibration", HTTP_GET, serveMeasurementPage);
   server.on("/", HTTP_GET, serveDashboard);
   server.on(TWIP_WEB_PATH, HTTP_GET, serveDashboard);
+  server.on("/ui/bal-r7-r12",HTTP_GET,serveDashboard); // old bookmark, same R12-only page
   server.on("/ui/bal-r1",HTTP_GET,serveDashboard);
   server.on("/ui/bal-r2",HTTP_GET,serveDashboard);
   server.on("/ui/bal-r3",HTTP_GET,serveDashboard);
@@ -368,13 +369,13 @@ void receiveSTM32() {
       testPacket[testPacketUsed++]=b;
       for(;;) {
         if(!testPacketUsed)break;
-        if(testPacket[0]!=0xa5 || (testPacketUsed>=2 && testPacket[1]!=0x5a && testPacket[1]!=0x5b)) {
+        if(testPacket[0]!=0xa5 || (testPacketUsed>=2 && testPacket[1]!=0x5a && testPacket[1]!=0x5e)) {
           memmove(testPacket,testPacket+1,--testPacketUsed);continue;
         }
         if(testPacketUsed<2)break;
-        packetLength=testPacket[1]==0x5b?sizeof(BalanceFrame):sizeof(TestFrame);
+        packetLength=testPacket[1]==0x5e?sizeof(BalanceFrame):sizeof(TestFrame);
         if(testPacketUsed<packetLength)break;
-        bool ok=testPacket[1]==0x5b?acceptBalanceFrame():acceptTestFrame();
+        bool ok=testPacket[1]==0x5e?acceptBalanceFrame():acceptTestFrame();
         unsigned consumed=ok?packetLength:1;
         testPacketUsed-=consumed;memmove(testPacket,testPacket+consumed,testPacketUsed);
       }

@@ -88,14 +88,14 @@ void setupMeasurementRoutes() {
       server.send(409,"text/plain","Keep this page open; confirm fixture and wait for connection.");return;
     }
     xSemaphoreTake(captureMutex,portMAX_DELAY);
-    bool matched=!strncmp(balanceMeta,"$BINFO,BAL-20261015-R12,",sizeof("$BINFO,BAL-20261015-R12,")-1);
+    bool matched=!strncmp(balanceMeta,"$BINFO,BAL-20261018-R12-SPEED2,",sizeof("$BINFO,BAL-20261018-R12-SPEED2,")-1);
     bool diagnostic=testSeen && testStage>=11 && testStage!=13 && millis()-testLastReceived<2500 &&
                     !(balanceSeen && millis()-balanceReceived<1000);
     bool stopped=balanceSeen && millis()-balanceReceived<500 && balanceLatest.state!=3 && balanceLatest.state!=7 &&
                  balanceLatest.state!=6 && !(balanceLatest.fault&(32|256|512));
     bool ok=matched && (diagnostic||stopped) && jobLogs.active<0 && !jobDownloadBusy && !balanceDownloading;
     xSemaphoreGive(captureMutex);
-    if(!ok){server.send(409,"text/plain","Need STM32 R7, stopped motors and fresh data. Stop and finish downloads first.");return;}
+    if(!ok){server.send(409,"text/plain","Need matching STM32 R12, stopped motors and fresh data. Stop and finish downloads first.");return;}
     controlClaim(client);
     if(!diagnostic)Serial1.print("$MEASURE*\r\n");
     server.send(200,"text/plain","Measurement mode requested; wait for STM32. Wheels remain braked until START.");
@@ -147,7 +147,7 @@ void setupMeasurementRoutes() {
     if(testStage<11 || testStage==13 || millis()-testLastReceived>2500 || jobDownloadBusy) {
       xSemaphoreGive(captureMutex);server.send(409,"text/plain","Wait for boot test or current job; check STM32 link.");return;
     }
-    if(kind>=12 && (strncmp(balanceMeta,"$BINFO,BAL-20261015-R12,",sizeof("$BINFO,BAL-20261015-R12,")-1) ||
+    if(kind>=12 && (strncmp(balanceMeta,"$BINFO,BAL-20261018-R12-SPEED2,",sizeof("$BINFO,BAL-20261018-R12-SPEED2,")-1) ||
        (balanceSeen && millis()-balanceReceived<1000))) {
       xSemaphoreGive(captureMutex);server.send(409,"text/plain","Enter wheel measurement mode with matching STM32 firmware first.");return;
     }

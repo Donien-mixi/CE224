@@ -50,6 +50,7 @@ typedef struct {
     float v_control, theta_control, pwm_base;
     float   batt_voltage;       // Điện áp pin ước tính hoặc đo qua ADC (V)
     uint32_t loop_count;        // Đếm chu kỳ 200Hz
+    uint8_t motion_ready;
 } Robot_Data_t;
 
 /**

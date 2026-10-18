@@ -14,10 +14,17 @@ typedef struct __attribute__((packed)) {
     float pitch, gyro, v_l, v_r, x, v_cmd, theta_cmd, pwm_base, integral;
     uint16_t fault, dropped;
     uint8_t state, ready;
+    uint8_t controller; // 7 or 12; protocol v6 sync0x5ea5, never inferred from PWM
+    uint8_t capture; // phase:0 normal,1 startup,2 disturbance recovery; 104-byte motion layout
+    float distance_limit; // allocated once on ARM, hard ceiling1m
+    float x_ref,v_ref;
+    uint32_t drive_epoch;
+    uint16_t motion_flags;
+    int16_t drive_direction;
     uint16_t crc;
 } BalanceFrame;
 #ifdef __cplusplus
-static_assert(sizeof(BalanceFrame)==82,"balance wire layout");
+static_assert(sizeof(BalanceFrame)==104,"balance wire layout");
 #else
-_Static_assert(sizeof(BalanceFrame)==82,"balance wire layout");
+_Static_assert(sizeof(BalanceFrame)==104,"balance wire layout");
 #endif

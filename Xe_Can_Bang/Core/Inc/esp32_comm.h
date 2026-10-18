@@ -28,9 +28,15 @@ typedef struct {
     uint8_t trigger_calib;  // Cờ yêu cầu hiệu chuẩn IMU
     uint8_t emergency_stop; // Cờ dừng khẩn cấp
     uint8_t arm_request, diag_request, pulse_request;
+    volatile uint8_t profile_request; // reserved legacy mailbox; cleared, no switching
+    uint8_t arm_profile; // must be12; stale ARM for another law is rejected
     int8_t pulse_direction;
     uint8_t bench_test;     // 1: Chế độ test quay bánh trực tiếp trên bàn, 0: Cân bằng tự động
     uint32_t last_cmd_time; // Thời điểm nhận gói tin cuối (dùng cho Failsafe timeout)
+    uint32_t arm_drive_epoch;
+    volatile uint32_t drive_epoch;
+    volatile uint32_t drive_word; // atomic sequence/direction publication
+    volatile uint8_t drive_speed_preset; //0:0.4m/s,1:0.6m/s; published with word while IRQs are masked
 } ESP32_Command_t;
 
 /**

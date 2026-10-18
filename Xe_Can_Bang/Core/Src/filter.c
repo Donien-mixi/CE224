@@ -14,6 +14,11 @@ float Filter_CalibratedRawPitch(float x,float z) {
 }
 
 static float estimated_angle = 0.0f;
+static const float filter_alpha=COMP_FILTER_ALPHA_R12;
+void Filter_SelectController(uint8_t controller) {
+    (void)controller; /* Fixed R12 coefficient; no legacy fallback. */
+}
+float Filter_GetAlpha(void) { return filter_alpha; }
 
 void Filter_Init(float initial_angle)
 {
@@ -27,9 +32,9 @@ float Filter_Complementary_Update(float gyro_rate, float acc_x, float acc_z, flo
     float theta_acc = PITCH_ACC_SIGN * Filter_CalibratedRawPitch(acc_x, acc_z);
 
     // 2. Tích hợp bộ lọc bù:
-    // Lấy 98% đáp ứng tức thời từ tích phân Gyro + 2% giá trị giữ chuẩn từ Accel
-    estimated_angle = COMP_FILTER_ALPHA * (estimated_angle + PITCH_GYRO_SIGN * gyro_rate * dt)
-                    + (1.0f - COMP_FILTER_ALPHA) * theta_acc;
+    // Hệ số R12 cố định: 0.998.
+    estimated_angle = filter_alpha * (estimated_angle + PITCH_GYRO_SIGN * gyro_rate * dt)
+                    + (1.0f - filter_alpha) * theta_acc;
 
     return estimated_angle;
 }
