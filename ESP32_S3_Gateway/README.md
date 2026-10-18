@@ -1,3 +1,5 @@
+> Bản 8 hướng: nạp cả hai board cùng phiên bản `SPEED2-8DIR`. Xem [hướng dẫn](../README.md).
+
 # ESP32-S3 Gateway — R12 SPEED2
 
 Mở `ESP32_S3_Gateway.ino` trong Arduino IDE. Cấu hình đã biên dịch: ESP32 core 3.3.11, thư viện WebSockets 2.7.2 của Markus Sattler.

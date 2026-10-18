@@ -1,3 +1,4 @@
+#include "drive8_protocol.h"
 #pragma once
 // Main-loop only: HTTP handlers and WebSocket callbacks share this session state.
 // UART capture fields are read under captureMutex; no UART protocol changes.
@@ -70,27 +71,21 @@ static bool controlMessage(uint8_t client,const String &command) {
     return controlOwner==-1 || controlOwner==client;
   }
   if(command=="$STOP*") {controlStop("stop_button_ws");return false;}
-  if(!strncmp(command.c_str(),"$MOVE,",6)) {
-    int direction=0;unsigned epoch=0,sequence=0,preset=0;char end,canonical[72];
-    bool extended=sscanf(command.c_str(),"$MOVE,%d,%u,%u,%u%c",&direction,&epoch,&sequence,&preset,&end)==5 && end=='*';
-    if((!extended&&(sscanf(command.c_str(),"$MOVE,%d,%u,%u%c",&direction,&epoch,&sequence,&end)!=4||end!='*')) || preset>1 ||
-       direction<-1||direction>1||epoch==0||epoch!=controlDriveEpoch ||
-       sequence==0||sequence>1000000000U||sequence<=controlMoveSequence ||
+  if(command.startsWith("$MOVE8,") && command.endsWith("*") && command.length()<64) {
+    if(strlen(command.c_str())!=command.length())return false;
+    String body=command.substring(0,command.length()-1);Drive8Packet p;
+    if(!Drive8_Parse(body.c_str(),&p)||p.epoch!=controlDriveEpoch||p.sequence<=controlMoveSequence||
        controlOwner!=client||controlStopLatched)return false;
-    if(extended)snprintf(canonical,sizeof(canonical),"$MOVE,%d,%u,%u,%u*",direction,epoch,sequence,preset);
-    else snprintf(canonical,sizeof(canonical),"$MOVE,%d,%u,%u*",direction,epoch,sequence);
-    if(command!=canonical)return false;
-    if(direction!=0){
+    if(p.direction!=0||p.turn!=0){
       xSemaphoreTake(captureMutex,portMAX_DELAY);
       bool ok=balanceSeen&&millis()-balanceReceived<300&&balanceLatest.state==3&&
         balanceLatest.controller==12&&balanceLatest.capture==0&&(balanceLatest.motion_flags&1U)&&
-        balanceLatest.drive_epoch==epoch&&balanceLatest.fault==0&&
-        !strncmp(balanceMeta,"$BINFO,BAL-20261018-R12-SPEED2,",sizeof("$BINFO,BAL-20261018-R12-SPEED2,")-1)&&
+        balanceLatest.drive_epoch==p.epoch&&balanceLatest.fault==0&&
+        !strncmp(balanceMeta,"$BINFO,BAL-20261018-R12-SPEED2-8DIR,",sizeof("$BINFO,BAL-20261018-R12-SPEED2-8DIR,")-1)&&
         balanceCapacity&&millis()-controlPings[client]<600;
-      xSemaphoreGive(captureMutex);
-      if(!ok)return false;
+      xSemaphoreGive(captureMutex);if(!ok)return false;
     }
-    controlMoveSequence=sequence;return true;
+    controlMoveSequence=p.sequence;return true;
   }
   if(command=="$BACKGROUND*" || command=="$LEAVE*") {
     if(controlOwner==client)

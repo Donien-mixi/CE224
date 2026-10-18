@@ -90,7 +90,7 @@ uint16_t testCRC(const uint8_t *bytes, unsigned length) {
 
 bool acceptBalanceFrame() {
   BalanceFrame f;memcpy(&f,testPacket,sizeof(f));
-  if(f.sync!=0x5ea5 || f.controller!=12 || testCRC(testPacket,sizeof(f)-2)!=f.crc){balanceCRC++;return false;}
+  if(f.sync!=0x5fa5 || f.controller!=12 || testCRC(testPacket,sizeof(f)-2)!=f.crc){balanceCRC++;return false;}
   if(balanceSeen) {
     if(f.sequence>balanceLatest.sequence+1)balanceGaps+=f.sequence-balanceLatest.sequence-1;
     if(f.sequence<=balanceLatest.sequence)balanceResets++;
@@ -255,7 +255,7 @@ void setup() {
   if (!testLog) testCapacity = 0;
   void *jobMemory=heap_caps_malloc(3*1024*1024,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
   if(jobMemory)jobLogs.attach(jobMemory,3*1024*1024);
-  balanceCapacity=18000;
+  balanceCapacity=9000;
   balanceFrames=(BalanceFrame*)heap_caps_malloc(balanceCapacity*sizeof(BalanceFrame),MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
   if(!balanceFrames)balanceCapacity=0;
   captureMutex = xSemaphoreCreateMutex();
@@ -369,13 +369,13 @@ void receiveSTM32() {
       testPacket[testPacketUsed++]=b;
       for(;;) {
         if(!testPacketUsed)break;
-        if(testPacket[0]!=0xa5 || (testPacketUsed>=2 && testPacket[1]!=0x5a && testPacket[1]!=0x5e)) {
+        if(testPacket[0]!=0xa5 || (testPacketUsed>=2 && testPacket[1]!=0x5a && testPacket[1]!=0x5f)) {
           memmove(testPacket,testPacket+1,--testPacketUsed);continue;
         }
         if(testPacketUsed<2)break;
-        packetLength=testPacket[1]==0x5e?sizeof(BalanceFrame):sizeof(TestFrame);
+        packetLength=testPacket[1]==0x5f?sizeof(BalanceFrame):sizeof(TestFrame);
         if(testPacketUsed<packetLength)break;
-        bool ok=testPacket[1]==0x5e?acceptBalanceFrame():acceptTestFrame();
+        bool ok=testPacket[1]==0x5f?acceptBalanceFrame():acceptTestFrame();
         unsigned consumed=ok?packetLength:1;
         testPacketUsed-=consumed;memmove(testPacket,testPacket+consumed,testPacketUsed);
       }
