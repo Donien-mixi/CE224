@@ -1,3 +1,4 @@
+#include "drive8_protocol.h"
 /**
   ******************************************************************************
   * @file    esp32_comm.c
@@ -100,21 +101,17 @@ static void Parse_Packet(const char* packet)
             s_command.arm_profile=12;s_command.arm_request=1;
             s_command.last_cmd_time=HAL_GetTick();
         }
-    } else if (!strncmp(packet,"$MOVE,",6)) {
-        int direction=0;unsigned epoch=0,sequence=0,preset=0;char tail,canonical[72];
-        bool extended=sscanf(packet,"$MOVE,%d,%u,%u,%u%c",&direction,&epoch,&sequence,&preset,&tail)==4;
-        if((!extended&&sscanf(packet,"$MOVE,%d,%u,%u%c",&direction,&epoch,&sequence,&tail)!=3) ||
-           preset>1 ||
-           direction<-1||direction>1||epoch==0||epoch!=s_command.drive_epoch ||
-           sequence==0||sequence>1000000000U || sequence<=(s_command.drive_word>>2) ||
-           s_command.emergency_stop||s_command.arm_request||Robot_GetData()->state!=ROBOT_STATE_BALANCING ||
-           (direction!=0&&!Robot_GetData()->motion_ready))return;
-        if(extended)snprintf(canonical,sizeof(canonical),"$MOVE,%d,%u,%u,%u",direction,epoch,sequence,preset);
-        else snprintf(canonical,sizeof(canonical),"$MOVE,%d,%u,%u",direction,epoch,sequence);
-        if(strcmp(packet,canonical))return;
-        s_command.drive_speed_preset=(uint8_t)preset;
-        s_command.drive_word=(sequence<<2)|(direction>0?1U:direction<0?2U:0U);
+    } else if (!strncmp(packet,"$MOVE8,",7)) {
+        Drive8Packet p;
+        if(!Drive8_Parse(packet,&p) || p.epoch!=s_command.drive_epoch ||
+           p.sequence<=(s_command.drive_word>>2) || s_command.emergency_stop || s_command.arm_request ||
+           Robot_GetData()->state!=ROBOT_STATE_BALANCING ||
+           ((p.direction!=0||p.turn!=0)&&!Robot_GetData()->motion_ready))return;
+        s_command.drive_turn=(int8_t)p.turn;s_command.drive_speed_preset=(uint8_t)p.preset;
+        s_command.drive_word=(p.sequence<<2)|(p.direction>0?1U:p.direction<0?2U:0U);
         s_command.last_cmd_time=HAL_GetTick();
+    } else if (!strncmp(packet,"$MOVE,",6)) {
+        return; // SPEED2-only command cannot preserve an old turn by accident.
     } else if (!strcmp(packet,"$MEASURE")) {
         if (!s_command.emergency_stop && Robot_GetData()->state!=ROBOT_STATE_BALANCING && Robot_GetData()->state!=ROBOT_STATE_BENCH_TEST) s_command.diag_request=2;
     } else if (!strcmp(packet,"$DIAG")) {
@@ -155,7 +152,7 @@ static void Parse_Packet(const char* packet)
         s_command.emergency_stop = 1;
         s_command.arm_request=0;s_command.pulse_request=0;s_command.diag_request=0;s_command.trigger_calib=0;
         s_command.profile_request=0;s_command.arm_profile=0;
-        s_command.drive_epoch=s_command.drive_word=0;s_command.drive_speed_preset=0;
+        s_command.drive_epoch=s_command.drive_word=0;s_command.drive_speed_preset=0;s_command.drive_turn=0;
         s_command.v_target = 0.0f;
         s_command.steer_cmd = 0.0f;
         s_command.bench_test = 0;
