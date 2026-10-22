@@ -17,6 +17,7 @@ static float gyro_bias_z = 0.0f;
 static uint8_t s_bmi160_i2c_addr = (0x68 << 1);
 static BMI160_RawData_t s_last_raw;
 static bool calibration_ok;
+static uint8_t s_dma_raw_buf[12] = {0}; /* Khai bao bo dem DMA */
 bool BMI160_CalibrationOK(void) { return calibration_ok; }
 
 /* Hàm phụ trợ ghi 1 byte vào thanh ghi I2C */
@@ -97,28 +98,23 @@ bool BMI160_Init(void)
     // 0x28 = ODR 100Hz (0x08), normal bandwidth (0x20).
     BMI160_WriteReg(BMI160_REG_ACC_CONF, 0x28);
     BMI160_WriteReg(BMI160_REG_GYR_CONF, 0x28);
-
+    // Mồi (Prime) dữ liệu lần đầu tiên bằng lệnh đọc blocking
+    BMI160_ReadReg(BMI160_REG_DATA_0, s_dma_raw_buf, 12);
+    // Kích hoạt DMA chạy ngầm lần đầu tiên
+    HAL_I2C_Mem_Read_DMA(&hi2c1, s_bmi160_i2c_addr, BMI160_REG_DATA_0, I2C_MEMADD_SIZE_8BIT, s_dma_raw_buf, 12);
     return true;
 }
 
 bool BMI160_Read_All(BMI160_Data_t *data)
 {
-    uint8_t raw_buf[12];
-
-    // Đọc Burst 12 bytes liên tục: 6 bytes Gyro (Gx, Gy, Gz) + 6 bytes Accel (Ax, Ay, Az)
-    if (!BMI160_ReadReg(BMI160_REG_DATA_0, raw_buf, 12))
-    {
-        return false;
-    }
-
     // Ghép 2 bytes (LSB trước, MSB sau) thành số nguyên có dấu 16-bit
-    int16_t gx_raw = (int16_t)(((uint16_t)raw_buf[1]  << 8) | raw_buf[0]);
-    int16_t gy_raw = (int16_t)(((uint16_t)raw_buf[3]  << 8) | raw_buf[2]);
-    int16_t gz_raw = (int16_t)(((uint16_t)raw_buf[5]  << 8) | raw_buf[4]);
+    int16_t gx_raw = (int16_t)(((uint16_t)s_dma_raw_buf[1]  << 8) | s_dma_raw_buf[0]);
+    int16_t gy_raw = (int16_t)(((uint16_t)s_dma_raw_buf[3]  << 8) | s_dma_raw_buf[2]);
+    int16_t gz_raw = (int16_t)(((uint16_t)s_dma_raw_buf[5]  << 8) | s_dma_raw_buf[4]);
 
-    int16_t ax_raw = (int16_t)(((uint16_t)raw_buf[7]  << 8) | raw_buf[6]);
-    int16_t ay_raw = (int16_t)(((uint16_t)raw_buf[9]  << 8) | raw_buf[8]);
-    int16_t az_raw = (int16_t)(((uint16_t)raw_buf[11] << 8) | raw_buf[10]);
+    int16_t ax_raw = (int16_t)(((uint16_t)s_dma_raw_buf[7]  << 8) | s_dma_raw_buf[6]);
+    int16_t ay_raw = (int16_t)(((uint16_t)s_dma_raw_buf[9]  << 8) | s_dma_raw_buf[8]);
+    int16_t az_raw = (int16_t)(((uint16_t)s_dma_raw_buf[11] << 8) | s_dma_raw_buf[10]);
     s_last_raw = (BMI160_RawData_t){gx_raw, gy_raw, gz_raw, ax_raw, ay_raw, az_raw};
 
     // Chuyển đổi sang đơn vị vật lý và trừ giá trị lệch tĩnh Gyro Bias
@@ -130,6 +126,7 @@ bool BMI160_Read_All(BMI160_Data_t *data)
     data->ay = (float)ay_raw * BMI160_ACCEL_SCALE_8G;
     data->az = (float)az_raw * BMI160_ACCEL_SCALE_8G;
 
+    HAL_I2C_Mem_Read_DMA(&hi2c1, s_bmi160_i2c_addr, BMI160_REG_DATA_0, I2C_MEMADD_SIZE_8BIT, s_dma_raw_buf, 12);
     return true;
 }
 

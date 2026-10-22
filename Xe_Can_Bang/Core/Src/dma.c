@@ -41,15 +41,17 @@ void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA2_Stream2_IRQn interrupt configuration
-   * CRITICAL: Priority (0,0) — cao nhất — đảm bảo DMA RX error callback
-   * luôn được phục vụ ngay, không bị chặn bởi TIM4 (200Hz) hay USART1 IRQ */
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
+  /* DMA1_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   /* DMA2_Stream7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 1);
+  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
 
 }
