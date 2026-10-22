@@ -90,7 +90,7 @@ uint16_t testCRC(const uint8_t *bytes, unsigned length) {
 
 bool acceptBalanceFrame() {
   BalanceFrame f;memcpy(&f,testPacket,sizeof(f));
-  if(f.sync!=0x5ea5 || f.controller!=12 || testCRC(testPacket,sizeof(f)-2)!=f.crc){balanceCRC++;return false;}
+  if(f.sync!=0x60a5 || f.controller!=12 || testCRC(testPacket,sizeof(f)-2)!=f.crc){balanceCRC++;return false;}
   if(balanceSeen) {
     if(f.sequence>balanceLatest.sequence+1)balanceGaps+=f.sequence-balanceLatest.sequence-1;
     if(f.sequence<=balanceLatest.sequence)balanceResets++;
@@ -229,7 +229,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       Serial1.write(payload, length);
       Serial1.print("\r\n");
       // Debug log để người dùng quan sát trên Arduino IDE Serial Monitor
-      Serial.printf("[WS->STM32] %.*s\n", (int)length, (char*)payload);
+      // Per-command USB printing is disabled: never block the command path.
       break;
     }
 
@@ -255,7 +255,7 @@ void setup() {
   if (!testLog) testCapacity = 0;
   void *jobMemory=heap_caps_malloc(3*1024*1024,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
   if(jobMemory)jobLogs.attach(jobMemory,3*1024*1024);
-  balanceCapacity=18000;
+  balanceCapacity=9000;
   balanceFrames=(BalanceFrame*)heap_caps_malloc(balanceCapacity*sizeof(BalanceFrame),MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
   if(!balanceFrames)balanceCapacity=0;
   captureMutex = xSemaphoreCreateMutex();
@@ -346,6 +346,7 @@ void loop() {
   xSemaphoreGive(captureMutex);
   if (telemetry[0]) webSocket.broadcastTXT(telemetry);
   /* 1. Xử lý các request HTTP và WebSockets */
+  webSocket.loop();
   server.handleClient();
   webSocket.loop();
   receiveSTM32();
@@ -369,13 +370,13 @@ void receiveSTM32() {
       testPacket[testPacketUsed++]=b;
       for(;;) {
         if(!testPacketUsed)break;
-        if(testPacket[0]!=0xa5 || (testPacketUsed>=2 && testPacket[1]!=0x5a && testPacket[1]!=0x5e)) {
+        if(testPacket[0]!=0xa5 || (testPacketUsed>=2 && testPacket[1]!=0x5a && testPacket[1]!=0x60)) {
           memmove(testPacket,testPacket+1,--testPacketUsed);continue;
         }
         if(testPacketUsed<2)break;
-        packetLength=testPacket[1]==0x5e?sizeof(BalanceFrame):sizeof(TestFrame);
+        packetLength=testPacket[1]==0x60?sizeof(BalanceFrame):sizeof(TestFrame);
         if(testPacketUsed<packetLength)break;
-        bool ok=testPacket[1]==0x5e?acceptBalanceFrame():acceptTestFrame();
+        bool ok=testPacket[1]==0x60?acceptBalanceFrame():acceptTestFrame();
         unsigned consumed=ok?packetLength:1;
         testPacketUsed-=consumed;memmove(testPacket,testPacket+consumed,testPacketUsed);
       }

@@ -1,10 +1,10 @@
 #pragma once
 // Included after measurement_web.h, using its bounded socket writer.
 static int balanceRow(char *out,size_t n,const BalanceFrame &f) {
-  return snprintf(out,n,"%lu,%lu,%u,%u,%u,%u,%u,%d,%d,%ld,%ld,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%u,%u,%u,%.4f,%.6f,%.6f,%lu,%u,%d",
+  return snprintf(out,n,"%lu,%lu,%u,%u,%u,%u,%u,%d,%d,%ld,%ld,%d,%d,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%u,%u,%u,%.4f,%.6f,%.6f,%lu,%u,%d,%.6f,%.6f,%d,%lu,%lu",
     (unsigned long)f.sequence,(unsigned long)f.t_ms,f.dt_us,f.execution_us,f.state,f.ready,f.fault,
     f.pwm_l,f.pwm_r,(long)f.ticks_l,(long)f.ticks_r,f.gx,f.gy,f.gz,f.ax,f.ay,f.az,
-    f.pitch,f.gyro,f.v_l,f.v_r,f.x,f.v_cmd,f.theta_cmd,f.pwm_base,f.integral,f.dropped,f.controller,f.capture,f.distance_limit,f.x_ref,f.v_ref,(unsigned long)f.drive_epoch,f.motion_flags,f.drive_direction);
+    f.pitch,f.gyro,f.v_l,f.v_r,f.x,f.v_cmd,f.theta_cmd,f.pwm_base,f.integral,f.dropped,f.controller,f.capture,f.distance_limit,f.x_ref,f.v_ref,(unsigned long)f.drive_epoch,f.motion_flags,f.drive_direction,f.psi_ref,f.w_ref,f.turn_direction,(unsigned long)f.drive_sequence,(unsigned long)f.drive_rx_ms);
 }
 static int balanceExportRow(char *out,size_t n,const BalanceFrame &f) {
   if(n<2)return -1;
@@ -40,12 +40,12 @@ void setupBalanceRoutes() {
     }
     xSemaphoreTake(captureMutex,portMAX_DELAY);
     bool fresh=balanceSeen && millis()-balanceReceived<500;
-    bool matched=!strncmp(balanceMeta,"$BINFO,BAL-20261018-R12-SPEED2,",sizeof("$BINFO,BAL-20261018-R12-SPEED2,")-1);
+    bool matched=!strncmp(balanceMeta,"$BINFO,BAL-20261019-R12-8DIR-RT1,",sizeof("$BINFO,BAL-20261019-R12-8DIR-RT1,")-1);
     bool running=balanceLatest.state==3||balanceLatest.state==7;
     if(action!="calib" && !sessionOK) message="Trang chưa có kênh điều khiển đang hoạt động. Giữ trang này mở và kết nối lại Wi-Fi.";
     else if(action!="calib" && !revisionOK) message="Đã có lệnh DỪNG sau yêu cầu cũ. Chờ thông số mới rồi bấm lại nếu muốn chạy.";
     else if(!fresh) message="Chưa nhận dữ liệu mới từ STM32. Kiểm tra nguồn, UART hoặc chế độ đo linh kiện.";
-    else if(!matched) message="STM32 chưa báo BAL-20261018-R12-SPEED2. Cần nạp đúng phiên bản STM32.";
+    else if(!matched) message="STM32 chưa báo BAL-20261019-R12-8DIR-RT1. Cần nạp đúng phiên bản STM32.";
     else if(running) message="Motor đang chạy. Bấm DỪNG trước khi đổi bài.";
     else if(balanceDownloading) message="Đang tải log. Chờ tải xong.";
     else if(action=="arm" && (controller!=balanceLatest.controller || balanceMetaController()!=controller)) message="Chế độ đã thay đổi hoặc STM32 chưa xác nhận cấu hình. Chờ thông số mới rồi chọn/bấm lại.";
@@ -92,7 +92,7 @@ void setupBalanceRoutes() {
     uint8_t logController=balanceFrames[0].controller;
     for(size_t i=1;i<count;i++)if(balanceFrames[i].controller!=logController){logController=0;break;}
     String filename=logController?String("twip_balance_R")+String(logController)+".txt":"twip_balance_MIXED.txt";
-    String header="# TWIP_BALANCE_V7; R12 SPEED2 selectable40_60cmps build BAL-20261018-R12-SPEED2\n# last_live_meta (not necessarily the configuration of every stored row): ";
+    String header="# TWIP_BALANCE_RT1_V1; frame122 sync0x60a5 50Hz; build BAL-20261019-R12-8DIR-RT1\n# last_live_meta (not necessarily the configuration of every stored row): ";
     header+=balanceMeta;
     header+="\n# acc correction (raw/4096-b)/s: b=-0.0416836098593,-0.105884356548,0.004738195334; s=0.997272837552,1.00758977736,1.00929388014; positive Y gain\n";
     header+="# pitch=CF(alpha=0.998, +gyroY, -(atan2(correctedAx,correctedAz)-2.166942649deg)); trim=0; dt=0.005; encoder meanPPR=898.225 beta=0.75; right sign=-1\n";
@@ -100,17 +100,18 @@ void setupBalanceRoutes() {
     header+="# R12: nonlinear per-wheel force allocation, directional startup/running friction and back-EMF; NO additional PID deadband; yaw PI/PD with antiwindup, cap0.08Nm; balance-force priority.\n";
     header+="# R12 telemetry: v_control=observer axle speed m/s; theta_control=observer body angle deg; pwm_base=mean final PWM; integral=yaw integral Nm, cap0.04. Brake on first ARM tick.\n";
     header+="# ARM abs(CF pitch)<=60deg for fixed R12 baseline, each gyro<6dps and each wheel<0.05m/s for200ms. Operator reports successful60deg starts; not a guarantee for impacts/slopes. Previous high-angle predictor remains unvalidated. Frozen R12 force law; only ARM>58deg extends startup limits.\n";
-    header+="# 100Hz decimated control snapshots; control200Hz IMU100Hz unsynchronised. PWM is command AFTER this sample; raw gyro/16.4 includes bias. No voltage/current/load measurement.\n";
+    header+="# 50Hz decimated control snapshots; control200Hz IMU100Hz unsynchronised. PWM is command AFTER this sample; raw gyro/16.4 includes bias. No voltage/current/load measurement.\n";
+    header+="# MOVE8 direction/turn=-1,0,+1; turn positive=body left. Pure turn normal1.2/fast2.2rad/s; diagonal normal0.80/fast0.55rad/s before wheel-speed/lateral/angle governors; yaw accel1.5/decel2.5rad/s2. psi_ref and w_ref are targets, not measured heading. Neutral releases both axes; stale yaw requires neutral before new press.\n";
     header+="# R12 BASE60: distance budget=min(1,max(.3,.3+.014*(abs(ARM_CF_angle)-10)))m. Capture starts above20deg, angle limit=max(25,abs(ARM_angle)+5), ends after200ms abs(pitch)<=8/gyro<25/speed<.15, timeout3s through58deg ARM,4s only for ARM>58deg; fault2048. Capture speed ceiling1m/s through48deg ARM,1.1m/s through58deg ARM,1.2m/s only for ARM>58deg; after capture tilt stop25deg and speed0.8m/s.\n";
     header+="# state3 balance; state7 fixed motor pulse +/-600 for max1500ms, no PID. fault bits: 1 STOP,2 heartbeat timeout,4 tilt exceeds active limit,8 relative tracking error exceeded active budget,16 speed exceeds active ceiling (capture1/1.1/1.2m/s for ARM<=48/<=58/>58deg,normal0.8m/s),32 I2C,64 loop timing,128 gyro calibration,256 IMU config,512 nonfinite,1024 fixture motion during pulse,2048 startup capture timeout3s through58deg ARM,4s above58deg,4096 disturbance recovery timeout4s,8192 suspected severe impact after motion (gyro>900dps or gyro>250dps with accel norm>2g/<0.4g); motor off, manual ARM only\n";
     header+="# REC1 control_phase:0 normal,1 startup,2 disturbance recovery. After500ms steady: abs(pitch)>=8deg or abs(gyro)>=60dps or abs(speed-vref)>=.35m/s may start recovery. Temporary limits50deg/1.2mps/min(1,max(base_budget,abs(entry_position)+.8))m, timeout4s without refresh. Exit300ms quiet: pitch<=6deg, gyro<25dps, abs(speed-vref)<.15mps AND abs(x-xref)<=base_budget. No encoder reset or gain change.\n";
-    header+="# SPEED2: hold40/60cmps, default40; speed preset is explicit in each MOVE packet, flag256=fast60 selected. Accel0.20/decel0.30mps2; continuous commanded travel. 350ms MOVE lease independent of PING. Flags:1ready,2moving,4braking,8tracking_limited,16release_required,32has_moved,64cancelled_old_target,128tracking_blockage,256fast_preset. Recovery after motion or sustained tracking failure abandons old position; velocity reference is initialized from measured speed then ramps to zero while xref follows the body until500ms quiet and a release. No automatic resumption; a new press is required. No encoder/observer reset. Cancellation has an independent1m/4s envelope from the first abort sample; re-entry cannot refresh it, even while xref follows the body.\n";
+    header+="# RT1: hold50/72cmps, default50; speed preset is explicit in each MOVE8 packet, flag256=fast72 selected. Accel0.30mps2 below0.50mps,0.15above; decel0.45mps2; continuous commanded travel. 350ms MOVE lease independent of PING. Flags:1ready,2moving,4braking,8tracking_limited,16release_required,32has_moved,64cancelled_old_target,128tracking_blockage,256fast_preset,512yaw_governor_limited. drive_sequence/drive_rx_ms acknowledge actual STM32 parsing; PING does not refresh them. Recovery after motion or sustained tracking failure abandons old position; velocity reference is initialized from measured speed then ramps to zero while xref follows the body until500ms quiet and a release. No automatic resumption; a new press is required. High-speed reserve predictor enters the same bounded REC1 only when primed, abs(vref)>0.55mps, abs(vactual)>0.78mps and abs(vactual-vref)>0.04mps in the overspeed direction. The0.8mps ordinary cutoff is unchanged. No encoder/observer reset. An unsettled cancellation has an independent1m/4s envelope from the first abort sample; re-entry cannot refresh it, even while xref follows the body. A500ms quiet body/wheel/yaw confirmation can end a completed abort while still requiring neutral/new press; a PING alone cannot end it.\n";
     header+="# log first 180s cumulative active+2s tail; full freezes storage (does not overwrite), live display continues; download requires STOP. Multiple arms require inspecting state/seq boundaries.\n";
     header+="# samples="+String((unsigned)count)+" crc_errors="+String(balanceCRC)+" sequence_gaps="+String(balanceGaps)+" overflow="+String(balanceOverflow)+" STM32_resets="+String(balanceResets)+"\n";
     header+="# GSTOP: gateway_ms,last_seen_STM32_ms,last_seen_seq,source; gateway command evidence, not an STM32 acknowledgment. First STOP per arm/pulse; max32 records.\n";
     for(unsigned i=0;i<controlStopCount;i++)header+=controlStops[i];
     header+="# gateway_stop_events_dropped="+String(controlStopOverflow)+"\n";
-    header+="seq,t_ms,dt_us,execution_us,state,ready,fault,pwm_l,pwm_r,ticks_l,ticks_r,gx_raw,gy_raw,gz_raw,ax_raw,ay_raw,az_raw,pitch_deg,gyroY_corrected_dps,v_l_mps,v_r_mps,x_encoder_m,control_v_mps,control_theta_deg,control_pwm,control_integral,stm32_drops,controller,control_phase,distance_limit_m,x_ref_m,v_ref_mps,drive_epoch,motion_flags,drive_direction\n";
+    header+="seq,t_ms,dt_us,execution_us,state,ready,fault,pwm_l,pwm_r,ticks_l,ticks_r,gx_raw,gy_raw,gz_raw,ax_raw,ay_raw,az_raw,pitch_deg,gyroY_corrected_dps,v_l_mps,v_r_mps,x_encoder_m,control_v_mps,control_theta_deg,control_pwm,control_integral,stm32_drops,controller,control_phase,distance_limit_m,x_ref_m,v_ref_mps,drive_epoch,motion_flags,drive_direction,psi_ref_rad,w_ref_radps,turn_direction,drive_sequence,drive_rx_ms\n";
     xSemaphoreGive(captureMutex);
     // A raw socket body must have a fixed length, never a chunked HTTP header.
     // Frames are immutable here: motors stopped, tail complete, new ARM/clear locked.

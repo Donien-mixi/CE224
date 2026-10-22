@@ -1,6 +1,6 @@
-static float study_speed=.6f;
+static float study_speed=.72f;
 #define BALANCE_MOTION_SPEED study_speed
-#include "balance_motion.h"
+#include "balance_turn.h"
 #include "phase2_motion_control.h"
 #define API __declspec(dllexport)
 static BalanceMotion decode(const double *s){
@@ -10,11 +10,12 @@ static BalanceMotion decode(const double *s){
 }
 API void twip_motion_reference(double *in,double *state,double *out){
  BalanceMotion s=decode(state);
- s.speed_preset=study_speed>.4f;
- int valid=BalanceMotion_Update(&s,in[0]!=0,(uint32_t)in[1],in[2],in[3],in[4],in[5],(uint32_t)in[6]);
- double a[17]={s.x_ref,s.v_ref,s.last_word,s.last_ms,s.stable,s.ready,s.release_required,s.used,s.cancel_origin,
- s.flags,s.requested,s.blocked_ticks,s.cancel_flags,s.inhibited,s.speed_preset,s.cancel_started_ms,valid};
- for(int i=0;i<17;i++)out[i]=a[i];
+ s.speed_preset=study_speed>.50f;
+ BalanceTurn t={.psi_ref=state[16],.w_ref=state[17],.requested=state[18],.used=state[19]!=0,.release_required=state[20]!=0,.blocked_ticks=state[21],.quiet=state[22]};
+ int valid=BalanceMotion8_Update(&s,&t,in[0]!=0,(uint32_t)in[1],(int)in[7],in[2],in[3],in[4],in[5],in[8],in[9],(uint32_t)in[6]);
+ double a[24]={s.x_ref,s.v_ref,s.last_word,s.last_ms,s.stable,s.ready,s.release_required,s.used,s.cancel_origin,
+ s.flags,s.requested,s.blocked_ticks,s.cancel_flags,s.inhibited,s.speed_preset,s.cancel_started_ms,t.psi_ref,t.w_ref,t.requested,t.used,t.release_required,t.blocked_ticks,t.quiet,valid};
+ for(int i=0;i<24;i++)out[i]=a[i];
 }
 API void twip_motion_impact(double *in,double *state,double *out){
  BalanceMotion s=decode(state);out[0]=BalanceMotion_Impact(&s,in[0]!=0,in[1],in[2]);
@@ -25,7 +26,7 @@ API void twip_motion_cancel_fault(double *in,double *state,double *out){
 API void twip_motion_control(double *in,double *state,double *out){
  float a[7],s[CAT_N+3],o[4];for(int i=0;i<7;i++)a[i]=(float)in[i];
  for(int i=0;i<CAT_N+3;i++)s[i]=(float)state[i];
- int valid=motion_cat_step(a,s,o,(float)in[7],(float)in[8]);
+ int valid=motion_cat_step8(a,s,o,(float)in[7],(float)in[8],(float)in[9],(float)in[10]);
  for(int i=0;i<CAT_N+3;i++)out[i]=s[i];
  out[CAT_N+3]=o[0];out[CAT_N+4]=o[1];out[CAT_N+5]=valid;
 }

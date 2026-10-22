@@ -2,7 +2,7 @@
 /* Final R12 STATE4_OBS14 baseline. Legacy PID constants below support
  * diagnostic/library code only; they are not a selectable balance controller.
  * Raw test data must never use the following sensor corrections. */
-#define BALANCE_BUILD "BAL-20261018-R12-SPEED2"
+#define BALANCE_BUILD "BAL-20261019-R12-8DIR-RT1"
 #define BALANCE_CONTROLLER_R12 12U
 #define BALANCE_DEFAULT_CONTROLLER BALANCE_CONTROLLER_R12
 #define BALANCE_PPR 898.225f

@@ -3,7 +3,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #ifndef BALANCE_MOTION_SPEED
-#define BALANCE_MOTION_SPEED (s->speed_preset? .60f:.40f)
+#define BALANCE_MOTION_SPEED (s->speed_preset? .72f:.50f)
+#endif
+#ifndef BALANCE_MOTION_ACCEL
+#define BALANCE_MOTION_ACCEL (fabsf(old)>.50f?.15f:.30f)
+#define BALANCE_MOTION_DECEL .45f
 #endif
 /* 200Hz. The observer/encoder remain in the physical frame. An abandoned
  * trajectory must never pull a blocked vehicle back toward its old target. */
@@ -73,7 +77,7 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
     float target=limited?0:BALANCE_MOTION_SPEED*wanted;
     if(wanted!=0)s->used=true;
     float old=s->v_ref;
-    float rate=(old*target<0||fabsf(target)<fabsf(old))?.30f:.20f;
+    float rate=(old*target<0||fabsf(target)<fabsf(old))?BALANCE_MOTION_DECEL:BALANCE_MOTION_ACCEL;
     s->v_ref+=fmaxf(-rate*.005f,fminf(rate*.005f,target-s->v_ref));
     if(s->used&&!s->cancel_flags)s->x_ref+=.5f*(old+s->v_ref)*.005f;
     s->requested=(int8_t)(fresh?dir:0);

@@ -35,8 +35,10 @@ typedef struct {
     uint32_t last_cmd_time; // Thời điểm nhận gói tin cuối (dùng cho Failsafe timeout)
     uint32_t arm_drive_epoch;
     volatile uint32_t drive_epoch;
+    volatile uint32_t drive_rx_ms; // reception time, not refreshed by PING
     volatile uint32_t drive_word; // atomic sequence/direction publication
-    volatile uint8_t drive_speed_preset; //0:0.4m/s,1:0.6m/s; published with word while IRQs are masked
+    volatile int8_t drive_turn; // -1:right,0:straight,+1:left; published with drive_word
+    volatile uint8_t drive_speed_preset; //0:0.5m/s,1:0.72m/s; published with word while IRQs are masked
 } ESP32_Command_t;
 
 /**

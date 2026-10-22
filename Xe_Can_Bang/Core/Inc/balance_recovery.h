@@ -42,3 +42,17 @@ static inline float BalanceRecovery_Speed(const BalanceRecovery *s,float ordinar
 static inline float BalanceRecovery_Distance(const BalanceRecovery *s,float ordinary) {
     return s->active?fmaxf(ordinary,s->distance_limit):ordinary;
 }
+
+/* Enter the existing bounded recovery before the ordinary speed interlock.
+ * Both velocities are measured/reference values; no sensor is rewritten. */
+static inline void BalanceRecovery_Reserve(BalanceRecovery *s,bool allow,float speed,float reference,
+ float position,float budget,uint32_t now){
+ if(!allow||s->active||!s->primed||!isfinite(speed)||!isfinite(reference)||
+    !isfinite(position)||!isfinite(budget))return;
+ float error=speed-reference;
+ if(fabsf(reference)>.55f&&fabsf(speed)>.78f&&fabsf(error)>.04f&&speed*error>0){
+  s->active=true;s->primed=false;s->quiet=0;s->started_ms=now;
+  if(s->episodes<65535U)s->episodes++;
+  s->distance_limit=fminf(1.0f,fmaxf(budget,fabsf(position)+.80f));
+ }
+}
