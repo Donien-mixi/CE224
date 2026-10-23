@@ -735,10 +735,10 @@ void Robot_ControlLoop_200Hz(void) {
             s_robot.state==ROBOT_STATE_BALANCING&&!bal_startup.active&&!just_armed,
             s_robot.v_actual,bal_motion.v_ref,s_robot.x_actual-bal_motion.x_ref,
             bal_startup.budget,HAL_GetTick());
-        uint16_t recovery_fault=BalanceRecovery_Update(&bal_recovery,
+        uint16_t recovery_fault=BalanceRecovery_UpdateMode(&bal_recovery,
             s_robot.state==ROBOT_STATE_BALANCING&&!bal_startup.active&&!just_armed,
             s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual-bal_motion.v_ref,s_robot.x_actual-bal_motion.x_ref,
-            bal_startup.budget,HAL_GetTick());
+            bal_startup.budget,HAL_GetTick(),BalanceMotion8_Maneuver(&bal_motion,&bal_turn,HAL_GetTick()));
         if(recovery_fault){BalanceStop(recovery_fault);break;}
         bal_motion.speed_preset=cmd->drive_speed_preset;
         if(!BalanceMotion8_Update(&bal_motion,&bal_turn,
@@ -778,7 +778,7 @@ void Robot_ControlLoop_200Hz(void) {
             s_robot.v_left,s_robot.v_right,
             (-(float)ticks_r-(float)ticks_l)*METERS_PER_TICK};
         float output[4];
-        if(!motion_cat_step8(input,bal_catalog,output,bal_motion.x_ref,bal_motion.v_ref,bal_turn.psi_ref,bal_turn.w_ref))BalanceStop(512);
+        if(!motion_cat_step8_mode(input,bal_catalog,output,bal_motion.x_ref,bal_motion.v_ref,bal_turn.psi_ref,bal_turn.w_ref,bal_turn.rate_mode))BalanceStop(512);
         else if(just_armed) {
             /* Observer updates once; first ARM tick still holds brake. */
             bal_catalog[CAT_N]=bal_catalog[CAT_N+2]=0;

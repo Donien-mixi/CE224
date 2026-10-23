@@ -110,7 +110,7 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         if ~audit_motor then error("Observer audit requires motor audit");end
         E=[E;zeros(5,n)];
     end
-    push_state=zeros(7,1);motion_state=zeros(23,1);motion_word=0;push_fault=0;push_events=[];motion_events=[];driver_cancelled=%f;last_plan_wanted=0;last_plan_turn=0;sent_turn=0;
+    push_state=zeros(7,1);motion_state=zeros(28,1);motion_word=0;push_fault=0;push_events=[];motion_events=[];driver_cancelled=%f;last_plan_wanted=0;last_plan_turn=0;sent_turn=0;
     external_stopped=%f; // Latched gateway/operator STOP, independent of PID stability.
     for k=1:N
         t=(k-1)*S.Ts;
@@ -200,7 +200,8 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         if isfield(S,"push_recovery") then
             impact=call("twip_motion_impact",[1;gyro/rad;norm_queue(1)],1,"d",motion_state,2,"d","out",[1,1],3,"d");
             if impact<>0 then push_fault=impact;push_events=[push_events;t,0,25,.8,.3,impact];n=k;break;end
-            push_result=call("twip_push_guard",[1;thhat/rad;gyro/rad;vf-motion_state(2);xhat-motion_state(1);.3;t*1000;vf;motion_state(2)],1,"d",push_state,2,"d","out",[11,1],3,"d");
+            maneuver=motion_state(6)<>0 & motion_state(13)==0 & motion_state(7)==0 & motion_state(21)==0 & t*1000-motion_state(4)<350 & (motion_state(11)<>0 | motion_state(19)<>0 | motion_state(24)<>0 | motion_state(26)<>0);
+            push_result=call("twip_push_guard",[1;thhat/rad;gyro/rad;vf-motion_state(2);xhat-motion_state(1);.3;t*1000;vf;motion_state(2);bool2s(maneuver)],1,"d",push_state,2,"d","out",[11,1],3,"d");
             push_state=push_result(1:7);push_fault=push_result(11);
             wanted=0;wanted_turn=0;
             for j=1:size(S.motion_plan,1)
@@ -209,12 +210,14 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
             publish=%t;if isfield(S,"motion_freeze_at") then publish=t<S.motion_freeze_at;end
             // Browser hold state, not plant truth: on a displayed inhibit the
             // actual UI clears driveHeld and never resumes a held gesture.
-            if wanted<>last_plan_wanted | wanted_turn<>last_plan_turn then driver_cancelled=%f;end
+            changed=wanted<>last_plan_wanted | wanted_turn<>last_plan_turn;
+            if changed then driver_cancelled=%f;end
             last_plan_wanted=wanted;last_plan_turn=wanted_turn;
-            if publish & modulo(k-1,20)==0 then
+            // RT2 matches the browser: immediate direction/release events and40ms refresh.
+            if publish & (modulo(k-1,8)==0 | changed) then
                 if (wanted<>0 | wanted_turn<>0) & (push_state(6)<>0 | bitand(uint16(motion_state(10)),uint16(1))==0) then driver_cancelled=%t;end
                 sent_direction=wanted;sent_turn=wanted_turn;if driver_cancelled then sent_direction=0;sent_turn=0;end
-                motion_word=4*(1+floor((k-1)/20));if sent_direction==1 then motion_word=motion_word+1;end;if sent_direction==-1 then motion_word=motion_word+2;end
+                motion_word=4*(floor(motion_word/4)+1);if sent_direction==1 then motion_word=motion_word+1;end;if sent_direction==-1 then motion_word=motion_word+2;end
             end
             if isfield(S,"motion_speed_plan") then
                 selected_speed=S.motion_speed_plan(1,2);
@@ -223,13 +226,13 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
                 end
                 ack=call("twip_motion_set_speed",selected_speed,1,"d","out",[1,1],2,"d");
             end
-            motion_result=call("twip_motion_reference",[1-push_state(6);motion_word;xhat;thhat/rad;gyro/rad;vf;t*1000;sent_turn;delta/S.coupled_pair(1);(vfLR(2)-vfLR(1))/S.coupled_pair(1)],1,"d",motion_state,2,"d","out",[24,1],3,"d");
-            motion_state=motion_result(1:23);
-            if motion_result(24)<>1 then error("Invalid motion reference");end
+            motion_result=call("twip_motion_reference",[1-push_state(6);motion_word;xhat;thhat/rad;gyro/rad;vf;t*1000;sent_turn;delta/S.coupled_pair(1);(vfLR(2)-vfLR(1))/S.coupled_pair(1)],1,"d",motion_state,2,"d","out",[29,1],3,"d");
+            motion_state=motion_result(1:28);
+            if motion_result(29)<>1 then error("Invalid motion reference");end
             cancel_fault=call("twip_motion_cancel_fault",[xhat;t*1000],1,"d",motion_state,2,"d","out",[1,1],3,"d");
             if cancel_fault<>0 then push_fault=cancel_fault;push_events=[push_events;t,0,25,.8,.3,cancel_fault];n=k;break;end
-            S.research_control.motion_ref=motion_state([1 2 17 18]);
-            motion_events=[motion_events;t,motion_state(1:2)',motion_state([10 11 12 13 14 17 18 19 21 22])'];
+            S.research_control.motion_ref=motion_state([1 2 17 18 28]);
+            motion_events=[motion_events;t,motion_state(1:2)',motion_state([10 11 12 13 14 17 18 19 21 22 24 26 28])'];
             S.push_diagnostic_limits=push_result([8 10 9]); // angle, distance, speed
             push_events=[push_events;t,push_state(6),push_result(8:11)'];
             if push_fault<>0 then n=k;break;end

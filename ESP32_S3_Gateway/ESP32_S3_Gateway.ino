@@ -4,7 +4,7 @@
   * @brief   Firmware Cầu nối Không dây Tốc độ cao ESP32-S3 N16R8 (Arduino IDE)
   *          Tạo Wi-Fi SoftAP + WebSockets Server + Cầu truyền thông USART1 với STM32
   ******************************************************************************
-  * CẤU HÌNH TRÊN ARDUINO IDE:
+  * CẤU HÌNH TRÊN ARDUINO IDE:  
   *   - Board: "ESP32S3 Dev Module"
   *   - USB CDC On Boot: "Enabled"
   *   - Flash Size: "16MB (128Mb)"
@@ -50,6 +50,7 @@ static uint32_t balanceReceived,balanceCRC,balanceGaps,balanceOverflow,balanceRe
 static bool balanceSeen,balanceDownloading;
 static char balanceMeta[256]={};
 void setupBalanceRoutes();
+static void setupNetworkRoutes();
 #include "job_log_store.h"
 JobLogStore jobLogs;
 uint32_t nextJobId=100,jobRequestedAt=0,jobLastRx=0;
@@ -141,6 +142,9 @@ bool acceptTestFrame() {
   return true;
 }
 
+#include "network_health.h"
+#include "balance_archive.h"
+
 void setupMeasurementRoutes();
 void measurementWatchdog();
 
@@ -206,12 +210,14 @@ uint8_t stm32LineIdx = 0;
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
   switch (type) {
     case WStype_DISCONNECTED:
+      gatewayWsDisconnected++;
       Serial.printf("[WS] Client #%u ngat ket noi\n", num);
       // Only the controlling session can stop on disconnect.
       controlDisconnected(num);
       break;
 
     case WStype_CONNECTED: {
+      gatewayWsConnected++;
       controlConnected(num);
       IPAddress ip = webSocket.remoteIP(num);
       Serial.printf("[WS] Client #%u ket noi tu IP: %s\n", num, ip.toString().c_str());
@@ -224,7 +230,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         if(!memcmp(payload+i,"$TEST,",6) || !memcmp(payload+i,"$TPING",6))return;
       // Nhận gói tin điều khiển từ Web UI (ví dụ: $CMD,v,steer* hoặc $PID,...)
       // Chuyển tiếp ngay lập tức xuống STM32F411 qua Serial1
-      String command;for(size_t i=0;i<length;i++)command+=(char)payload[i];
+      if(length>256)return;
+      String command;command.reserve(length);for(size_t i=0;i<length;i++)command+=(char)payload[i];
       if(!controlMessage(num,command))return;
       Serial1.write(payload, length);
       Serial1.print("\r\n");
@@ -249,6 +256,9 @@ void setup() {
   /* Khởi tạo Serial1 giao tiếp phần cứng với STM32F411 */
   Serial1.setRxBufferSize(16384);
   Serial1.begin(STM32_BAUD, SERIAL_8N1, STM32_RX_PIN, STM32_TX_PIN);
+  // An ESP-only restart must never keep an earlier STM32 driving session alive.
+  Serial1.print("$STOP*\r\n");
+  gatewayHealthBegin();
   testCapacity = 2 * 1024 * 1024;
   testLog = (char *)heap_caps_malloc(testCapacity, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   if (!testLog) { testCapacity = 128 * 1024; testLog = (char *)malloc(testCapacity); }
@@ -266,10 +276,15 @@ void setup() {
   }
   Serial.printf("[UART] Da mo ket noi voi STM32 tren RX: GPIO%d, TX: GPIO%d @ %d bps\n",
                 STM32_RX_PIN, STM32_TX_PIN, STM32_BAUD);
+  archiveBegin();
 
   /* Bật Wi-Fi SoftAP độc lập tốc độ cao */
   WiFi.mode(WIFI_AP);
-  WiFi.softAP(AP_SSID, AP_PASS);
+  WiFi.setSleep(false);
+  bool apOK=WiFi.softAP(AP_SSID,AP_PASS,6,false,4);
+  esp_err_t bwOK=esp_wifi_set_bandwidth(WIFI_IF_AP,WIFI_BW_HT20);
+  bool powerOK=WiFi.setTxPower(WIFI_POWER_17dBm);
+  Serial.printf("[NET1] AP=%d HT20=%d TX17=%d boot=%lu reset=%s archive=%lu\n",apOK,(int)bwOK,powerOK,(unsigned long)gatewayBootId,gatewayResetText(gatewayResetReason),(unsigned long)archiveError);
   IPAddress myIP = WiFi.softAPIP();
 
   Serial.print("[Wi-Fi] SoftAP SSID : "); Serial.println(AP_SSID);
@@ -313,6 +328,7 @@ void setup() {
   server.on("/hardware-log", HTTP_GET, downloadHardwareLog);
   setupMeasurementRoutes();
   setupBalanceRoutes();
+  setupNetworkRoutes();
   server.on("/hardware-status", HTTP_GET, []() {
     char reply[1024];
     xSemaphoreTake(captureMutex, portMAX_DELAY);
@@ -340,11 +356,16 @@ void setup() {
 }
 
 void loop() {
-  char telemetry[256];
+  static uint32_t previous=0,lastLegacy=0;uint32_t tick=millis();
+  if(previous&&tick-previous>gatewayLoopGapMax)gatewayLoopGapMax=tick-previous;previous=tick;
+  char telemetry[256];bool liveBalance;
   xSemaphoreTake(captureMutex, portMAX_DELAY);
   memcpy(telemetry, pendingTelemetry, sizeof(telemetry)); pendingTelemetry[0] = 0;
+  liveBalance=balanceSeen&&millis()-balanceReceived<=1000;
   xSemaphoreGive(captureMutex);
-  if (telemetry[0]) webSocket.broadcastTXT(telemetry);
+  // R12 dashboard consumes balance-status, not legacy $TEL broadcasts. A slow
+  // observer must not queue ignored traffic ahead of control on every loop.
+  if(telemetry[0]&&!liveBalance&&tick-lastLegacy>=200){webSocket.broadcastTXT(telemetry);lastLegacy=tick;}
   /* 1. Xử lý các request HTTP và WebSockets */
   webSocket.loop();
   server.handleClient();
@@ -355,6 +376,7 @@ void loop() {
 
 #include "measurement_web.h"
 #include "balance_web.h"
+#include "network_routes.h"
 
 void receiveSTM32() {
 #ifdef ARDUINO

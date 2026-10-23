@@ -46,6 +46,9 @@ static void controlStop(const char *source) {
         "# GSTOP,%lu,%lu,%lu,%s\n",(unsigned long)millis(),
         (unsigned long)stmMs,(unsigned long)seq,source);
     else controlStopOverflow++;
+#ifdef ARDUINO
+    if(controlStopCount)gatewayRecordStop(controlStops[controlStopCount-1]);
+#endif
   }
   Serial1.print("$STOP*\r\n");
 }
@@ -81,7 +84,7 @@ static bool controlMessage(uint8_t client,const String &command) {
       bool ok=balanceSeen&&millis()-balanceReceived<300&&balanceLatest.state==3&&
         balanceLatest.controller==12&&balanceLatest.capture==0&&(balanceLatest.motion_flags&1U)&&
         balanceLatest.drive_epoch==p.epoch&&balanceLatest.fault==0&&
-        !strncmp(balanceMeta,"$BINFO,BAL-20261019-R12-8DIR-RT1,",sizeof("$BINFO,BAL-20261019-R12-8DIR-RT1,")-1)&&
+        !strncmp(balanceMeta,"$BINFO,BAL-20261022-R12-8DIR-RT4,",sizeof("$BINFO,BAL-20261022-R12-8DIR-RT4,")-1)&&
         balanceCapacity&&millis()-controlPings[client]<600;
       xSemaphoreGive(captureMutex);if(!ok)return false;
     }

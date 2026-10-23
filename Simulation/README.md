@@ -1,4 +1,4 @@
-# Mô phỏng tổng quan R12 8DIR RT1
+# Mô phỏng tổng quan R12 8DIR RT4
 
 Yêu cầu: Windows 64 bit, Scilab 2026.1 và GCC/MinGW 64 bit. Không cần log riêng, báo cáo hay thư viện nhị phân từ máy người phát triển.
 
@@ -13,3 +13,5 @@ Chạy không biểu đồ: Execute `Simulation/current/review_cli.sce` bằng S
 Giữ nguyên kích thước và bố trí xe. Tải, ma sát, độ trượt và va chạm chưa được nhận dạng đầy đủ. Các thử nghiệm này không chứng minh khả năng phục hồi ở mọi lực xô hoặc góc lớn; khởi động 60° đã được xác nhận trên xe nhưng mô hình tiếp xúc ở góc lớn còn hạn chế. Không tự động sửa hay nạp firmware khi chạy mô phỏng.
 
 `scripts/run_team.sce` là bộ đối chiếu PID cũ, không phải điểm vào R12 hiện hành.
+
+Mô phỏng dùng đúng header firmware, gồm tâm quay cố định, tham chiếu vận tốc mới khi nhấn, hãm tiến/lùi và phục hồi phân biệt thao tác chủ động. Cần chạy lại `build_native.ps1` sau khi cập nhật; cửa vào dùng DLL RT4 để tránh nạp nhầm thư viện cũ trong phiên Scilab đang mở.

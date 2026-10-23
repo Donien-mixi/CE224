@@ -16,5 +16,5 @@ foreach ($job in $jobs) {
     if ($LASTEXITCODE -ne 0) { throw "Compilation failed: $($job[0])" }
 }
 Write-Host 'Simulation libraries built. Execute robot_can_bang_pid_1.sce in Scilab.'
-Copy-Item -LiteralPath (Join-Path $root 'current/motion_native.dll') -Destination (Join-Path $root 'current/motion_rt1.dll') -Force
-Copy-Item -LiteralPath (Join-Path $root 'current/recovery_native.dll') -Destination (Join-Path $root 'current/recovery_rt1.dll') -Force
+Copy-Item -LiteralPath (Join-Path $root 'current/motion_native.dll') -Destination (Join-Path $root 'current/motion_rt4.dll') -Force
+Copy-Item -LiteralPath (Join-Path $root 'current/recovery_native.dll') -Destination (Join-Path $root 'current/recovery_rt4.dll') -Force
