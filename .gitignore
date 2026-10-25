@@ -1,0 +1,48 @@
+# Office temporary files
+~$*.xlsx
+~$*.docx
+~$*.pptx
+
+# Build & IDE files
+.build/
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Generated simulation runs; measured inputs and history remain versionable.
+Simulation/results/
+Simulation/tools/twip_integrate.dll
+Simulation/tools/native_build.json
+
+# Generated compiler/runtime output; CubeIDE project definitions stay versioned.
+**/.metadata/
+**/.theia/
+**/Debug/
+**/Release/
+**/Backup/
+__pycache__/
+*.py[cod]
+Simulation/tools/*.dll
+Simulation/tools/*.so
+Simulation/tools/pair_native_build.json
+Simulation/current/*.dll
+Simulation/current/*_path.txt
+
+# Local measurement campaigns and automatically generated review material.
+Simulation/data/
+Simulation/reports/
+Simulation/archive/
+/test dưới sàn/
+/test kê cao/
+/56 bài test/
+/bài test 2-7/
+/12 bài test động cơ và encoder/
+/2-7/
+/drive-download-*/
+/test_BMI160.txt
+/kết quả chạy scilab.txt

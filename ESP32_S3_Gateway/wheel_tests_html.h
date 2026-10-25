@@ -1,0 +1,80 @@
+#pragma once
+#include "firmware_build.h"
+const char WHEEL_TESTS_HTML[] PROGMEM=R"WHEELPAGE(
+<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Đo hai motor và encoder</title><style>
+body{margin:0;background:#101827;color:#e6edf7;font:17px system-ui;line-height:1.5}main{max-width:850px;margin:auto;padding:18px}section{background:#1b293d;border-radius:15px;padding:18px;margin:16px 0}h1{font-size:26px}h2{font-size:21px}button,select{font:inherit;padding:13px;border-radius:9px;border:1px solid #6b839e;margin:5px 0;max-width:100%;color:#102037;background:#75e6e0}button:disabled{opacity:.4}select{width:100%;background:#fff}input{width:23px;height:23px;vertical-align:middle}a{color:#79e2ff}pre{white-space:pre-wrap;font-size:15px}#stop{background:#ff7387;width:100%;font-weight:bold}#message{background:#243e50;padding:14px;border-radius:10px}small{color:#bfcde0}.log{border-top:1px solid #53657e;padding:12px 0}.row{display:flex;gap:10px;flex-wrap:wrap}
+*{box-sizing:border-box}main{max-width:620px;padding-bottom:calc(110px + env(safe-area-inset-bottom))}body{background:#090f19;font-size:16px}section{background:#111d2c;border:1px solid #243246;border-radius:16px}button,select{min-height:48px}button{background:#76edc1}button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #76edc1;outline-offset:4px}pre{overflow-wrap:anywhere}footer{position:fixed;bottom:0;left:0;right:0;z-index:20;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:#0a121eea;border-top:1px solid #243246;backdrop-filter:blur(10px)}footer #stop{display:block;max-width:588px;min-height:52px;margin:auto;border:1px solid #fb718555;border-radius:15px;background:linear-gradient(135deg,#b72e48,#8d213b);color:#eaf1fa;font-size:15px;letter-spacing:.7px}.log button+button{margin-left:8px}
+</style><main><a href="/">← Về trang cân bằng</a><h1>Đo hai motor / tìm nguyên nhân xoay</h1>
+<p>12 bài đã đặt sẵn thông số. Mỗi bài đo 3 lần lặp, ghi cả PWM, encoder và BMI160. Không cần nhập PWM hay ghi chú.</p>
+<p id="message" role="status">Đang kết nối…</p>
+<section><h2>1. Chuẩn bị và vào chế độ đo</h2><p>Kê chắc thân xe, hai bánh không chạm sàn hoặc vật cản. Giữ nguyên vị trí giá kê trong cả bài. Không giữ, bóp hay chạm bánh đang quay.</p>
+<label><input id="fixture" type="checkbox"> Tôi đã kê chắc xe, hai bánh quay tự do.</label><br><button id="enter">VÀO CHẾ ĐỘ ĐO (chưa quay bánh)</button>
+<p id="connection">Chờ dữ liệu STM32…</p><small>Giữ trang này ở phía trước và màn hình sáng. Chuyển ứng dụng, mất kết nối hoặc bấm DỪNG sẽ dừng bài; log dở vẫn giữ lại.</small></section>
+<section><h2>2. Chọn bài rồi bắt đầu</h2><select id="step"></select><p id="description"></p><div class="row"><button id="start" disabled>BẮT ĐẦU BÀI ĐANG CHỌN</button><button id="next">CHỌN BÀI TIẾP THEO</button></div>
+<p id="progress">Chưa chạy.</p><pre id="live">PWM / encoder / BMI160 sẽ hiện ở đây.</pre>
+<small>Trái/phải: nhìn từ WAGO 5 V về WAGO nguồn pin. PWM dương: đỉnh bánh về WAGO nguồn pin. Các mức PWM nhỏ có thể chưa làm bánh quay; đây vẫn là dữ liệu cần đo, không phải tự động kết luận hỏng encoder. “Hoàn tất” chỉ xác nhận chạy hết bài.</small></section>
+<section><h2>3. Tải log của từng bài</h2><label><input id="auto" type="checkbox" checked> Thử tự tải khi bài kết thúc.</label>
+<p>Web kiểm tra dòng kết thúc và số mẫu trước khi tải. iPhone có thể yêu cầu thao tác tải thủ công. Kiểm tra file trong mục Tải về trước khi xóa khỏi xe.</p><p id="storage"></p><div id="logs"></div>
+<small>Xe giữ tối đa 4 lượt trong RAM, không ghi đè. Tải và xóa rõ ràng một lượt để có chỗ chạy tiếp. Tắt nguồn hoặc khởi động lại ESP32 sẽ mất log chưa tải.</small></section>
+<section><h2>Sau khi đủ 12 bài</h2><p>Gửi 12 file TXT; nếu có bài dừng lỗi, gửi cả log dở và tên bài. Đo thêm chu vi thực tế từng bánh (lăn đúng 10 vòng rồi chia 10) và khoảng cách giữa tâm hai vệt tiếp xúc bánh với sàn, ghi đơn vị mm. Web không tự đo được hai kích thước này.</p>
+<p>Muốn trở lại cân bằng: tải hết log trước, khởi động lại riêng STM32 rồi mở trang cân bằng. Không bật cân bằng khi đang kê cao. Chưa thay PID trong phiên bản bổ sung phép đo này.</p></section>
+<small id="build"></small></main><footer><button id="stop">■ DỪNG MOTOR NGAY</button></footer><script>
+'use strict';
+var plans=[];
+['TRÁI','PHẢI','HAI BÁNH'].forEach(function(w,t){plans.push({kind:12,duration:18000,pwm:600,tag:t,name:w+' · tiến/lùi ±600',text:'5 giây ổn định + 18 giây đo. Ba lần: +600 trong 2 giây, phanh 1 giây, −600 trong 2 giây, phanh 1 giây.'});});
+['TRÁI','PHẢI','HAI BÁNH'].forEach(function(w,t){[1,-1].forEach(function(s){plans.push({kind:13,duration:36000,pwm:400*s,tag:t,name:w+' · PWM nhỏ '+(s>0?'TIẾN':'LÙI'),text:'5 giây ổn định + 36 giây đo. Ba lần quét PWM '+(s>0?'+':'−')+'120,160,180,200,220,260,320,400. Mỗi mức chạy 1 giây, phanh 0,5 giây.'});});});
+['TRÁI','PHẢI','HAI BÁNH'].forEach(function(w,t){plans.push({kind:14,duration:12900,pwm:300,tag:t,name:w+' · đổi chiều qua phanh',text:'5 giây ổn định + 12,9 giây đo. Ba lần: +300 trong 1,5 giây, phanh 0,3 giây, −300 trong 1,5 giây, phanh 1 giây.'});});
+var $=function(id){return document.getElementById(id);},ws,session=-1,token=0,revision=-1,ms=null,hw=null,bal=null,polling=false,busy=false,entering=false,downloadBusy=false,visible=true,attempted={},saved={},pinging=false,logRows=new Map();
+var owner=sessionStorage.getItem('wheelOwner');if(!owner){owner='W'+Array.from(crypto.getRandomValues(new Uint32Array(3))).map(function(n){return n.toString(16);}).join('');sessionStorage.setItem('wheelOwner',owner);}
+plans.forEach(function(p,i){var o=document.createElement('option');o.value=i;o.textContent=(i+1)+'/12 — '+p.name;$('step').appendChild(o);});
+function selected(){return Number($('step').value);}
+function describe(){var p=plans[selected()];$('description').textContent=p.text;}
+function message(s){$('message').textContent=s;}
+function credentials(){return {session:String(session),token:String(token),stop_revision:String(revision)};}
+async function post(path,args){var r=await fetch(path,{method:'POST',body:new URLSearchParams(args||{}),cache:'no-store'});var text=await r.text();if(!r.ok)throw Error(text);return text;}
+function stop(){visible=false;message('Đã yêu cầu dừng. Chờ STM32 xác nhận; tải cả log dở nếu có.');if(ws&&ws.readyState===1)ws.send('$STOP*');return post('/measurement-stop').catch(function(){message('Mất kết nối khi gửi DỪNG. Giữ xe trên giá kê; kiểm tra nguồn và Wi-Fi.');});}
+function background(){visible=false;if(ws&&ws.readyState===1)ws.send('$BACKGROUND*');navigator.sendBeacon('/measurement-stop',new URLSearchParams());}
+document.addEventListener('visibilitychange',function(){if(document.hidden)background();else visible=true;});window.addEventListener('pagehide',background);
+function connect(){ws=new WebSocket('ws://'+location.hostname+':81/');ws.onmessage=function(e){try{var h=JSON.parse(e.data);if(Number.isInteger(h.session)&&Number.isInteger(h.token)){session=h.session;token=h.token;if(!document.hidden)ws.send('$PING*');}}catch(ignore){}};ws.onclose=function(){session=-1;token=0;setTimeout(connect,1500);};ws.onerror=function(){};}
+setInterval(function(){if(!document.hidden&&ws&&ws.readyState===1)ws.send('$PING*');},200);
+setInterval(async function(){if(document.hidden||!visible||!ms||!ms.active||pinging)return;pinging=true;try{await post('/measurement-ping',{owner:owner});}catch(e){}finally{pinging=false;}},300);
+function ready(){return hw&&hw.seen&&hw.age_ms<2500&&hw.stage>=11&&hw.stage!==13&&hw.balance_live===false&&bal&&bal.meta.indexOf('$BINFO,BAL-20261018-R12-SPEED2-8DIR,')===0;}
+function quality(j){if(!j.sealed)return j.phase===0?'CHỜ STM32 XÁC NHẬN':'ĐANG ĐO';return j.flags||j.gaps||j.crc||j.overflow||j.stm_drops?'CÓ LỖI / THIẾU MẪU — vẫn tải để phân tích':j.phase===2?'HOÀN TẤT (cần phân tích chất lượng)':'ĐÃ DỪNG — log chưa đủ bài';}
+async function download(j){if(downloadBusy)return;downloadBusy=true;render();try{message('Đang lấy và kiểm tra log…');var response=await fetch('/measurement-log?id='+j.id,{cache:'no-store'});if(!response.ok)throw Error(await response.text());var text=await response.text(),end=text.trimEnd().split('\n').pop();var rows=text.split('\n').filter(function(s){return /^\d+,/.test(s);}).length;
+if(end!=='# END job_id='+j.id+' rows='+j.samples||rows!==j.samples)throw Error('File tải chưa đầy đủ; hãy tải lại.');
+var blob=new Blob([text],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='twip_wheel_W'+String(j.plan-60).padStart(2,'0')+'_job'+j.id+(j.phase===2?'':'_DUNG')+'.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},60000);saved[j.id]=true;message('Đã gửi file đầy đủ tới trình duyệt. Kiểm tra mục Tải về trước khi xóa log trên xe.');
+}catch(e){message('Chưa tải được: '+e.message+' Bấm TẢI LOG để thử lại.');}finally{downloadBusy=false;render();}}
+function render(){if(!ms)return;var active=ms.jobs.find(function(j){return j.id===ms.active;});$('storage').textContent=ms.jobs.length+'/4 lượt đang lưu · '+ms.records_per_slot+' mẫu/lượt. '+(ms.available?'':'RAM chưa sẵn sàng; kiểm tra OPI PSRAM.');
+$('start').disabled=busy||downloadBusy||!ready()||!$('fixture').checked||!ms.available||ms.jobs.length>=4||!!ms.active||session<0||document.hidden;
+$('enter').disabled=busy||!!ms.active||downloadBusy||!$('fixture').checked||session<0;
+$('next').disabled=!!ms.active||busy||downloadBusy;$('step').disabled=!!ms.active||busy||downloadBusy;
+if(ready()){$('connection').textContent='STM32 R12 đã vào chế độ đo, đang giữ phanh. Có thể chọn bài và BẮT ĐẦU.';entering=false;}else $('connection').textContent=hw&&hw.stage===13?'STM32 đang thực hiện bài đo.':entering?'Đang chờ STM32 vào chế độ đo…':'Chưa vào chế độ đo. Cần nạp STM32 và ESP32 R12, chờ dữ liệu rồi bấm VÀO CHẾ ĐỘ ĐO.';
+if(active){var p=plans[active.plan-61];$('progress').textContent=(active.phase===0?'Chờ STM32 xác nhận':'ĐANG ĐO')+' · '+(p?p.name:'Bài khác')+' · '+(active.t_ms/1000).toFixed(1)+' giây · '+active.samples+' mẫu'+(active.t_ms<5000?' · đang chờ ổn định, chưa quay bánh':'');}
+else if(ms.jobs.length){var last=ms.jobs[ms.jobs.length-1];$('progress').textContent=quality(last)+' · '+last.samples+' mẫu';}
+var a=ms.latest?ms.latest.split(',').map(Number):[];if(a.length===16)$('live').textContent='PWM trái / phải: '+a[5]+' / '+a[6]+'\nEncoder thô L / R: '+a[7]+' / '+a[8]+' ticks\nEncoder phải đổi dấu: '+(-a[8])+' ticks\nGyro XYZ chưa trừ bias: '+a.slice(9,12).map(function(v){return(v/16.4).toFixed(3);}).join(' / ')+' °/s\nAccel XYZ thô: '+a.slice(12,15).map(function(v){return(v/4096).toFixed(4);}).join(' / ')+' g\nChu kỳ: '+a[2]+' µs · STM32 mất mẫu: '+a[15];
+var jobIds=new Set(ms.jobs.map(function(j){return j.id;}));
+logRows.forEach(function(entry,id){if(!jobIds.has(id)){entry.box.remove();logRows.delete(id);}});
+ms.jobs.forEach(function(j){var entry=logRows.get(j.id);
+if(!entry){
+ var box=document.createElement('div');box.className='log';
+ var label=document.createElement('p'),b=document.createElement('button'),del=document.createElement('button');
+ b.textContent='TẢI LOG';del.textContent='XÓA KHỎI XE';
+ entry={box:box,label:label,download:b,deleteButton:del,job:j};logRows.set(j.id,entry);
+ b.onclick=function(){download(entry.job);};
+ del.onclick=async function(){if(!confirm('Bạn đã kiểm tra file TXT trong mục Tải về? Xóa lượt '+entry.job.id+' khỏi xe để giải phóng chỗ?'))return;try{await post('/measurement-delete',{id:String(entry.job.id),confirm:'delete'});await poll();}catch(e){message(e.message);}};
+ box.appendChild(label);box.appendChild(b);box.appendChild(del);$('logs').appendChild(box);
+}
+entry.job=j;var name=plans[j.plan-61];
+entry.label.textContent=(name?'W'+String(j.plan-60).padStart(2,'0')+' '+name.name:'Lượt '+j.id)+' · '+quality(j)+' · '+j.samples+' mẫu · flags '+j.flags+' / thiếu '+j.gaps+' / CRC '+j.crc+' / tràn '+j.overflow+' / STM32 '+j.stm_drops;
+entry.download.disabled=entry.deleteButton.disabled=!j.sealed||!!ms.active||downloadBusy;
+if(j.sealed&&j.plan>=61&&j.plan<=72&&!attempted[j.id]&&!ms.active&&!downloadBusy&&$('auto').checked){attempted[j.id]=true;setTimeout(function(){download(j);},0);}});}
+
+async function poll(){if(polling||downloadBusy||document.hidden)return;polling=true;try{var responses=await Promise.all(['/measurement-status','/hardware-status','/balance-status'].map(function(u){return fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw Error('Không lấy được trạng thái');return r.json();});}));ms=responses[0];hw=responses[1];bal=responses[2];revision=bal.control_revision;if($('message').textContent==='Đang kết nối…')message('Đã kết nối. Xác nhận kê xe và bấm VÀO CHẾ ĐỘ ĐO; chưa quay bánh.');render();}catch(e){$('start').disabled=true;$('enter').disabled=true;message('Chưa nhận được dữ liệu mới. Giữ kết nối Wi-Fi xe; không bắt đầu bài khác.');}finally{polling=false;}}
+$('enter').onclick=async function(){busy=true;visible=true;render();try{await post('/wheel-test-enter',Object.assign(credentials(),{ready:$('fixture').checked?'yes':'no'}));entering=true;message('Đã yêu cầu vào chế độ đo. Chờ dòng STM32 đã vào chế độ đo; chưa quay bánh.');}catch(e){message('Chưa vào được chế độ đo: '+e.message);}finally{busy=false;await poll();}};
+$('start').onclick=async function(){if(!ready()||busy||!ms||ms.active||!$('fixture').checked)return;busy=true;visible=true;render();var p=plans[selected()];try{var response=await post('/measurement-start',Object.assign(credentials(),{owner:owner,kind:String(p.kind),duration:String(p.duration),pwm:String(p.pwm),reference:'0',tag:String(p.tag),plan:String(61+selected()),ready:'yes',note:'WHEEL_PLAN_V1 W'+(selected()+1)+'; fixture wheels free; requested three repetitions'}));var id=JSON.parse(response).id;attempted[id]=false;message('Đã gửi bài W'+(selected()+1)+'. Giữ nguyên giá kê, chờ bài hoàn tất.');}catch(e){message('Chưa bắt đầu được: '+e.message);}finally{busy=false;await poll();}};
+$('fixture').onchange=function(){if(ms&&ms.active&&!$('fixture').checked)stop();render();};$('step').onchange=describe;$('next').onclick=function(){if(selected()<11){$('step').value=selected()+1;describe();}else message('Đã đến bài 12. Kiểm tra đủ 12 file trước khi kết thúc.');};$('stop').onclick=stop;
+fetch('/firmware-info',{cache:'no-store'}).then(function(r){return r.json();}).then(function(f){$('build').textContent=f.build;}).catch(function(){});
+describe();connect();poll();setInterval(poll,700);
+</script></html>
+)WHEELPAGE";

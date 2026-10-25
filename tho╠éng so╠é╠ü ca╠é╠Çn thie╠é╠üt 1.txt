@@ -1,0 +1,36 @@
+| Chi tiết | x | y | z |
+|---|---:|---:|---:|
+| Mica 1 | 0 | 0 | 21,7 |
+| Mica 2 | 0 | 0 | 76,7 |
+| Mica 3 | 0 | 0 | 131,7 |
+| Pin | 0 | 0 | 23,3 |
+| XL4015 | 0 | +85 | 23,3 |
+| Breadboard | 0 | 0 | 83,5 |
+| STM32 | 0 | −55 | 89.5 |
+| ESP32 | 0 | +45 | 89.5 |
+| Dual A4950 | 0 | −10 | 89,5 |
+| BMI160 | 0 | +10 | **89.5** |
+| WAGO trước | +30 | 0 | 68,4 |
+| WAGO sau | −30 | 0 | 68,4 |
+| Dây trên breadboard | 0 | 0 | 90,5
+| GA25 trái/phải | 0 | −75 / +75 | 0 |
+| Gá trái/phải | 0 | −88.5 / +88.5 | 16,7 |
+| Bốn cọc tầng 1 | ±35 | ±90 | 49,2 |
+| Bốn cọc tầng 2 | ±35 | ±90 | 102.5 |
+
+
+| Chi tiết | Kích thước mô hình: dọc × ngang × cao |
+|---|---|
+| Pin | **40 × 110 × 25 mm** |
+| XL4015 | 25 × 52 × 12 mm |
+| Breadboard | 55 × 165 × 10 mm |
+| STM32 | 20 × 50 × 10 mm |
+| ESP32 | 25 × 60 × 10 mm |
+| Dual A4950 | 20 × 25 × 10 mm |
+| BMI160 | 15 × 15 × 4 mm |
+| Mỗi cụm WAGO | 30 × 50 × 12 mm |
+| Khối dây trên breadboard | 55 × 165 × 6 mm |
+| GA25 | Trụ đường kính 25 mm, dài theo ngang 50 mm |
+| Bánh xe | Đường kính 65 mm, dày 26 mm |
+| Thân khớp nối | Đường kính 12 mm, dài 18 mm |
+| Cọc đồng | Đường kính ngoài mô hình 6 mm, dài 55 mm |
