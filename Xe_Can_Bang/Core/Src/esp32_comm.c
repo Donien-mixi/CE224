@@ -201,7 +201,8 @@ void ESP32_Comm_Process(void)
     }
 
     /* 2. Đọc tuần tự các byte mới từ bộ đệm xoay vòng */
-    while (s_rx_read_idx != write_idx) {
+    unsigned byte_budget=64; /* Bound work per foreground pass; preserve partial packets. */
+    while (s_rx_read_idx != write_idx && byte_budget--) {
         uint8_t b = s_rx_dma_buf[s_rx_read_idx];
         s_rx_read_idx = (s_rx_read_idx + 1) % ESP32_RX_BUF_SIZE;
 
@@ -212,7 +213,14 @@ void ESP32_Comm_Process(void)
         } else if (s_in_packet) {
             if (b == '*' || b == '\r' || b == '\n') {
                 s_packet_buf[s_packet_idx] = '\0';
+                /* Keep command fields coherent to the control ISR. SysTick and
+                 * DMA stay alive, including HAL timeouts in the recovery path. */
+                uint32_t timer_enabled=NVIC_GetEnableIRQ(TIM4_IRQn);
+                HAL_NVIC_DisableIRQ(TIM4_IRQn);
+                __DSB(); __ISB();
                 Parse_Packet(s_packet_buf);
+                __DMB();
+                if(timer_enabled)HAL_NVIC_EnableIRQ(TIM4_IRQn);
                 s_in_packet = 0;
                 s_packet_idx = 0;
             } else if (s_packet_idx < (PARSER_BUF_SIZE - 1)) {

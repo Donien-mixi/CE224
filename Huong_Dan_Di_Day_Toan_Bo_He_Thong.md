@@ -1,341 +1,250 @@
-# CẨM NANG ĐI DÂY TOÀN BỘ HỆ THỐNG — XE CÂN BẰNG 2 BÁNH TỐC ĐỘ CAO (TWIP ROBOT)
-## (BẢN CHUẨN HÓA HOÀN THIỆN 100% — TRIỆT TIÊU NHẬP NHẰNG, CHỐNG CHÁY CHÍP & CHỐNG NHIỄU)
+# HƯỚNG DẪN ĐI DÂY HỆ THỐNG XE HAI BÁNH TỰ CÂN BẰNG
 
-> **QUY ƯỚC HƯỚNG VÀ VỊ TRÍ ROBOT**:
-> * Đứng từ **phía sau xe nhìn về phía trước**:
->   * **Bên Trái**: Động cơ Trái + Encoder Trái (`TIM2`) + Kênh Driver A (`AIN1, AIN2, AOUT1, AOUT2`).
->   * **Bên Phải**: Động cơ Phải + Encoder Phải (`TIM3`) + Kênh Driver B (`BIN1, BIN2, BOUT1, BOUT2`).
-> * **Cảm biến GY-BMI160**: Đặt ở giữa sàn xe, mặt chip ngửa lên trời, có lót lớp xốp cách rung 2-3mm.
+Cập nhật: **30/10/2026**. Project: `D:\DA_HTN`.
 
----
+Tài liệu ghi lại cấu hình kết nối của đồ án đang sử dụng, dựa trên sơ đồ đi dây đã lưu, bố trí phần cứng đã được người dùng xác nhận và đối chiếu mã nguồn hiện hành. Xe đã được người dùng đánh giá hoạt động cân bằng ổn định. Việc cập nhật tài liệu không yêu cầu thay dây hoặc hiệu chuẩn lại xe đang chạy tốt.
 
-## PHẦN 1: NGUYÊN TẮC BẮT BUỘC — TẠI SAO PHẢI TÁCH WAGO VÀ BREADBOARD?
+Firmware nguồn dùng để đối chiếu:
 
-Hệ thống có 2 phân vùng điện áp và dòng điện hoàn toàn khác biệt:
+- STM32: `BAL-20261024-R12-8DIR-RT8`.
+- ESP32: `TWIP-WEB-20261024-BAL-R12-8DIR-RT8-NET5`.
 
-```
-                    ┌────────────────────────────────────────────────────────┐
-                    │ PHÂN TÁCH ĐIỆN VỰC ĐỘNG LỰC & ĐIỆN VỰC ĐIỀU KHIỂN SỐ   │
-                    └────────────────────────────────────────────────────────┘
+Đây là phiên bản source trên laptop; không dùng thông tin này để khẳng định hai bo trên xe đã được nạp RT8 hoặc ba thay đổi RT8 đã được thử thực tế. Xem thêm [HANDOFF.md](HANDOFF.md).
 
-    ╔════════════════════════════════════════╗        ╔════════════════════════════════════════╗
-    ║      KHỐI CÔNG SUẤT CAO (WAGO)         ║        ║       KHỐI TÍN HIỆU SỐ (BREADBOARD)    ║
-    ╠════════════════════════════════════════╣        ╠════════════════════════════════════════╣
-    ║ • Dòng điện cực lớn: 5A - 10A          ║        ║ • Dòng điện rất nhỏ: 0.1A - 0.5A       ║
-    ║ • Điện áp: 12V Pin LiPo & 5V sau Buck  ║        ║ • Điện áp: 5.0V nuôi bo & 3.3V logic   ║
-    ║ • Gồm: Giắc XT60 Pin, Driver A4950,    ║        ║ • Gồm: STM32, ESP32, BMI160, Buzzer   ║
-    ║   Mạch hạ áp Buck XL4015, Tụ hóa bù áp ║        ║ • Cắm chung trên các lỗ cắm Breadboard ║
-    ║ • Cút nối WAGO chịu dòng 20A - 32A     ║        ║ • Lá đồng Breadboard chỉ chịu <= 0.8A  ║
-    ╚════════════════════════════════════════╝        ╚════════════════════════════════════════╝
-```
+## 1. Quy ước hướng và bố trí thực tế
 
-> [!CAUTION]
-> **CẢNH BÁO NGUY HIỂM CHÁY NỔ**:
-> Tuyệt đối **KHÔNG CẮM DÂY 12V TỪ PIN HOẶC DÂY NGUỒN ĐỘNG CƠ VÀO BREADBOARD**! Lá đồng mỏng bên trong Breadboard sẽ nóng đỏ, chảy nhựa cách điện, gây chập cực Pin LiPo (cháy nổ) hoặc sụt áp tức thời làm vi điều khiển STM32/ESP32 bị treo!
+Đứng **phía sau xe nhìn về phía trước** để xác định bên trái và bên phải:
 
----
+| Vị trí | Cụm linh kiện / quy ước |
+|---|---|
+| Phía trước (+x) | WAGO 1 phân phối nguồn pin LiPo |
+| Phía sau (−x) | WAGO 2 phân phối nguồn 5 V sau XL4015 |
+| Bên trái | Motor trái, encoder TIM2, kênh A của driver |
+| Bên phải | Motor phải, encoder TIM3, kênh B của driver |
+| Tầng 1, trên mica thứ nhất | Pin LiPo 3S và XL4015 |
+| Dưới mica thứ hai | Hai cụm WAGO; nguồn pin phía trước, nguồn 5 V phía sau |
+| Tầng 2, trên mica thứ hai | Breadboard chứa STM32, ESP32-S3, BMI160 và Dual A4950 |
+| Cọc giữa các tấm mica | 55 mm |
 
-## PHẦN 2: HƯỚNG DẪN ĐẤU NỐI KHỐI WAGO (BẮT BUỘC THỰC THI)
+**Driver A4950 nằm trên breadboard tầng 2.** Phải phân biệt vị trí đặt module với đường đi dòng điện: VM và các đầu ra motor nối bằng dây riêng theo bảng bên dưới, không dùng ray nguồn breadboard để phân phối dòng motor.
 
-Hệ thống cần **2 khối WAGO** (mỗi khối gồm 1 cút Dương `+` và 1 cút Âm `-`):
+Giữ nguyên hướng lắp BMI160 đã dùng khi hiệu chuẩn xe. Chỉ mô tả “mặt chip ngửa lên” không đủ xác định hướng các trục X/Y/Z; không xoay cảm biến hoặc thay lớp đệm lắp đặt chỉ để khớp một hình minh họa.
 
-### 1. CỤM WAGO SỐ 1: ĐỘNG LỰC 12V VÀ MASS XẢ PIN (DÂY TO 18AWG)
-*Chuyên trách dẫn dòng điện cực đại từ Pin LiPo 3S (11.1V – 12.6V).*
+## 2. Sơ đồ nguồn tổng thể
 
-#### A. Cút WAGO 1 Dương — Màu Đỏ (12V Pin):
-* **Cổng Vào**: Dây ĐỎ to (18AWG) từ đầu cái giắc **XT60 của Pin LiPo 3S**.
-* **Cổng Ra 1**: Dây ĐỎ to nối vào chân **`VM` (Hàng 1)** của Driver Dual A4950.
-* **Cổng Ra 2**: Dây ĐỎ nối vào cọc **`IN (+)`** của Mạch Buck XL4015.
+**Xác nhận bổ sung của người dùng:** breadboard hiện tại không lắp tụ ngoài; INT1 của BMI160 đã nối PB2; còi hai chân có (+) → PB12, (−) → GND. Theo yêu cầu mới, sơ đồ KiCad revision 1.2 bổ sung **C1–C9 để lắp trên PCB mới**, không đánh dấu DNP. Các tụ này là phần thiết kế bổ sung, không phải linh kiện đã có trên breadboard.
 
-#### B. Cút WAGO 1 Âm — Màu Đen (Mass xả Pin 12V):
-* **Cổng Vào**: Dây ĐEN to (18AWG) từ đầu cái giắc **XT60 của Pin LiPo 3S**.
-* **Cổng Ra 1**: Dây ĐEN to nối vào chân **`GND` (Hàng 1)** của Driver Dual A4950.
-* **Cổng Ra 2**: Dây ĐEN nối vào cọc **`IN (-)`** của Mạch Buck XL4015.
+```text
+Pin LiPo 3S (+) ── WAGO 1 (+) ──┬── VM của Dual A4950
+                                └── IN+ của XL4015
+Pin LiPo 3S (−) ── WAGO 1 (−) ──┬── GND hàng 1 của Dual A4950
+                                └── IN− của XL4015
 
----
+XL4015 OUT+ (5 V) ── WAGO 2 (+) ──┬── Ray 5 V breadboard
+                                  ├── VCC của Dual A4950
+                                  └── (+) tụ 1000 µF / 16 V [PCB mới sẽ lắp; breadboard hiện chưa có]
+XL4015 OUT− ──────── WAGO 2 (−) ──┬── Ray GND breadboard
+                                  ├── GND hàng 2 của Dual A4950, dây riêng
+                                  └── (−) tụ 1000 µF / 16 V [PCB mới sẽ lắp; breadboard hiện chưa có]
 
-### 2. CỤM WAGO SỐ 2: PHÂN PHỐI NGUỒN 5.0V SẠCH SAU HẠ ÁP XL4015
-*Nhận nguồn điện áp ổn định 5.00V sạch từ Mạch Buck XL4015 để chia cho hệ thống điều khiển.*
+Ray 5 V ──┬── 5V của STM32 Black Pill
+           └── 5V/VIN của bo ESP32-S3 đang dùng
 
-#### A. Cút WAGO 2 Dương — Màu Đỏ (5.0V Sạch):
-* **Cổng Vào**: Dây ĐỎ từ cọc **`OUT (+)`** của Mạch hạ áp Buck XL4015 *(vặn chiết áp đo đúng 5.00V)*.
-* **Cổng Ra 1**: Dây ĐỎ cắm thẳng sang **[ĐƯỜNG RAY 5V (+)]** trên Breadboard.
-* **Cổng Ra 2**: Dây ĐỎ nối sang chân **`VCC` (Hàng 1)** của Driver Dual A4950 *(cấp điện áp tham chiếu $V_{REF}=5.0\text{V}$ để mở dòng tối đa 2.0A cho động cơ)*.
-* **Cổng Ra 3**: Chân Dương (+) của **Tụ hóa $1000\mu F / 16V$** *(chống sụt áp khi ESP32 phát Wi-Fi)*.
-
-#### B. Cút WAGO 2 Âm — Màu Đen (Mass 5V / GND Hệ Thống):
-* **Cổng Vào**: Dây ĐEN từ cọc **`OUT (-)`** của Mạch hạ áp Buck XL4015.
-* **Cổng Ra 1**: Dây ĐEN cắm thẳng sang **[ĐƯỜNG RAY GND (-)]** trên Breadboard *(cung cấp mốc 0V chuẩn cho toàn bộ vi mạch số)*.
-* **Cổng Ra 2**: Chân Âm (-) của **Tụ hóa $1000\mu F / 16V$** *(chân có vạch sọc trắng/xám)*.
-
----
-
-## PHẦN 3: ĐI DÂY 4 LINH KIỆN TRÊN BREADBOARD (CHUNG NGUỒN & CHUNG MASS)
-
-Cả 4 linh kiện cắm trên Breadboard gồm:
-1. **STM32F411CEU6 Black Pill** (Vi điều khiển trung tâm)
-2. **Gateway ESP32-S3 N16R8** (Web HUD, Wi-Fi Telemetry)
-3. **Module GY-BMI160** (Cảm biến con quay hồi chuyển & gia tốc góc)
-4. **Module Còi Active Buzzer** (Báo động trạng thái)
-
-```
-===================================================================================================
-                       SƠ ĐỒ PHÂN BỔ ĐƯỜNG RAY NGUỒN & MASS TRÊN BREADBOARD
-===================================================================================================
-
-       Dây ĐỎ 5V từ WAGO 2 ───────────────┐
-       Dây ĐEN GND từ WAGO 2 ─────────┐   │
-                                      │   │
-                                      ▼   ▼
-  🔴 ĐƯỜNG RAY 5V (+) [Vạch Đỏ]: ─────┴───┼───────────────────────────────────────────────
-                                          │
-  🔵 ĐƯỜNG RAY GND (-) [Vạch Xanh/Đen]: ──┴───────────────────────────────────────────────
-
-
-  [A] NHỮNG CHÂN CẮM CHUNG VÀO ĐƯỜNG RAY 5V (+):
-      ├── 1. Chân [5V] của bo mạch STM32F411 Black Pill.
-      ├── 2. Chân [5V] (hoặc VIN) của bo mạch Gateway ESP32-S3.
-      └── 3. Chân [VCC] (hoặc +) của Module Còi Buzzer.
-      ⛔ (CẤM: KHÔNG CẮM CHÂN 3V3 HOẶC VIN CỦA CẢM BIẾN BMI160 VÀO RAY 5V NÀY!)
-
-  [B] NHỮNG CHÂN CẮM CHUNG VÀO ĐƯỜNG RAY GND (-):
-      ├── 1. Chân [GND] của STM32F411 Black Pill.
-      ├── 2. Chân [GND] của Gateway ESP32-S3.
-      ├── 3. Chân [GND] (hoặc -) của Module Còi Buzzer.
-      ├── 4. Chân [GND] của Module GY-BMI160.
-      ├── 5. Chân [SA0] của Module GY-BMI160 (Kéo xuống GND để khóa địa chỉ I2C = 0x68).
-      ⛔ (CẤM: KHÔNG CẮM DÂY GND HÀNG 2 CỦA DRIVER A4950 VÀO RAY GND NÀY — xem Phần 6 mục 1)
-      ├── 6. Dây ĐEN (Pin 2 - Hall GND) của Encoder Động cơ Trái.
-      └── 7. Dây ĐEN (Pin 2 - Hall GND) của Encoder Động cơ Phải.
-
-  [C] TRẠM NGUỒN 3.30V SẠCH CỦA STM32 (DÀNH RIÊNG CHO THIẾT BỊ 3.3V TRÊN BREADBOARD):
-      Chân [3.3V] trên bo mạch STM32 Black Pill ──────┐
-                                                      │ (Cắm vào 1 hàng rãnh rỗng trên bo test)
-                                                      ▼
-      ╔═══════════════════════════════════════════════════════════════════════════════╗
-      ║              TRẠM NGUỒN 3.30V AN TOÀN (LẤY TỪ IC ỔN ÁP LDO STM32)             ║
-      ╠═══════════════════════════════════════════════════════════════════════════════╣
-      ├── 1. Chân [3V3] của GY-BMI160 (Nuôi trực tiếp chip BMI160 đúng áp chuẩn 3.30V)║
-      ├── 2. Chân [CS] của GY-BMI160 (Kéo lên mức HIGH để chip chuyển sang mode I2C)  ║
-      ├── 3. Dây XANH DƯƠNG (Pin 5 - Hall VCC) của Encoder Bánh Trái                  ║
-      └── 4. Dây XANH DƯƠNG (Pin 5 - Hall VCC) của Encoder Bánh Phải                  ║
-      ╚═══════════════════════════════════════════════════════════════════════════════╝
-===================================================================================================
+STM32 3V3 ──┬── BMI160 3V3
+             ├── BMI160 CS
+             ├── VCC encoder trái
+             └── VCC encoder phải
 ```
 
-> [!CAUTION]
-> **VẤN ĐỀ CỐT TỬ CỦA CẢM BIẾN GY-BMI160**:
-> 1. Chip Bosch BMI160 là vi mạch siêu nhạy cảm với điện áp: **Điện áp định mức là 3.3V, tuyệt đối không được vượt quá 3.6V**!
-> 2. Chân **`VIN`** trên vỉ GY-BMI160 đi qua một con diode và IC hạ áp dỏm gây sụt áp, làm đường I2C tụt xuống 2.36V khiến STM32 không đọc được $\to$ **BỎ TRỐNG CHÂN `VIN`**.
-> 3. Chân **`3V3`** ăn thẳng vào ruột chip. **BẮT BUỘC PHẢI LẤY TỪ CHÂN `3.3V` CỦA STM32** (tuyệt đối không cắm vào Ray 5V!).
-> 4. Chân **`SA0`** (một số vỉ ghi `SDO`): **BẮT BUỘC CẮM RAY GND** để chốt địa chỉ I2C = `0x68`. Nếu thả nổi, địa chỉ sẽ đổi thành `0x69` $\to$ Còi hú liên tục báo lỗi I2C!
-> 5. Chân **`CS`**: **BẮT BUỘC CẮM VÀO CHÂN `3.3V` CỦA STM32** để chip chọn chuẩn I2C. Nếu thả nổi hoặc chạm mass, chip sẽ tự động chuyển sang SPI và ngắt I2C $\to$ Liệt cảm biến!
+“12 V” là cách gọi nhánh nguồn pin 3S, không phải đầu ra ổn áp 12 V. Driver nhận VM trực tiếp từ pin. Điện áp khoảng 11,7 V là số đo lịch sử của người dùng, không phải phép đo mới hoặc số đo ADC từ firmware.
 
----
+### 2.1. WAGO 1 — nguồn pin
 
-## PHẦN 4: KẾT NỐI TÍN HIỆU GIỮA 4 LINH KIỆN TRÊN BREADBOARD
+| Điểm nối | Dây đến |
+|---|---|
+| WAGO 1 (+) | Cực dương pin qua XT60, driver VM, XL4015 IN+ |
+| WAGO 1 (−) | Cực âm pin qua XT60, driver GND hàng 1, XL4015 IN− |
 
-Tất cả các kết nối tín hiệu dưới đây là dây nhảy ngắn cắm trực tiếp trên Breadboard:
+### 2.2. WAGO 2 — nguồn 5 V
 
-```
-                            SƠ ĐỒ TÍN HIỆU NỘI BỘ BREADBOARD
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                                                        │
-│  [STM32F411 BLACK PILL]                             [MODULE BOSCH GY-BMI160]           │
-│      Chân PB8 (I2C1_SCL) ─────────────────────────────► Chân SCL                       │
-│      Chân PB9 (I2C1_SDA) ─────────────────────────────► Chân SDA                       │
-│      Chân PB2 (EXTI2)    ◄───────────────────────────── Chân INT1                      │
-│                                                                                        │
-│  [STM32F411 BLACK PILL]                             [GATEWAY ESP32-S3]                 │
-│      Chân PB6 (USART1_TX) ────────────────────────────► Chân GPIO18 (RX)               │
-│      Chân PB7 (USART1_RX) ◄──────────────────────────── Chân GPIO17 (TX)               │
-│                                                                                        │
-│  [STM32F411 BLACK PILL]                             [MODULE CÒI ACTIVE BUZZER]         │
-│      Chân PB12 (GPIO Output) ─────────────────────────► Chân IN (hoặc S / I/O)         │
-│                                                                                        │
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
+| Điểm nối | Dây đến |
+|---|---|
+| WAGO 2 (+) | XL4015 OUT+, ray 5 V breadboard, driver VCC, cực dương C1 trên PCB mới (breadboard chưa có) |
+| WAGO 2 (−) | XL4015 OUT−, ray GND breadboard, driver GND hàng 2 qua dây riêng, cực âm C1 trên PCB mới (breadboard chưa có) |
 
----
+Giữ nhánh VCC driver lấy từ WAGO 2 (+) như sơ đồ đang lưu. Chưa có sơ đồ mạch module và giá trị điện trở cảm dòng để kết luận cấp 5 V tại chân này tương ứng giới hạn dòng 2 A. Không điều chỉnh nguồn hoặc thay linh kiện cảm dòng từ suy luận đó.
 
-## PHẦN 5: BẢNG TRA CỨU CHI TIẾT TỪNG CHÂN (PINOUT REFERENCE)
+### 2.3. Ray nguồn trên breadboard
 
-### 1. Vi điều khiển STM32F411CEU6 Black Pill (Cắm trên Breadboard)
+| Ray / điểm phân phối | Các chân nối vào |
+|---|---|
+| 5 V | STM32 5V, ESP32-S3 5V/VIN |
+| GND | GND STM32, ESP32-S3, BMI160, encoder trái/phải; BMI160 SA0; chân âm còi |
+| 3,3 V từ STM32 | BMI160 3V3 và CS; VCC encoder trái/phải |
 
-| Tên Chân STM32 | Loại Tín Hiệu | Cắm Sang Đâu? | Vị Trí Cụ Thể | Ý Nghĩa Kỹ Thuật |
-| :---: | :---: | :--- | :---: | :--- |
-| **`5V`** | Nguồn Vào | Đường ray Breadboard | **Ray 5V (+)** | Nhận 5.00V sạch từ Buck XL4015 (qua Wago 2) |
-| **`GND`** | Nguồn Mass | Đường ray Breadboard | **Ray GND (-)** | Mốc 0V chuẩn toàn hệ thống |
-| **`3.3V`**| Nguồn Ra | Breadboard | **Trạm 3.3V** | Cấp áp 3.30V chuẩn nuôi BMI160 và 2 Encoder |
-| **`PB8`** | I2C1 Clock | Module BMI160 | Chân **`SCL`** | Xung nhịp Fast Mode 400kHz |
-| **`PB9`** | I2C1 Data | Module BMI160 | Chân **`SDA`** | Tuyến dữ liệu I2C |
-| **`PB2`** | Ngắt ngoài | Module BMI160 | Chân **`INT1`** | EXTI2: Báo dữ liệu góc mới sẵn sàng (200Hz) |
-| **`PB6`** | UART1 TX | Gateway ESP32-S3 | Chân **`GPIO18`** | Bắn dữ liệu Telemetry 100Hz lên Web HUD |
-| **`PB7`** | UART1 RX | Gateway ESP32-S3 | Chân **`GPIO17`** | Nhận lệnh điều khiển và tinh chỉnh PID |
-| **`PB12`**| Digital Out | Module Còi Buzzer | Chân **`IN`** | Bật/tắt còi báo trạng thái FSM |
-| **`PA8`** | TIM1_CH1 | Driver Dual A4950 | Chân **`AIN1`** (Hàng 1)| PWM 20kHz Bánh Trái Tiến |
-| **`PA9`** | TIM1_CH2 | Driver Dual A4950 | Chân **`AIN2`** (Hàng 1)| PWM 20kHz Bánh Trái Lùi |
-| **`PA10`**| TIM1_CH3 | Driver Dual A4950 | Chân **`BIN1`** (Hàng 2)| PWM 20kHz Bánh Phải Tiến |
-| **`PA11`**| TIM1_CH4 | Driver Dual A4950 | Chân **`BIN2`** (Hàng 2)| PWM 20kHz Bánh Phải Lùi *(Xem lưu ý nạp Type-C bên dưới)* |
-| **`PA0`** | TIM2_CH1 | Encoder Bánh Trái | Dây **Vàng** (Pin 3) | Đọc xung Hall Kênh A Bánh Trái |
-| **`PA1`** | TIM2_CH2 | Encoder Bánh Trái | Dây **Xanh Lá** (Pin 4)| Đọc xung Hall Kênh B Bánh Trái |
-| **`PB4`** | TIM3_CH1 | Encoder Bánh Phải | Dây **Vàng** (Pin 3) | Đọc xung Hall Kênh A Bánh Phải |
-| **`PB5`** | TIM3_CH2 | Encoder Bánh Phải | Dây **Xanh Lá** (Pin 4)| Đọc xung Hall Kênh B Bánh Phải |
-| **`PC13`**| LED Onboard| *Có sẵn trên bo* | — | Đèn báo: Khởi động (2.5s) $\to$ Standby (chậm) $\to$ Run (sáng) |
+Các nhánh cùng dùng mốc GND hệ thống. Việc đi dây GND riêng nhằm tránh dùng chung đoạn dây/ray mang dòng motor với tín hiệu; **không tạo cách ly điện giữa hai khối**. Không có phép đo xác nhận các số spike dòng, ground bounce hoặc sai số gyro cụ thể trong tài liệu cũ, nên không dùng chúng làm kết luận về xe.
 
-> [!TIP]
-> **NẠP CODE BẰNG MẠCH NẠP ST-LINK V2 (KHUYẾN NGHỊ - XEM MỤC 5 BÊN DƯỚI)**:
-> Dùng **ST-Link V2** cắm vào 4 chân `3V3`, `GND`, `SWDIO`, `SWCLK` của Black Pill. Vì ST-LINK dùng giao thức **SWD** (không dùng cổng Type-C) nên:
-> * **KHÔNG cần rút dây `PA11`** ra khỏi Driver A4950.
-> * **KHÔNG cần bấm `BOOT0`/`NRST`** để vào chế độ nạp.
-> * Bấm `Run/Debug` trong STM32CubeIDE là nạp ngay, nạp lại bao nhiêu lần cũng mượt.
+### 2.4. Tụ lọc bổ sung trên PCB mới — schematic revision 1.2
 
-> [!WARNING]
-> **LƯU Ý VỀ CHÂN `PA11` (CHỈ KHI NẠP BẰNG CÁP TYPE-C/DFU)**:
-> Chân **`PA11`** của STM32 đồng thời là chân tín hiệu **`USB_DM` (D-)** của cổng Type-C. Nếu buộc phải nạp bằng cáp Type-C qua DFU (không có ST-LINK) thì **bắt buộc RÚT DÂY `PA11`** ra khỏi Driver A4950, nếu không máy tính sẽ báo *"USB device not recognized"*.
+Các tụ C1–C9 đều được vẽ thành kết nối điện và đánh dấu **sẽ lắp**, với chân 1 nối rail nguồn tương ứng, chân 2 nối GND. Chúng mắc song song nguồn, không mắc nối tiếp đường cấp nguồn. Các tụ đã có sẵn bên trong từng module vẫn giữ nguyên.
 
----
+| Ký hiệu | Giá trị / điện áp định mức tối thiểu | Nối giữa | Vị trí đặt khi thiết kế PCB |
+|---|---|---|---|
+| C1 | 1000 µF / 16 V, điện phân | +5V và GND | Gần OUT+/OUT− XL4015 và điểm phân phối 5 V |
+| C2 | 470 µF / 35 V, điện phân | VBAT_3S và GND | Gần đầu VM/GND của module Dual A4950 |
+| C3 | 220 nF / 50 V, gốm X7R | VBAT_3S và GND | Sát đầu VM/GND module driver, vòng dòng ngắn |
+| C4 | 10 µF / 16 V, gốm X7R | +5V và GND | Sát chân cấp nguồn 5V/GND của bo ESP32-S3 |
+| C5 | 100 nF / 16 V, gốm X7R | +5V và GND | Cùng vị trí C4, ưu tiên đường nối ngắn |
+| C6 | 10 µF / 16 V, gốm X7R | +5V và GND | Sát chân cấp nguồn 5V/GND Black Pill |
+| C7 | 100 nF / 16 V, gốm X7R | +5V và GND | Cùng vị trí C6, ưu tiên đường nối ngắn |
+| C8 | 1 µF / 16 V, gốm X7R | +3V3 và GND | Sát chân 3V3/GND của module BMI160 |
+| C9 | 100 nF / 16 V, gốm X7R | +3V3 và GND | Cùng vị trí C8, ưu tiên đường nối ngắn |
 
-### 2. Cảm biến quán tính Bosch GY-BMI160 (Cắm trên Breadboard — 6 Chân Chuẩn Hóa Đã Test Thực Tế)
+C1/C2 chọn loại điện phân 105 °C có thông số ESR và dòng ripple phù hợp; chân dương hướng về rail nguồn, chân âm về GND. Chọn kích thước tụ gốm theo điện dung hiệu dụng tại điện áp làm việc (DC bias), không chỉ trị số in trên linh kiện. Footprint và mã linh kiện chưa được chốt.
 
-| Tên Chân BMI160 | Nối Sang Đâu? | Vị Trí Cụ Thể | Quy Tắc Bắt Buộc (Đã Test Thực Nghiệm) |
-| :---: | :--- | :---: | :--- |
-| **`3V3`** | STM32 Black Pill | Chân **`3.3V` STM32** | **BẮT BUỘC**: Cấp đúng 3.30V vào ruột chip. **TUYỆT ĐỐI KHÔNG CẮM VÀO 5V** |
-| **`GND`** | Đường ray Breadboard | **Ray GND (-)** | Nối chung mass toàn hệ thống |
-| **`SCL`** | STM32 Black Pill | Chân **`PB8`** | Tuyến xung nhịp I2C1 Clock (Fast Mode 400kHz) |
-| **`SDA`** | STM32 Black Pill | Chân **`PB9`** | Tuyến dữ liệu I2C1 Data |
-| **`CS`** | STM32 Black Pill | Chân **`3.3V` STM32** | **BẮT BUỘC**: Kéo lên HIGH (3.3V) để ép chip chọn chế độ I2C (thay vì SPI) |
-| **`SA0`** | Đường ray Breadboard | **Ray GND (-)** | **BẮT BUỘC**: Nối Mass để chốt cố định địa chỉ I2C = `0x68` |
-| **`VIN`** | ⛔ **BỎ TRỐNG HOÀN TOÀN** | — | **CẤM CẮM DÂY VÀO CHÂN NÀY** *(Đi qua diode/LDO dỏm gây sụt áp I2C làm đơ chip)* |
-| **`INT1`**| STM32 Black Pill | Chân **`PB2`** | Ngắt ngoài EXTI2 chu kỳ 200Hz (Tùy chọn) |
-| **`INT2`**| *BỎ TRỐNG* | — | Không sử dụng |
+Đây là **phương án tụ ngoài cho bo mang các module hiện có**, chưa được đo trên xe. Không coi các trị số trên là đã được tối ưu thực nghiệm. Khi thử bo cần kiểm tra XL4015 khởi động với C1 1000 µF, đáp ứng tải 5 V, nguồn ESP32 khi phát Wi-Fi và VM lúc motor khởi động/phanh/đảo chiều. Tụ không thay thế nguồn đủ dòng, đường đồng phù hợp và đường hồi GND được bố trí đúng. Không cho dòng motor dùng chung đoạn đường hồi GND với BMI160; các khối vẫn chung mốc GND.
 
----
+Cơ sở thiết kế: [Allegro A4950, Application Information](https://www.allegromicro.com/-/media/files/datasheets/a4950-datasheet.pdf) khuyến nghị tụ điện phân song song tụ gốm gần nguồn tải; [Espressif ESP32-S3, Power Supply](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html#power-supply) hướng dẫn tụ đệm tại đầu nguồn và tụ decoupling. Giá trị C2 470 µF và bộ tụ ngoài module ở đây là lựa chọn thiết kế cho project, không phải giá trị bắt buộc của hãng. Các khuyến nghị tại chân chip phải phân biệt với tụ bổ sung ở đầu vào 5 V của bo ESP32-S3 có sẵn LDO và tụ nội bộ.
 
-### 3. Gateway Không Dây ESP32-S3 N16R8 (Cắm trên Breadboard)
+## 3. STM32 và ESP32-S3
 
-| Tên Chân ESP32-S3 | Nối Sang Đâu? | Vị Trí Cụ Thể | Chức Năng |
-| :---: | :--- | :---: | :--- |
-| **`5V`** *(hoặc `VIN`)*| Đường ray Breadboard | **Ray 5V (+)** | Nhận 5.0V nuôi ESP32 |
-| **`GND`** | Đường ray Breadboard | **Ray GND (-)** | Mass chung vi mạch |
-| **`GPIO18`** *(RX)* | STM32 Black Pill | Chân **`PB6`** (TX) | Nhận gói Telemetry 100Hz từ STM32 |
-| **`GPIO17`** *(TX)* | STM32 Black Pill | Chân **`PB7`** (RX) | Gửi lệnh điều khiển từ Web HUD xuống STM32 |
+| Chân STM32 | Chân ESP32-S3 | Chức năng |
+|---|---|---|
+| PB6 — USART1_TX | GPIO18 — Serial1 RX | STM32 gửi dữ liệu sang gateway |
+| PB7 — USART1_RX | GPIO17 — Serial1 TX | Gateway gửi lệnh sang STM32 |
+| GND hệ thống | GND hệ thống | Mốc tín hiệu chung |
 
----
+UART **115200 baud, 8N1**, tín hiệu logic 3,3 V. Nguồn 5 V đi vào chân cấp nguồn của từng bo, không đưa vào chân UART.
 
-### 4. Module Còi Báo Động Active Buzzer (Cắm trên Breadboard)
+Dữ liệu balance hiện được gửi **50 Hz** từ vòng điều khiển **200 Hz**. Tần số gửi dữ liệu khác tần số lấy mẫu cảm biến và tần số cập nhật giao diện web. STM32 nhận lệnh ARM, STOP, điều khiển 8 hướng và các lệnh đo/hiệu chuẩn; luật cân bằng hiện tại là R12 với observer và phân bổ lực từng bánh.
 
-* **Loại Module Còi 3 chân (khuyên dùng)**:
-  - Chân **`VCC`** (hoặc `+`) $\to$ Cắm vào **Ray 5V (+)** của Breadboard.
-  - Chân **`GND`** (hoặc `-`) $\to$ Cắm vào **Ray GND (-)** của Breadboard.
-  - Chân **`IN`** (hoặc `S`) $\to$ Cắm vào chân **`PB12`** của STM32 Black Pill.
-* **Loại Còi chíp rời 2 chân**:
-  - Chân Dài (`+`) $\to$ Cắm vào chân **`PB12`** của STM32 Black Pill.
-  - Chân Ngắn (`-`) $\to$ Cắm vào **Ray GND (-)** của Breadboard.
+## 4. BMI160 và STM32
 
----
+Giữ cách cấp nguồn trực tiếp 3,3 V của module đang dùng; bỏ trống VIN như sơ đồ đi dây đã lưu.
 
-### 5. Mạch nạp ST-Link V2 (Cắm ngoài Breadboard — Dùng để nạp và gỡ lỗi)
+| Chân GY-BMI160 | Điểm nối | Vai trò hiện tại |
+|---|---|---|
+| 3V3 | STM32 3V3 | Nguồn cảm biến |
+| GND | Ray GND | Mass chung |
+| SCL | STM32 PB8 | I2C1 SCL, 400 kHz |
+| SDA | STM32 PB9 | I2C1 SDA |
+| CS | STM32 3V3 | Giữ mức HIGH để dùng I2C |
+| SA0 / SDO | Ray GND | Chọn địa chỉ I2C 0x68 |
+| VIN | Bỏ trống | Không dùng trong cách cấp nguồn này |
+| INT1 | STM32 PB2 — người dùng xác nhận đã cắm | Dây đã nối; firmware hiện chưa dùng ngắt này để chạy cân bằng |
+| INT2 | Bỏ trống | Không sử dụng |
 
-Kết nối tối thiểu **4 dây** (đấu theo **nhãn in trên mạch nạp**, không cần đếm số chân):
+**Trạng thái INT1:** người dùng xác nhận dây **INT1 → PB2 đang cắm trên breadboard**; giữ kết nối này trên sơ đồ và PCB mới. Mã GPIO vẫn khai báo EXTI2, nhưng firmware hiện không cấu hình phát data-ready qua INT1 và không dùng callback này để đọc IMU/chạy cân bằng. Phân biệt dây đã nối với việc firmware có sử dụng ngắt đó hay không.
 
-| Chân ST-Link V2 | Nhãn trên mạch ST-Link | Nối tới STM32 Black Pill | Ghi chú |
-| :---: | :---: | :--- | :--- |
-| **3.3V** | `3.3V` (hoặc `3V3`) | Chân **`3.3V`** | **CHỈ cắm khi board CHƯA có nguồn riêng** |
-| **GND** | `GND` | Chân **`GND`** | **Bắt buộc** nối chung mass |
-| **SWDIO** | `SWDIO` (hoặc `DIO`) | Chân **`PA13`** (SWDIO) | Tuyến dữ liệu nạp/gỡ lỗi |
-| **SWCLK** | `SWCLK` (hoặc `CLK`) | Chân **`PA14`** (SWCLK) | Tuyến xung nhịp nạp/gỡ lỗi |
-| *(tùy chọn)* **RST** | `RST` | Chân **`NRST`** / `R` | Tăng độ ổn định khi chọn *"Connect under reset"* |
+Cảm biến được cấu hình accel ±8 g, gyro ±2000°/s, ODR **100 Hz**. STM32 đọc I2C bằng HAL blocking, timeout 2 ms, trong vòng TIM4 **200 Hz**. Không mô tả đây là pipeline dùng INT1 hoặc I2C DMA.
 
-```
-   [ST-Link V2]                         [STM32F411 BLACK PILL]
-    3.3V  ───────────────────────────────  3.3V   (chỉ khi board chưa có nguồn)
-    GND   ───────────────────────────────  GND
-    SWDIO ───────────────────────────────  PA13 (SWDIO)
-    SWCLK ───────────────────────────────  PA14 (SWCLK)
-    RST   ───────────────────────────────  NRST   (tùy chọn, nên nối)
-```
+Firmware thử địa chỉ 0x68 rồi 0x69 khi khởi tạo. SA0 nối GND để cố định địa chỉ theo sơ đồ; không kết luận cứ thấy 0x69 là cảm biến hỏng. Giữ nguyên đường 3,3 V, không cấp 5 V vào 3V3, CS, SDA hoặc SCL. Nhận xét về cấu trúc VIN/LDO của một module không được áp cho mọi phiên bản GY-BMI160.
 
-> [!CAUTION]
-> **TRÁNH CẤP NGUỒN TRÙNG**:
-> Nếu xe đang cắm Pin LiPo (board đã có nguồn riêng), **TUYỆT ĐỐI KHÔNG nối dây `3.3V` từ ST-LINK** vào board để tránh hai nguồn đấu nhau gây hỏng. Khi đó chỉ nối **`GND`, `SWDIO`, `SWCLK`** (và `RST` nếu có). Chỉ nối `3.3V` khi muốn ST-LINK nuôi board lúc board chưa có nguồn.
+## 5. Dual A4950 và hai động cơ
 
-> [!NOTE]
-> **QUY TRÌNH NẠP**: Cắm ST-LINK vào cổng USB máy tính → mở STM32CubeIDE → chọn đúng cấu hình `Xe_Can_Bang Debug` (ST-LINK, SWD) → bấm **Run/Debug** (`F11`). CubeIDE tự build rồi nạp, **không cần bấm `BOOT0`** và **không cần rút `PA11`**.
+### 5.1. Tín hiệu điều khiển
 
----
+| STM32 | Timer | Chân driver | Bánh |
+|---|---|---|---|
+| PA8 | TIM1_CH1 | AIN1 | Trái |
+| PA9 | TIM1_CH2 | AIN2 | Trái |
+| PA10 | TIM1_CH3 | BIN1 | Phải |
+| PA11 | TIM1_CH4 | BIN2 | Phải |
 
-## PHẦN 6: DÂY NỐI LINH KIỆN NGOÀI BREADBOARD (DRIVER VÀ 2 ĐỘNG CƠ)
+PWM khoảng **20 kHz**, TIM1 center-aligned, giới hạn lệnh ±2499. Mỗi cặp IN1/IN2 cùng quyết định chiều và mức tác động lên một bánh; không hiểu mỗi dây là một ngõ PWM tiến/lùi độc lập. Mã motor hiện dùng slow decay: khi chạy, một đầu vào giữ HIGH và đầu còn lại được điều chế; lệnh duty bằng 0 đặt cả hai HIGH để phanh.
 
-### 1. Mạch Công Suất Driver Dual A4950 (Gắn trên khung xe)
+### 5.2. Bảng đầy đủ các chân module đang được mô tả
 
-* **Hàng chân 1 (Cạnh có tụ điện)**:
-  - **`VM`** $\to$ Nối vào **Cọc Dương (+) WAGO 1 (12V Pin LiPo)** *(Dây Đỏ to)*.
-  - **`GND`** $\to$ Nối vào **Cọc Âm (-) WAGO 1 (Mass xả Pin)** *(Dây Đen to)*.
-  - **`VCC`** $\to$ Nối vào **Cọc Dương (+) WAGO 2 (5.0V)** *(hoặc Ray 5V Breadboard)* để cấp điện áp tham chiếu $V_{REF}=5.0\text{V}$.
-  - **`AIN2`** $\to$ Nối vào chân **`PA9`** của STM32 (Bánh Trái Lùi).
-  - **`AIN1`** $\to$ Nối vào chân **`PA8`** của STM32 (Bánh Trái Tiến).
-  - **`BOUT1`** $\to$ Nối vào Dây **ĐỎ** (Pin 1) của Động cơ Bánh Phải *(Xoắn đôi với BOUT2)*.
-  - **`BOUT2`** $\to$ Nối vào Dây **TRẮNG** (Pin 6) của Động cơ Bánh Phải *(Xoắn đôi với BOUT1)*.
+Quy ước hàng dưới đây kế thừa tài liệu đi dây của module đang dùng: hàng 1 ở cạnh có tụ, hàng 2 đối diện. **Ưu tiên nhãn in trên module** khi truy dây; đây không phải pinout chung cho mọi bo Dual A4950.
 
-* **Hàng chân 2 (Hàng đối diện)**:
-  - **`AOUT2`** $\to$ Nối vào Dây **TRẮNG** (Pin 6) của Động cơ Bánh Trái *(Xoắn đôi với AOUT1)*.
-  - **`AOUT1`** $\to$ Nối vào Dây **ĐỎ** (Pin 1) của Động cơ Bánh Trái *(Xoắn đôi với AOUT2)*.
-  - **`BIN1`** $\to$ Nối vào chân **`PA10`** của STM32 (Bánh Phải Tiến).
-  - **`BIN2`** $\to$ Nối vào chân **`PA11`** của STM32 (Bánh Phải Lùi).
-  - **`GND`** $\to$ Nối 1 dây riêng biệt về **Cọc Âm (-) WAGO 2 (Mass 5V)** *(KHÔNG CẮM VÀO RAY GND BREADBOARD! Dòng hồi tiếp PWM 20kHz có spike lên 0.5–2A, nếu chạy chung Ray GND Breadboard sẽ gây nhiễu Ground Bounce ~50mV làm méo tín hiệu I2C của BMI160)*.
+| Hàng | Nhãn chân | Điểm nối trong sơ đồ đã lưu |
+|---|---|---|
+| 1 | VM | WAGO 1 (+), nguồn pin |
+| 1 | GND | WAGO 1 (−), dây nguồn riêng |
+| 1 | VCC | WAGO 2 (+), 5 V |
+| 1 | AIN2 | STM32 PA9 |
+| 1 | AIN1 | STM32 PA8 |
+| 1 | BOUT1 | Dây đỏ M1 motor phải |
+| 1 | BOUT2 | Dây trắng M2 motor phải |
+| 2 | AOUT2 | Dây trắng M2 motor trái |
+| 2 | AOUT1 | Dây đỏ M1 motor trái |
+| 2 | BIN1 | STM32 PA10 |
+| 2 | BIN2 | STM32 PA11 |
+| 2 | GND | WAGO 2 (−), dây riêng theo sơ đồ lưu |
 
-> [!CAUTION]
-> **CHỐNG SỤT ÁP & NHIỄU ĐẤT (GROUND BOUNCE)**:
-> Dây GND Hàng 2 của Driver A4950 mang dòng hồi tiếp PWM 20kHz (spike đỉnh 0.5–2A). Nếu cắm vào Ray GND Breadboard (trở kháng lá đồng ~100mΩ), xung dòng sẽ tạo nhiễu điện áp ~50mV trên mốc 0V chung, gây rung tín hiệu I2C của BMI160 → Gyro đọc sai ±1–3 deg/s. **BẮT BUỘC** nối dây này về **WAGO 2 (−)** để cách ly hoàn toàn đường mass công suất và đường mass tín hiệu số.
+Giữ nguyên đường GND đã đấu của xe đang hoạt động. Không suy ra hai chân GND trên module là hai miền cách ly hoặc mỗi chân chỉ mang một loại dòng nếu chưa đối chiếu đường đồng của bo.
 
----
+### 5.3. Dây motor và encoder
 
-### 2. Hai Động cơ GA25-370 có Encoder (Bánh Trái & Bánh Phải)
+Màu dây khớp file `thông số động cơ.txt`. Số pin là quy ước của tài liệu đã lưu; không đếm giắc từ một hướng tùy ý khi chưa xác định đầu pin 1.
 
-Đuôi mỗi động cơ GA25 có giắc JST PH2.0 gồm 6 chân (đếm từ Pin 1 đến Pin 6):
+| Dây | Chức năng | Motor/encoder trái | Motor/encoder phải |
+|---|---|---|---|
+| Đỏ — pin 1 | M1, cuộn dây motor | AOUT1 | BOUT1 |
+| Trắng — pin 6 | M2, cuộn dây motor | AOUT2 | BOUT2 |
+| Đen — pin 2 | GND encoder | Ray GND | Ray GND |
+| Xanh dương — pin 5 | VCC encoder | 3,3 V từ STM32 | 3,3 V từ STM32 |
+| Vàng — pin 3 | Encoder kênh A | PA0 — TIM2_CH1 | PB4 — TIM3_CH1 |
+| Xanh lá — pin 4 | Encoder kênh B | PA1 — TIM2_CH2 | PB5 — TIM3_CH2 |
 
-| Chân & Màu Dây Chuẩn | Ký Hiệu | Bản Chất Dây | Điểm Đến | Vị Trí Cắm |
-| :---: | :---: | :---: | :--- | :---: |
-| **Pin 1 — 🔴 ĐỎ** | M1 | Nguồn Motor 12V | Driver Dual A4950 | **`AOUT1`** *(Trái)* / **`BOUT1`** *(Phải)* |
-| **Pin 6 — ⚪ TRẮNG**| M2 | Nguồn Motor 12V | Driver Dual A4950 | **`AOUT2`** *(Trái)* / **`BOUT2`** *(Phải)* |
-| **Pin 2 — ⚫ ĐEN** | GND | Mass Cảm biến Hall | Breadboard | **Ray GND (-)** |
-| **Pin 5 — 🔵 XANH DƯƠNG**| VCC | Nguồn Hall 3.3V | STM32 Black Pill | Chân **`3.3V` STM32** |
-| **Pin 3 — 🟡 VÀNG** | C1 | Xung Hall Kênh A | STM32 Black Pill | Chân **`PA0`** *(Trái)* / **`PB4`** *(Phải)* |
-| **Pin 4 — 🟢 XANH LÁ**| C2 | Xung Hall Kênh B | STM32 Black Pill | Chân **`PA1`** *(Trái)* / **`PB5`** *(Phải)* |
+Dây đỏ/trắng là hai đầu cuộn motor nối đầu ra cầu H, không phải các dây cấp nguồn Hall. Đi cặp dây motor sát nhau, tránh bó sát dây I2C; không cần đổi lại bó dây đang ổn định chỉ để đạt một số vòng xoắn quy định.
 
-> [!CAUTION]
-> **CẢNH BÁO ĐẶC BIỆT VỀ MÀU DÂY ENCODER GA25**:
-> * **Dây ĐỎ (Pin 1) và Dây TRẮNG (Pin 6)** là 2 dây cấp điện 12V cho cuộn dây động cơ. Hai dây này **bắt buộc xoắn chặt vào nhau (2 - 3 vòng/cm)** trước khi đấu vào Driver để triệt tiêu bức xạ điện từ EMI gây nhiễu I2C!
-> * Dây **XANH LÁ (Pin 4)** là dây tín hiệu xung Kênh B. Tuyệt đối **không nhầm lẫn giữa dây Trắng (12V) và dây Xanh Lá (3.3V)**!
+### 5.4. Chiều đã chốt trên xe
 
----
+- Người dùng đã xác nhận **PWM dương ở cả hai bánh làm đỉnh bánh quay về WAGO nguồn pin**, tức phía trước xe.
+- Nút thử TRÁI/PHẢI đã được xác nhận đúng nhãn.
+- Firmware đảo dấu encoder phải trong `encoder.c`; ticks phải thô trong frame vẫn theo dấu phần cứng, khác dấu vận tốc phải đã xử lý.
+- Encoder hiện dùng 898,225 ticks/vòng bánh, từ số đo thực; không dùng lại 937,2 danh nghĩa để suy luận dây đấu sai.
 
-## PHẦN 7: BẢNG KIỂM TRA ĐIỆN ÁP TRƯỚC KHI BẬT NGUỒN PIN (CHECKLIST)
+**Giữ nguyên cực dây motor, thứ tự A/B encoder và hướng IMU của cấu hình đang chạy tốt.** Nếu phải tháo lắp, đối chiếu lại nhãn và kiểm tra cả chiều motor lẫn dấu encoder bằng bài test kê cao trước khi ARM trên sàn. Không tự đảo AOUT/BOUT hoặc đổi A/B chỉ vì một giá trị raw có dấu khác mong đợi.
 
-Sau khi đi dây xong, bạn hãy rút giắc động cơ, cầm đồng hồ vạn năng VOM (thang đo DC Volts) kiểm tra tuần tự 4 bước:
+## 6. Còi và LED
 
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                        QUY TRÌNH ĐO KIỂM BẰNG ĐỒNG HỒ VOM                              │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│ 1. Đo cọc OUT(+) và OUT(-) của Buck XL4015:  Phải đúng: 5.00V - 5.05V                 │
-│ 2. Đo Ray 5V và Ray GND trên Breadboard:      Phải đúng: 5.00V                         │
-│ 3. Đo chân 3V3 của Module BMI160 và Ray GND:  Phải đúng: 3.28V - 3.30V (Tuyệt đối < 3.6V)│
-│ 4. Đo chân CS của BMI160:                     Phải đúng: 3.30V                         │
-│ 5. Đo chân SA0 của BMI160:                    Phải đúng: 0.00V (Thông mạch với GND)    │
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
+| Tín hiệu | Kết nối / hành vi firmware |
+|---|---|
+| Còi | PB12, HIGH để bật, LOW để tắt |
+| LED onboard | PC13, active LOW |
 
----
+**Người dùng xác nhận còi thực tế có hai chân:** chân dương (+) nối trực tiếp STM32 PB12, chân âm (−) nối GND. Không có dây VCC 5 V và chân IN riêng của module còi ba chân. Sơ đồ KiCad dùng BZ1 để thể hiện đúng cách đấu này. Chưa có thông số dòng tiêu thụ và loại còi để đánh giá tải trực tiếp của PB12; cần xác minh khi chốt phần cứng PCB, không tự coi cách đấu hiện tại là phù hợp cho mọi còi hai chân.
 
-## PHẦN 8: XỬ LÝ CHIỀU QUAY ĐỘNG CƠ KHI CHẠY THẬT
+## 7. Kết nối nạp STM32 bằng ST-LINK
 
-Sau khi cắm nguồn Pin và dựng thẳng xe:
-1. **Kiểm tra phản hồi giữ thăng bằng**:
-   * Nghiêng thân xe về phía **TRƯỚC** $\to$ Hai bánh xe phải cùng quay **TIẾN** để đỡ xe.
-   * Nghiêng thân xe về phía **SAU** $\to$ Hai bánh xe phải cùng quay **LÙI** để đỡ xe.
-2. **Nếu có 1 bánh bị quay ngược chiều (xe bị xoay tròn tại chỗ)**:
-   * Nếu **Bánh Trái** quay ngược: Đảo chéo 2 dây **`AOUT1`** và **`AOUT2`** trên Driver A4950.
-   * Nếu **Bánh Phải** quay ngược: Đảo chéo 2 dây **`BOUT1`** và **`BOUT2`** trên Driver A4950.
-   *(Không cần sửa hay nạp lại bất kỳ dòng code nào!)*
+Dùng các chân SWD có sẵn trên Black Pill để nối mạch nạp bên ngoài; không thêm đầu nối ST-LINK riêng trên PCB mới theo yêu cầu người dùng. Các chân SWD có sẵn không đồng nghĩa bo Black Pill tích hợp mạch ST-LINK. ST-LINK nối SWD, không chiếm các chân PA8–PA11 điều khiển motor.
+
+| Chân nạp | STM32 Black Pill |
+|---|---|
+| SWDIO / DIO | PA13 — SWDIO |
+| SWCLK / CLK | PA14 — SWCLK |
+| GND | GND |
+| RST, nếu sử dụng | NRST |
+
+Dây nguồn/tham chiếu điện áp phụ thuộc đúng loại ST-LINK đang dùng: phân biệt ngõ **3,3 V cấp ra** với ngõ **VTref đo nguồn target**. Không đấu song song ngõ cấp 3,3 V của mạch nạp với nguồn 3,3 V đang có trên xe. Không áp quy tắc bỏ VTref cho mọi loại probe.
+
+Giữ cấu hình nạp ST-LINK/SWD trong CubeIDE; không cần tháo PA11 khi dùng SWD. PA11 đồng thời là USB D−, nên USB/DFU có thể xung đột với kết nối driver; tài liệu này không thay phương thức nạp đang sử dụng sang DFU.
+
+## 8. Đối chiếu khi bảo trì hoặc lắp lại
+
+Xe đang hoạt động ổn định không cần chạy lại quy trình này chỉ vì tài liệu được cập nhật. Khi thực sự tháo/lắp lại dây:
+
+1. **Tắt nguồn** trước khi kiểm tra thông mạch, cực tính và chạm chập. Đối chiếu nhãn module và ảnh/dấu dây trước khi tháo; kiểm tra ray breadboard có bị ngắt giữa hay không.
+2. **Đo điện áp khi đã cấp nguồn, motor ngắt khỏi driver:** XL4015 và ray 5 V xấp xỉ mức đặt 5,0 V; 3V3 BMI160 và CS xấp xỉ 3,3 V; SA0 gần 0 V. Không dùng khoảng 3,28–3,30 V làm tiêu chí đạt/trượt cứng cho mọi đồng hồ và LDO.
+3. Nếu kiểm tra lỗi reset khi motor chạy, đo nguồn tại ESP32/STM32 trong điều kiện có tải. Điện áp tĩnh tại XL4015 không loại được sụt áp ngắn khi khởi động hoặc đảo chiều motor.
+4. Khi lắp lại hoàn tất, thử bánh kê cao bằng chức năng pulse hiện hành, xác nhận đúng bánh, đúng chiều và dấu encoder. Sau đó mới thực hiện hiệu chuẩn/ARM theo quy trình trên web. Cấp pin đơn thuần không tự ARM và không tự chạy bài motor.
+
+## 9. Phạm vi xác nhận và nguồn đối chiếu
+
+Các chân tín hiệu, timer, UART, tần số vòng điều khiển và cách đọc cảm biến đã được đối chiếu với mã nguồn. Bố trí tầng, vị trí driver, hướng WAGO và chiều bánh dựa trên thông tin người dùng đã chốt trong `HANDOFF.md`.
+
+Bảng nguồn, hai hàng chân module, màu dây và cực motor kế thừa sơ đồ đi dây đã lưu. Chưa có kiểm tra trực tiếp từng dây bằng ảnh mới hoặc đo thông mạch trong lần cập nhật này. Những chi tiết phụ chưa được xác nhận riêng gồm thông số dòng/loại còi và sơ đồ nội bộ module driver. INT1 → PB2 đã được người dùng xác nhận còn cắm. Người dùng đã xác nhận còi hai chân (+ → PB12, − → GND), xe không lắp tụ bổ sung. Các ghi chú đó không yêu cầu thay cấu hình xe đang hoạt động ổn định.
+
+Nguồn trong project:
+
+- `HANDOFF.md`; `thông số chi tiết linh kiện.txt` cho bố trí, có ưu tiên thông tin đã chốt mới nhất trong HANDOFF.
+- `thông số động cơ.txt` cho màu và chức năng dây motor/encoder.
+- `Xe_Can_Bang/Core/Src/tim.c`, `i2c.c`, `usart.c`, `gpio.c`, `motor.c`, `encoder.c`, `bmi160.c`, `robot_fsm.c`, `main.c`.
+- `ESP32_S3_Gateway/ESP32_S3_Gateway.ino` và `firmware_build.h`.
+
+Tài liệu hãng dùng để phân biệt đặc tính chip với đặc tính module:
+
+- [Bosch BMI160 datasheet](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmi160-ds000.pdf).
+- [Allegro A4950 datasheet](https://www.allegromicro.com/-/media/Files/Datasheets/A4950-Datasheet.ashx).

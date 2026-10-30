@@ -188,7 +188,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       <button class="action" id="balance-arm" disabled onclick="balanceArm()">MỞ TRANG CHỌN R12</button>
       <button class="action btn-estop" onclick="sendRaw('$STOP*')">DỪNG MOTOR</button>
       <button class="action" id="balance-calib" onclick="sendRaw('$CALIB*')">ĐO LẠI GYRO · GIỮ XE YÊN 5 GIÂY</button>
-      <pre id="balance-live" style="white-space:pre-wrap;font-size:13px;line-height:1.7">Chờ STM32 BAL-20261022-R12-8DIR-RT4…</pre>
+      <pre id="balance-live" style="white-space:pre-wrap;font-size:13px;line-height:1.7">Chờ STM32 BAL-20261024-R12-8DIR-RT8…</pre>
       <canvas id="balance-chart" width="700" height="180" style="width:100%;background:#0d1424"></canvas>
       <p>Đồ thị: pitch điều khiển (xanh, ±10°) và quãng đường encoder (cam, ±10 cm), 60 giây gần nhất.</p>
       <button class="action" onclick="location.href='/balance-log'">TẢI LOG CÂN BẰNG 100 Hz</button>

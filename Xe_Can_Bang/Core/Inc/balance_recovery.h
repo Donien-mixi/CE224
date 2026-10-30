@@ -26,7 +26,17 @@ static inline uint16_t BalanceRecovery_UpdateMode(BalanceRecovery *s,bool allow,
          * Only an acknowledged, fresh maneuver gets12deg; idle remains8deg.
          * Gyro/speed triggers and all recovery/interlock limits are unchanged. */
         float tilt_trigger=maneuver?12.0f:8.0f;
-        if(s->primed&&(fabsf(pitch)>=tilt_trigger||fabsf(gyro)>=60.0f||fabsf(speed)>=.35f)){
+        /* A short commanded transient is not a sustained loss of tracking.
+         * quiet is unused while inactive: reuse it for 60ms evidence, so the
+         * native simulation state remains ABI-compatible.
+         * RT8: a single 150 dps gyro spike is a suspension bump, not a loss of
+         * control. Log27 showed 60 dps firing four times on rough ground with
+         * pitch under5deg; the threshold is now above every observed bump. */
+        bool suspect=fabsf(pitch)>=tilt_trigger||fabsf(speed)>=.35f;
+        if(s->primed&&maneuver&&suspect){if(s->quiet<12U)s->quiet++;}
+        else s->quiet=0;
+        if(s->primed&&(fabsf(gyro)>=150.0f||
+            (suspect&&(!maneuver||s->quiet>=12U)))){
             s->active=true;s->primed=false;s->quiet=0;s->started_ms=now;
             if(s->episodes<65535)s->episodes++;
             s->distance_limit=fminf(1.0f,fmaxf(base_budget,fabsf(position)+.80f));

@@ -30,6 +30,27 @@ static void controlClaim(long client) {
   strcpy(controlLastStop,"none");
   controlDriveEpoch=controlDriveEpoch%1000000000U+1U;controlMoveSequence=0;
 }
+/* Reconnect policy: the vehicle may already be balancing with nobody at the
+ * wheel. A new page takes the free seat WITHOUT bumping the epoch, because the
+ * STM32 only accepts the epoch it received at ARM. Sequence numbering continues
+ * from the last packet the STM32 acknowledged. A genuinely live owner (recent
+ * heartbeat) keeps the wheel. */
+static void controlAdoptIfFree(uint8_t client) {
+  if (client>=WEBSOCKETS_SERVER_CLIENT_MAX) return;
+  if (controlOwner>=0 && controlOwner<WEBSOCKETS_SERVER_CLIENT_MAX &&
+      (uint32_t)(millis()-controlPings[controlOwner])<2000U) return;
+  bool balancing=false; uint32_t epoch=0,sequence=0;
+  xSemaphoreTake(captureMutex,portMAX_DELAY);
+  balancing=balanceSeen&&(uint32_t)(millis()-balanceReceived)<1000U&&
+    balanceLatest.state==3&&balanceLatest.controller==12&&balanceLatest.fault==0;
+  if(balancing){epoch=balanceLatest.drive_epoch;sequence=balanceLatest.drive_sequence;}
+  xSemaphoreGive(captureMutex);
+  if(!balancing||!epoch)return;
+  controlOwner=(int)client;controlClaimUntil=millis()+2000;
+  controlDriveEpoch=epoch;
+  if(controlMoveSequence<sequence)controlMoveSequence=sequence;
+  controlStopLatched=false;strcpy(controlLastStop,"none");
+}
 static void controlStop(const char *source) {
   controlRevision=(controlRevision%2000000000u)+1;
   controlDriveEpoch=controlDriveEpoch%1000000000U+1U;controlMoveSequence=0;
@@ -59,11 +80,14 @@ static void controlConnected(uint8_t client) {
   controlTokens[client]=controlGeneration;controlPings[client]=millis()-1000;
   char hello[80];snprintf(hello,sizeof(hello),"{\"session\":%u,\"token\":%lu}",
     client,(unsigned long)controlTokens[client]);webSocket.sendTXT(client,hello);
+  controlAdoptIfFree(client);
 }
 static void controlDisconnected(uint8_t client) {
   if(client>=WEBSOCKETS_SERVER_CLIENT_MAX)return;
-  // -2 retains the lost-controller condition: observers cannot revive heartbeat.
-  if(controlOwner==client) {controlStop("controller_disconnected");controlOwner=-2;}
+  /* Closing the page must not stop a balancing vehicle. The seat is freed so the
+   * next page can adopt the running session; the 350 ms move lease already
+   * brakes any held command. Only an explicit STOP cuts the motor. */
+  if(controlOwner==client) controlOwner=-1;
   controlTokens[client]=0;
 }
 static bool controlMessage(uint8_t client,const String &command) {
@@ -82,19 +106,18 @@ static bool controlMessage(uint8_t client,const String &command) {
     if(p.direction!=0||p.turn!=0){
       xSemaphoreTake(captureMutex,portMAX_DELAY);
       bool ok=balanceSeen&&millis()-balanceReceived<300&&balanceLatest.state==3&&
-        balanceLatest.controller==12&&balanceLatest.capture==0&&(balanceLatest.motion_flags&1U)&&
+        balanceLatest.controller==12&&balanceLatest.capture!=1&&(balanceLatest.motion_flags&1U)&&
         balanceLatest.drive_epoch==p.epoch&&balanceLatest.fault==0&&
-        !strncmp(balanceMeta,"$BINFO,BAL-20261022-R12-8DIR-RT4,",sizeof("$BINFO,BAL-20261022-R12-8DIR-RT4,")-1)&&
+        !strncmp(balanceMeta,"$BINFO,BAL-20261024-R12-8DIR-RT8,",sizeof("$BINFO,BAL-20261024-R12-8DIR-RT8,")-1)&&
         balanceCapacity&&millis()-controlPings[client]<600;
       xSemaphoreGive(captureMutex);if(!ok)return false;
     }
     controlMoveSequence=p.sequence;return true;
   }
   if(command=="$BACKGROUND*" || command=="$LEAVE*") {
-    if(controlOwner==client)
-      controlStop(command=="$BACKGROUND*"?"controller_background":"controller_page_left");
-    // Also invalidate an unclaimed HTTP ARM already in transit from this page.
-    // An observer leaving never sends STOP to the active controller.
+    /* Leaving or hiding the page keeps the vehicle balancing and keeps the seat
+     * for this page, so returning to the tab can drive again with the same epoch.
+     * A held command is released by the page before sending this. */
     controlConnected(client);
     return false;
   }

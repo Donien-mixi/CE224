@@ -62,7 +62,9 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
     int dir=code==1?1:code==2?-1:0;
     bool fresh=(word>>2)>0U&&(uint32_t)(now-s->last_ms)<350U;
     if(!fresh&&dir!=0)s->release_required=true;
-    if(!allow&&s->used&&!s->inhibited)BalanceMotion_Cancel(s,position,speed,0,now);
+    /* Inhibit (startup/recovery) only pauses the trajectory: the reference is
+     * held on the body and v_ref ramps to zero, so the SAME held press resumes
+     * when the inhibit ends. The gesture is never cancelled by a recovery. */
     s->inhibited=!allow;
     /* A press/direction change starts here, not at an earlier gesture's anchor.
      * Neutral abandons position debt immediately; only velocity is ramped down. */
@@ -78,10 +80,14 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
     // Encoder tracking detects a possible blockage, not wall distance. A wheel
     // spinning against a wall may evade this; violent IMU motion has its own cut.
     float error=s->x_ref-position;
-    bool lead=dir!=0&&s->used&&!s->cancel_flags&&!s->braking&&dir*error>.12f;
+    /* RT8: log27 showed reverse settling 9.6cm behind the reference, which the
+     * old18cm/10cm pair treated as a permanent blockage. The run-up budget is
+     * now20cm and the blockage evidence30cm, so a reversal transient no longer
+     * throttles the whole reverse leg while a real wall still cancels. */
+    bool lead=dir!=0&&s->used&&!s->cancel_flags&&!s->braking&&dir*error>.30f;
     /* A stationary balancing/turning axle can have a small steady offset.
      * Low speed is blockage evidence only during commanded translation;
-     * the12cm commanded lead and ordinary distance guards still apply. An
+     * the30cm commanded lead and ordinary distance guards still apply. An
      * overshoot or a pure turn is not evidence of a blocked translation. */
     bool stuck=dir!=0&&s->used&&!s->cancel_flags&&!s->braking&&dir*error>.06f&&fabsf(speed)<.05f;
     if(allow&&(lead||stuck)){
@@ -89,9 +95,7 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
         if(s->blocked_ticks>=60U)BalanceMotion_Cancel(s,position,speed,128U,now);
     }else s->blocked_ticks=0;
     if(fresh&&dir==0)s->release_required=false;
-    if(!allow){s->ready=false;s->stable=0;if(s->used)s->release_required=true;}
-    // During cancellation let balance catch the body without chasing an obsolete
-    // position. Retain velocity damping. Freeze a new anchor only after quiet.
+    // During inhibition the trajectory simply waits on the measured position.
     if(s->cancel_flags&&!s->ready&&(!allow||fabsf(s->v_ref)>.0001f))s->x_ref=position;
     if(allow&&!s->release_required){
         bool quiet=fabsf(pitch)<=5&&fabsf(gyro)<25&&fabsf(speed)<(s->cancel_flags?.10f:.15f)&&fabsf(s->v_ref)<.01f&&fabsf(position-s->x_ref)<.08f;
@@ -101,7 +105,7 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
     int wanted=allow&&s->ready&&!s->release_required&&fresh?dir:0;
     if(wanted!=0&&s->braking){s->x_ref=position;s->braking=false;s->stop_ticks=0;}
     if(wanted!=0)s->cancel_flags=0;
-    bool limited=wanted*(s->x_ref-position)>.10f;
+    bool limited=wanted*(s->x_ref-position)>.20f;
     float target=limited?0:BALANCE_MOTION_SPEED*wanted;
     if(wanted!=0)s->used=true;
     float old=s->v_ref;
@@ -121,7 +125,8 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
             bool stopped=fabsf(speed)<.06f&&fabsf(s->v_ref)<.01f&&fabsf(pitch)<=3&&fabsf(gyro)<25;
             if(stopped){if(s->stop_ticks<20U)s->stop_ticks++;}else s->stop_ticks=0;
             if(s->stop_ticks>=20U){s->braking=false;s->v_ref=0;s->x_ref=position;}
-        }else s->x_ref+=.5f*(old+s->v_ref)*.005f;
+        }else if(allow) s->x_ref+=.5f*(old+s->v_ref)*.005f;
+        else s->x_ref=position;
     }
     s->requested=(int8_t)(fresh?dir:0);
     s->flags=(s->ready&&!s->release_required?1U:0U)|(fabsf(s->v_ref)>.0001f?2U:0U)|

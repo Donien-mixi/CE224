@@ -25,4 +25,4 @@ Sơ đồ đã kiểm tra bằng KiCad CLI: **0 lỗi, 0 cảnh báo ERC** khi b
 
 ## Trạng thái firmware đi kèm repo
 
-Lượt cập nhật này chỉ đưa `Hardware` lên GitHub. Sơ đồ đối chiếu source local STM32 **RT8** / ESP32 **RT8 NET5**; firmware và các thay đổi mô phỏng mới trên máy chưa được đưa lên trong commit Hardware. Không suy ra firmware trong nhánh đã đồng bộ chỉ từ sự có mặt của sơ đồ này.
+Commit Hardware ban đầu `d6a14af` chưa có firmware mới. Đợt đồng bộ tiếp theo ngày 30/10/2026 bổ sung source STM32 **RT8**, ESP32 **RT8 NET5**, mô phỏng và công cụ kiểm thử hiện hành. Sơ đồ vẫn là revision 1.3; việc đồng bộ source không xác nhận firmware đã nạp trên xe.

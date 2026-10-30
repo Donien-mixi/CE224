@@ -128,11 +128,9 @@ int main(void)
   while (1)
   {
     /* 1. Xử lý giải mã lệnh UART từ ESP32-S3 qua DMA buffer
-     * CRITICAL: Tắt ngắt TIM4 tạm thời để tránh race condition khi
-     * Robot_ControlLoop_200Hz() đọc s_command đang được cập nhật giữa chừng. */
-    if (!HardwareTest_IsLocked()) __disable_irq();
+     * The parser masks only TIM4 around complete command publication.
+     * UART DMA recovery and byte scanning run with interrupts enabled. */
     ESP32_Comm_Process();
-    if (!HardwareTest_IsLocked()) __enable_irq();
     HardwareTest_Service();
 
     /* 2. Xử lý yêu cầu hiệu chuẩn lại IMU từ web ($CALIB) — chạy NGOÀI ngắt 200Hz */

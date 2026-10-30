@@ -35,7 +35,7 @@ static inline int BalanceMotion8_Update(BalanceMotion *s,BalanceTurn *t,bool all
  if(allow&&fresh&&neutral&&t->requested!=0&&!s->cancel_flags){
   BalanceMotion_BeginBrake(s,position,now);
  }
- if(t->used&&(!fresh||!allow||(s->cancel_flags&&!s->ready)))t->release_required=true;
+ if(t->used&&(!fresh||(s->cancel_flags&&!s->ready)))t->release_required=true;
  if(fresh&&neutral)t->release_required=false;
  if(!BalanceMotion_Update(s,allow&&!t->release_required,word,position,pitch,gyro,speed,now))return 0;
  bool enabled=allow&&s->ready&&!s->release_required&&!t->release_required&&fresh;
@@ -55,8 +55,10 @@ static inline int BalanceMotion8_Update(BalanceMotion *s,BalanceTurn *t,bool all
   t->release_required=true;t->blocked_ticks=0;wanted=0;
  }
  if(wanted){t->used=true;s->used=true;s->cancel_flags=0;s->flags&=(uint16_t)~(64U|128U);s->flags|=32U;}
- /* Release/recovery cancels the abandoned yaw trajectory as well as x. */
- if(t->used&&(!allow||s->cancel_flags)){t->psi_ref=yaw;t->braking=true;}
+ /* A cancelled gesture also abandons the yaw trajectory. A plain inhibit keeps
+  * the heading anchor and simply stops asking for rate, so the held press can
+  * continue when the inhibit ends. */
+ if(t->used&&s->cancel_flags){t->psi_ref=yaw;t->braking=true;}
  float requested_rate=(word&3U)?BALANCE_TURN_DIAGONAL_RATE:BALANCE_TURN_PURE_RATE;
  float max_rate=requested_rate;
  float wheel_cap=fmaxf(.10f,2.0f*(.80f-fabsf(speed))/.262f);
@@ -68,8 +70,11 @@ static inline int BalanceMotion8_Update(BalanceMotion *s,BalanceTurn *t,bool all
  float balance=fmaxf(0,fminf(1,(12.0f-fabsf(pitch))/6.0f));
  /* A drifting turn center calls for less turn authority, not a false linear
   * blockage cancellation (log26). R12 position feedback keeps its fixed anchor;
-  * ordinary/recovery position budgets still provide the independent bound. */
- float center=linear_neutral?fmaxf(.20f,fminf(1,(.16f-fabsf(s->x_ref-position))/.10f)):1.0f;
+  * ordinary/recovery position budgets still provide the independent bound.
+  * RT8: log27 left turns sat at~11cm centre drift, so the old16cm knee halved
+  * the rate on more than half of the gesture. The knee moves to22cm and the
+  * floor to40%, which still throttles a real walk-away but not a normal turn. */
+ float center=linear_neutral?fmaxf(.40f,fminf(1,(.22f-fabsf(s->x_ref-position))/.10f)):1.0f;
  target*=tracking*balance*center;
  if(wanted&&(max_rate<requested_rate-.001f||tracking<.999f||balance<.999f||center<.999f))s->flags|=512U;
  float old=t->w_ref;

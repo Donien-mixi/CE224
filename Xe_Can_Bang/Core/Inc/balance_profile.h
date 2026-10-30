@@ -2,7 +2,7 @@
 /* Final R12 STATE4_OBS14 baseline. Legacy PID constants below support
  * diagnostic/library code only; they are not a selectable balance controller.
  * Raw test data must never use the following sensor corrections. */
-#define BALANCE_BUILD "BAL-20261022-R12-8DIR-RT4"
+#define BALANCE_BUILD "BAL-20261024-R12-8DIR-RT8"
 #define BALANCE_CONTROLLER_R12 12U
 #define BALANCE_DEFAULT_CONTROLLER BALANCE_CONTROLLER_R12
 #define BALANCE_PPR 898.225f
@@ -43,7 +43,11 @@
 #define BALANCE_CAPTURE_SPEED 1.00f // only during bounded startup capture
 #define BALANCE_LARGE_CAPTURE_ANGLE 48.0f // preserve S48T speed guard through48deg
 #define BALANCE_LARGE_CAPTURE_SPEED 1.10f // only active capture started above48deg
-#define BALANCE_HEARTBEAT_MS 1000U
+/* The car keeps balancing when the browser is closed: the gateway sends its own
+ * heartbeat while balancing, and this 10 s window covers a gateway reboot.
+ * Losing the browser only expires the 350 ms move lease (brake + hold), it does
+ * not cut the motor. Explicit STOP and the hard protections are unchanged. */
+#define BALANCE_HEARTBEAT_MS 10000U
 
 #define BALANCE_EXTREME_CAPTURE_ANGLE 58.0f
 #define BALANCE_EXTREME_CAPTURE_SPEED 1.20f

@@ -2,10 +2,10 @@
 here=get_absolute_file_path("review.sce");root=here+"../";
 exec(root+"current/cases.sce",-1);
 [loaded,library]=c_link("twip_motion_reference");if loaded then ulink(library);end
-link(here+"motion_rt4.dll",["twip_motion_reference";"twip_motion_control";"twip_motion_set_speed";"twip_motion_impact";"twip_motion_cancel_fault"],"c");
+link(here+"motion_rt5.dll",["twip_motion_reference";"twip_motion_control";"twip_motion_set_speed";"twip_motion_impact";"twip_motion_cancel_fault"],"c");
 if ~c_link("twip_pair_catalog_contact") then link(here+"contact_native.dll","twip_pair_catalog_contact","c");end
 [loaded,recovery_library]=c_link("twip_push_guard");if loaded then ulink(recovery_library);end
-link(root+"current/recovery_rt4.dll","twip_push_guard","c");
+link(root+"current/recovery_rt5.dll","twip_push_guard","c");
 motor_cases=catalog_nominal_cases(ones(1,12),:);
 function [Pc,Sc]=motor_override(Pc,Sc,ic)
  speed=.72;if ic<=2 then speed=.5;end;r=call("twip_motion_set_speed",speed,1,"d","out",[1,1],2,"d");
@@ -28,7 +28,7 @@ show_plots=%t;if isdef("motion_review_plots") then show_plots=motion_review_plot
 if show_plots then
  for ic=[2 3 5 6]
   a=csvRead(out+msprintf("/case%02d_policy1.csv",ic),",");b=csvRead(out+msprintf("/guard%02d.csv.motion.csv",ic),",");f=scf();clf(f);
-  subplot(3,1,1);plot(a(:,1),a(:,7)*180/%pi);xgrid();ylabel("Pitch CF deg");title(msprintf("R12 RT4 hold/release review case%d",ic));
+  subplot(3,1,1);plot(a(:,1),a(:,7)*180/%pi);xgrid();ylabel("Pitch CF deg");title(msprintf("R12 RT5 hold/release review case%d",ic));
   subplot(3,1,2);plot(a(:,1),a(:,11),b(:,1),b(:,3));xgrid();ylabel("Speed m/s");legend("Encoder","Reference");
   subplot(3,1,3);plot(a(:,1),a(:,12),b(:,1),b(:,2));xgrid();ylabel("Travel m");xlabel("Time s");legend("Encoder","Reference");
  end
@@ -40,4 +40,4 @@ if show_plots then
  end
 end
 clear motor_override;
-mprintf("RT4 review done. 50cm/s default;72cm/s requires floor testing; collision model is not identified. Results:%s\n",out);
+mprintf("RT5 review done. 50cm/s default;72cm/s requires floor testing; collision model is not identified. Results:%s\n",out);

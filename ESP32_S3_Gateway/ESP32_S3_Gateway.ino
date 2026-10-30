@@ -149,6 +149,12 @@ void setupMeasurementRoutes();
 void measurementWatchdog();
 
 void downloadHardwareLog() {
+  // A legacy log download can occupy the synchronous HTTP loop for seconds.
+  // Reject it while either drive mode is active, including from an old tab.
+  xSemaphoreTake(captureMutex,portMAX_DELAY);
+  bool motorsRunning=balanceSeen&&(balanceLatest.state==3||balanceLatest.state==7);
+  xSemaphoreGive(captureMutex);
+  if(motorsRunning){server.send(409,"text/plain","Stop motors before downloading hardware logs.");return;}
   if(jobLogs.active>=0){server.send(409,"text/plain","Finish the active measurement before downloading.");return;}
   xSemaphoreTake(captureMutex, portMAX_DELAY);
   /* Snapshot length: downloading while tests run never alters the capture buffer. */
@@ -256,8 +262,8 @@ void setup() {
   /* Khởi tạo Serial1 giao tiếp phần cứng với STM32F411 */
   Serial1.setRxBufferSize(16384);
   Serial1.begin(STM32_BAUD, SERIAL_8N1, STM32_RX_PIN, STM32_TX_PIN);
-  // An ESP-only restart must never keep an earlier STM32 driving session alive.
-  Serial1.print("$STOP*\r\n");
+  /* No STOP on boot: if this gateway restarts while the STM32 is balancing, the
+   * vehicle must keep balancing and wait for the next page, not fall over. */
   gatewayHealthBegin();
   testCapacity = 2 * 1024 * 1024;
   testLog = (char *)heap_caps_malloc(testCapacity, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
@@ -372,6 +378,17 @@ void loop() {
   webSocket.loop();
   receiveSTM32();
   measurementWatchdog();
+  /* Gateway heartbeat: a closed browser must not cut the motor. While the STM32
+   * reports balancing, keep its command watchdog fresh even with no page open;
+   * the 350 ms move lease still brakes any held gesture when commands stop. */
+  static uint32_t lastKeepalive=0;
+  if(tick-lastKeepalive>=400){
+    bool balancing;
+    xSemaphoreTake(captureMutex, portMAX_DELAY);
+    balancing=balanceSeen && (uint32_t)(millis()-balanceReceived)<=1000 && balanceLatest.state==3;
+    xSemaphoreGive(captureMutex);
+    if(balancing){Serial1.print("$PING*\r\n");lastKeepalive=tick;}
+  }
 }
 
 #include "measurement_web.h"

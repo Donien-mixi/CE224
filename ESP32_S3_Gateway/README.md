@@ -1,4 +1,9 @@
-> ESP32 hiện là `8DIR-RT4-NET1`, tương thích STM32 `8DIR-RT4`. Nếu STM32 đã là RT4 thì chỉ cần nạp lại ESP32. Xem [hướng dẫn](../README.md).
+# Bản hiện tại: RT8 NET5
+
+Cần nạp cùng STM32 `BAL-20261024-R12-8DIR-RT8`. Web hiển thị `TWIP-WEB-20261024-BAL-R12-8DIR-RT8-NET5`, mở `http://192.168.4.1/ui/r12?v=rt8-net5`.
+Xem `../Docs/Ke_Hoach_Sua_Loi_RT8.md` để kiểm chứng. Mức tốc độ vẫn 50/72 cm/s; chưa mở tốc độ cao hơn. Đóng web làm lệnh di chuyển hết lease rồi hãm và giữ cân bằng. Mở lại phải nhấn lệnh mới, không phát lại thao tác giữ trước đó. Các phần dưới mô tả chức năng log/kết nối kế thừa từ NET1.
+
+> **Lịch sử RT4/NET1:** thông tin ở các mục mang tên RT4 phía dưới mô tả nền cũ. Cặp hiện hành là STM32 RT8 / ESP32 RT8 NET5; dùng URL và hướng dẫn đầu tài liệu.
 
 Đo lại gyro khóa các thao tác bật/thử bánh tới khi có dữ liệu xác nhận hoàn tất. STM32 hủy lệnh motor đang chờ và yêu cầu kiểm tra đứng yên lại đủ 200 ms; hiệu chuẩn không tự bật motor.
 
