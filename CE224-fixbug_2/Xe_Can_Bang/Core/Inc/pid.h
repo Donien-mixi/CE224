@@ -1,0 +1,121 @@
+/**
+  ******************************************************************************
+  * @file    pid.h
+  * @brief   Bộ điều khiển Cascade PID 2 vòng lồng nhau (Góc PD + Vận tốc PI)
+  *          kèm bù vùng chết ma sát hộp số (Deadband) và bẻ lái thích ứng vận tốc.
+  ******************************************************************************
+  */
+
+#ifndef __PID_H__
+#define __PID_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+#include <math.h>
+#include "balance_profile.h"
+
+/* Thông số mặc định ban đầu */
+#define DEFAULT_KP_ANGLE        BALANCE_KP_ANGLE  // Conditional simulation candidate, not hardware certified.
+#define DEFAULT_KD_ANGLE        BALANCE_KD_ANGLE
+#define DEFAULT_KP_VELOCITY     BALANCE_KP_VELOCITY    // Vòng vận tốc êm ái
+#define DEFAULT_KI_VELOCITY     BALANCE_KI_VELOCITY    // Tích phân
+#define DEFAULT_KP_POSITION     BALANCE_KP_POSITION    // Vòng vị trí mềm mại
+/* Positive PWM rolls forward. With forward-positive control pitch, forward
+ * lean/rate must request positive PWM to catch the chassis. */
+#define PID_ANGLE_OUTPUT_SIGN   (-1.0f)
+
+#define MAX_TILT_NORMAL         8.0f    // Giới hạn góc ngả chế độ thường (độ)
+#define MAX_TILT_RACE           15.0f   // Giới hạn góc ngả chế độ đua (độ)
+#define MAX_INTEGRAL_VELOCITY   BALANCE_INTEGRAL_LIMIT
+
+typedef struct {
+    float Kp;
+    float Kd;
+} PID_Angle_t;
+
+typedef struct {
+    float Kp;
+    float Ki;
+    float integral;
+} PID_Velocity_t;
+
+typedef struct {
+    float Kp;
+} PID_Position_t;
+
+/**
+  * @brief  Khởi tạo các tham số PID ban đầu
+  */
+void PID_Init(void);
+float PID_GetVelocityIntegral(void);
+void PID_EnableVelocityIntegration(uint8_t enabled);
+
+/**
+  * @brief  Cập nhật tham số PID trực tiếp từ lệnh tune ($PID,kp1,kd1,kp2,ki2*)
+  */
+void PID_SetParams(float kp1, float kd1, float kp2, float ki2);
+
+/**
+  * @brief  Thiết lập góc bù trọng tâm tĩnh thực tế (Pitch Trim)
+  * @param  trim Góc bù trọng tâm (độ), dương nếu nghiêng trước, âm nếu nghiêng sau
+  */
+void PID_SetTrim(float trim);
+
+/**
+  * @brief  Lấy góc bù trọng tâm hiện tại (độ)
+  */
+float PID_GetTrim(void);
+
+/**
+  * @brief  Tính toán vòng ngoài cùng (Position Loop P) sinh ra vận tốc đặt
+  * @param  target_pos: Vị trí đặt (m)
+  * @param  actual_pos: Vị trí đo từ Encoder (m)
+  * @retval Vận tốc đặt v_target (m/s)
+  */
+float PID_Position_Compute(float target_pos, float actual_pos);
+
+/**
+  * @brief  Tính toán vòng ngoài (Velocity Loop PI) sinh ra góc nghiêng đặt
+  * @param  target_vel: Vận tốc đặt từ Joystick (m/s)
+  * @param  actual_vel: Vận tốc đo được từ Encoder (m/s)
+  * @param  is_racing:  1 nếu đang ở chế độ đua, 0 nếu chế độ thường
+  * @param  dt:         Chu kỳ lấy mẫu (giây)
+  * @retval Góc nghiêng đặt Theta_target (độ)
+  */
+float PID_Velocity_Compute(float target_vel, float actual_vel, uint8_t is_racing, float dt);
+
+/**
+  * @brief  Tính toán vòng trong (Angle Loop PD) sinh ra Base PWM
+  * @param  target_angle: Góc đặt từ vòng vận tốc (độ)
+  * @param  actual_angle: Góc nghiêng thực từ bộ lọc bù (độ)
+  * @param  gyro_rate:    Vận tốc góc Pitch từ Gyro (deg/s)
+  * @retval Xung PWM cơ sở (Base PWM)
+  */
+float PID_Angle_Compute(float target_angle, float actual_angle, float gyro_rate);
+
+/**
+  * @brief  Bù vi sai lái thích ứng theo vận tốc (tránh lật xe khi vào cua tốc độ cao)
+  * @param  steer_cmd:  Lệnh rẽ từ Joystick
+  * @param  actual_vel: Vận tốc hiện tại (m/s)
+  * @retval Giá trị PWM vi sai bù vào 2 bánh
+  */
+float PID_Adaptive_Steering(float steer_cmd, float actual_vel);
+
+/**
+  * @brief  Bù vùng chết ma sát tĩnh hộp số GA25 (Deadband Compensation)
+  */
+int16_t PID_Apply_Deadband(float pwm_val, int16_t deadband, int16_t max_pwm);
+
+/**
+  * @brief  Reset khâu tích phân về 0 khi xe ngã hoặc đứng chờ
+  */
+void PID_Reset_Integral(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __PID_H__ */

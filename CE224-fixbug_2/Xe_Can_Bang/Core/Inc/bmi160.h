@@ -1,0 +1,112 @@
+/**
+  ******************************************************************************
+  * @file    bmi160.h
+  * @brief   Driver cảm biến quán tính 6 trục cao cấp Bosch BMI160 (GY-BMI160).
+  *          Giao tiếp qua I2C1 Fast Mode 400kHz (PB8: SCL, PB9: SDA).
+  *          Đọc đồng thời 12 bytes Gia tốc và Con quay hồi chuyển trong < 350µs.
+  *
+  * @note    QUY TẮC ĐẤU DÂY 6 CHÂN BẮT BUỘC ĐÃ TEST THỰC NGHIỆM:
+  *          1. Chân 3V3 : Cấp nguồn 3.30V từ chân 3.3V của STM32 (BỎ TRỐNG VIN!)
+  *          2. Chân GND : Nối mass chung hệ thống
+  *          3. Chân SCL : Nối chân PB8 (I2C1_SCL)
+  *          4. Chân SDA : Nối chân PB9 (I2C1_SDA)
+  *          5. Chân CS  : Nối chân 3.3V (Ép chip chạy chế độ I2C thay vì SPI)
+  *          6. Chân SA0 : Nối GND (Cố định địa chỉ I2C = 0x68)
+  *          * TUYỆT ĐỐI BỎ TRỐNG CHÂN VIN (không cấp nguồn vào VIN)
+  ******************************************************************************
+  */
+
+#ifndef __BMI160_H__
+#define __BMI160_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+#include "i2c.h"
+#include <stdint.h>
+#include <stdbool.h>
+
+/* I2C Address Defines -------------------------------------------------------*/
+#define BMI160_I2C_ADDR             (0x68 << 1) // 0xD0 (Ghi), 0xD1 (Đọc)
+
+/* Register Addresses --------------------------------------------------------*/
+#define BMI160_REG_CHIP_ID          0x00        // Giá trị trả về phải là 0xD1
+#define BMI160_REG_ERR              0x02
+#define BMI160_REG_STATUS           0x1B
+#define BMI160_REG_DATA_0           0x0C        // Bắt đầu 12 bytes dữ liệu (Gx LSB)
+#define BMI160_REG_ACC_CONF         0x40        // Cấu hình ODR và bộ lọc số Accel
+#define BMI160_REG_ACC_RANGE        0x41        // Cấu hình dải đo Accel
+#define BMI160_REG_GYR_CONF         0x42        // Cấu hình ODR và bộ lọc số Gyro
+#define BMI160_REG_GYR_RANGE        0x43        // Cấu hình dải đo Gyro
+#define BMI160_REG_CMD              0x7E        // Thanh ghi lệnh chế độ nguồn
+
+/* Command Register Codes ---------------------------------------------------*/
+#define BMI160_CMD_ACC_MODE_NORMAL  0x11        // Chuyển Accel sang Normal Mode
+#define BMI160_CMD_GYR_MODE_NORMAL  0x15        // Chuyển Gyro sang Normal Mode
+#define BMI160_CMD_SOFT_RESET       0xB6        // Reset mềm toàn bộ chip
+
+/* Scale Factors -------------------------------------------------------------*/
+// Dải đo Gyro: +-2000 deg/s -> 16.4 LSB / (deg/s) -> 1 / 16.4 = 0.061035156f
+#define BMI160_GYRO_SCALE_2000DPS   (1.0f / 16.4f)
+
+// Dải đo Accel: +-8g -> 4096 LSB / g -> 1 / 4096 = 0.00024414f
+#define BMI160_ACCEL_SCALE_8G       (1.0f / 4096.0f)
+
+/* Structs -------------------------------------------------------------------*/
+typedef struct {
+    int16_t gx_raw;
+    int16_t gy_raw;
+    int16_t gz_raw;
+    int16_t ax_raw;
+    int16_t ay_raw;
+    int16_t az_raw;
+} BMI160_RawData_t;
+
+typedef struct {
+    float gx;   // Vận tốc góc Roll (deg/s)
+    float gy;   // Vận tốc góc Pitch (deg/s - Trục ngã của xe)
+    float gz;   // Vận tốc góc Yaw (deg/s - Trục quay bẻ lái)
+    float ax;   // Gia tốc trục X (g)
+    float ay;   // Gia tốc trục Y (g)
+    float az;   // Gia tốc trục Z (g)
+} BMI160_Data_t;
+
+/* Function Prototypes -------------------------------------------------------*/
+
+/**
+  * @brief  Khởi tạo, đánh thức và cấu hình dải đo cho Bosch BMI160
+  * @retval true nếu tìm thấy Chip ID 0xD1 và khởi tạo thành công, false nếu lỗi I2C
+  */
+bool BMI160_Init(void);
+
+/**
+  * @brief  Kiểm tra STATUS rồi đọc Burst 12 bytes từ 0x0C đến 0x17
+  * @param  data: Con trỏ tới cấu trúc chứa dữ liệu đơn vị vật lý (deg/s và g)
+  * @retval true nếu đọc thành công, false nếu lỗi I2C, chưa khởi tạo hoặc thiếu cập nhật >= 30 ms
+  */
+bool BMI160_Read_All(BMI160_Data_t *data);
+void BMI160_GetLastRaw(BMI160_RawData_t *raw);
+bool BMI160_GetConfig(uint8_t config[6]); /* addr, chip_id, ACC_CONF/RANGE, GYR_CONF/RANGE */
+void BMI160_GetBias(float bias[3]);
+
+/**
+  * @brief  Hiệu chuẩn bù độ trôi tĩnh con quay hồi chuyển (Zero-rate Bias)
+  * @param  samples: Read attempts at 100 Hz (500 attempts take about 5 seconds).
+  */
+void BMI160_Calibrate_Gyro(uint16_t samples);
+bool BMI160_CalibrationOK(void);
+
+/**
+  * @brief  Chạy quy trình kiểm tra toàn diện cảm biến BMI160 trên STM32
+  *         (Quét bus I2C, đọc Chip ID 0xD1, khởi tạo, đo bias và in dữ liệu qua UART1)
+  */
+void BMI160_Test_Run(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __BMI160_H__ */

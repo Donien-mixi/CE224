@@ -1,0 +1,316 @@
+/**
+  ******************************************************************************
+  * @file    bmi160.c
+  * @brief   Hiện thực hóa Driver cảm biến quán tính Bosch BMI160.
+  ******************************************************************************
+  */
+
+#include "bmi160.h"
+#include "filter.h"
+#include <stdio.h>
+#include <math.h>
+
+/* Biến lưu trữ giá trị bù trôi tĩnh con quay hồi chuyển */
+static float gyro_bias_x = 0.0f;
+static float gyro_bias_y = 0.0f;
+static float gyro_bias_z = 0.0f;
+static uint8_t s_bmi160_i2c_addr = (0x68 << 1);
+static BMI160_RawData_t s_last_raw;
+static bool calibration_ok;
+static bool initialized;
+static uint32_t last_acc_ms, last_gyr_ms;
+/* Three missing 100 Hz updates are a fault, even when I2C still ACKs. */
+#define BMI160_STALE_MS 30U
+bool BMI160_CalibrationOK(void) { return calibration_ok; }
+
+/* Hàm phụ trợ ghi 1 byte vào thanh ghi I2C */
+static bool BMI160_WriteReg(uint8_t reg, uint8_t value)
+{
+    /* HAL otherwise waits up to 25 ms on BUSY, exceeding the 5 ms loop. */
+    if (__HAL_I2C_GET_FLAG(&hi2c1, I2C_FLAG_BUSY)) return false;
+    if (HAL_I2C_Mem_Write(&hi2c1, s_bmi160_i2c_addr, reg, I2C_MEMADD_SIZE_8BIT, &value, 1, 2) == HAL_OK)
+    {
+        /* Datasheet 3.2.4: >=2 us after writes in normal mode, >=450 us
+         * in suspend. Writes occur only during setup, outside the 200 Hz loop. */
+        HAL_Delay(1);
+        return true;
+    }
+    return false;
+}
+
+/* Hàm phụ trợ đọc dữ liệu từ thanh ghi I2C */
+static bool BMI160_ReadReg(uint8_t reg, uint8_t *buffer, uint16_t len)
+{
+    /* HAL otherwise waits up to 25 ms on BUSY, exceeding the 5 ms loop. */
+    if (__HAL_I2C_GET_FLAG(&hi2c1, I2C_FLAG_BUSY)) return false;
+    if (HAL_I2C_Mem_Read(&hi2c1, s_bmi160_i2c_addr, reg, I2C_MEMADD_SIZE_8BIT, buffer, len, 2) == HAL_OK)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool BMI160_Init(void)
+{
+    uint8_t chip_id = 0;
+    initialized = calibration_ok = false;
+
+    /* Thử đọc Chip ID tối đa 5 lần kết hợp tự động khôi phục bus I2C */
+    for (int retry = 0; retry < 5; retry++)
+    {
+        // 1. Thử địa chỉ 0x68 trước (khi SDO nối GND)
+        s_bmi160_i2c_addr = (0x68 << 1);
+        HAL_Delay(25);
+        BMI160_ReadReg(BMI160_REG_CHIP_ID, &chip_id, 1);
+
+        // 2. Nếu không thấy 0xD1, thử tiếp địa chỉ 0x69 (khi SDO nối 3.3V)
+        if (chip_id != 0xD1)
+        {
+            s_bmi160_i2c_addr = (0x69 << 1);
+            BMI160_ReadReg(BMI160_REG_CHIP_ID, &chip_id, 1);
+        }
+
+        if (chip_id == 0xD1)
+        {
+            break; // Đã tìm thấy cảm biến Bosch BMI160 thành công!
+        }
+
+        // Nếu bus I2C bị nghẽn (cờ BUSY), thực hiện Reset mềm ngoại vi I2C1
+        __HAL_RCC_I2C1_FORCE_RESET();
+        HAL_Delay(5);
+        __HAL_RCC_I2C1_RELEASE_RESET();
+        HAL_I2C_Init(&hi2c1);
+    }
+
+    if (chip_id != 0xD1)
+    {
+        return false; // Lỗi tiếp xúc hoặc chưa cấp nguồn cảm biến
+    }
+
+    // 2. Reset mềm chip để đưa về trạng thái sạch sẽ
+    if (!BMI160_WriteReg(BMI160_REG_CMD, BMI160_CMD_SOFT_RESET)) return false;
+    HAL_Delay(15);
+
+    // 3. Đánh thức Accelerometer vào Normal Mode
+    if (!BMI160_WriteReg(BMI160_REG_CMD, BMI160_CMD_ACC_MODE_NORMAL)) return false;
+    HAL_Delay(5);
+
+    // 4. Đánh thức Gyroscope vào Normal Mode (Cần tối thiểu 50ms để bộ thạch anh ổn định)
+    if (!BMI160_WriteReg(BMI160_REG_CMD, BMI160_CMD_GYR_MODE_NORMAL)) return false;
+    HAL_Delay(55);
+
+    // 5. Cấu hình Dải đo:
+    // Gyro: +-2000 deg/s (Ghi 0x00 vào 0x43)
+    if (!BMI160_WriteReg(BMI160_REG_GYR_RANGE, 0x00)) return false;
+
+    // Accel: +-8g (Ghi 0x08 vào 0x41)
+    if (!BMI160_WriteReg(BMI160_REG_ACC_RANGE, 0x08)) return false;
+
+    // 0x28 = ODR 100Hz (0x08), normal bandwidth (0x20).
+    if (!BMI160_WriteReg(BMI160_REG_ACC_CONF, 0x28)) return false;
+    if (!BMI160_WriteReg(BMI160_REG_GYR_CONF, 0x28)) return false;
+
+    /* ACKs do not prove that the power commands/configuration took effect. */
+    HAL_Delay(15); /* allow the first 100 Hz sample after configuration */
+    uint8_t health[2], config[6];
+    if (!BMI160_ReadReg(BMI160_REG_ERR, health, 2) ||
+        (health[0] & 0x5fU) || (health[1] & 0x3cU) != 0x14U ||
+        !BMI160_GetConfig(config) || config[1] != 0xd1 ||
+        config[2] != 0x28 || config[3] != 0x08 ||
+        config[4] != 0x28 || config[5] != 0x00) return false;
+    last_acc_ms = last_gyr_ms = HAL_GetTick();
+    initialized = true;
+    return true;
+}
+
+bool BMI160_Read_All(BMI160_Data_t *data)
+{
+    uint8_t raw_buf[12], status;
+    if (!data || !initialized) return false;
+    /* Read STATUS BEFORE DATA: reading DATA clears the respective DRDY bits.
+     * Duplicate reads at 200 Hz are expected with a 100 Hz IMU; identical raw
+     * values at rest are valid. Use DRDY, never value equality, for freshness. */
+    if (!BMI160_ReadReg(BMI160_REG_STATUS, &status, 1)) return false;
+    uint32_t now = HAL_GetTick();
+    if (!(status & 0x80U) && (uint32_t)(now-last_acc_ms) >= BMI160_STALE_MS) return false;
+    if (!(status & 0x40U) && (uint32_t)(now-last_gyr_ms) >= BMI160_STALE_MS) return false;
+
+    // Đọc Burst 12 bytes liên tục: 6 bytes Gyro (Gx, Gy, Gz) + 6 bytes Accel (Ax, Ay, Az)
+    if (!BMI160_ReadReg(BMI160_REG_DATA_0, raw_buf, 12))
+    {
+        return false;
+    }
+
+    if (status & 0x80U) last_acc_ms = now;
+    if (status & 0x40U) last_gyr_ms = now;
+
+    // Ghép 2 bytes (LSB trước, MSB sau) thành số nguyên có dấu 16-bit
+    int16_t gx_raw = (int16_t)(((uint16_t)raw_buf[1]  << 8) | raw_buf[0]);
+    int16_t gy_raw = (int16_t)(((uint16_t)raw_buf[3]  << 8) | raw_buf[2]);
+    int16_t gz_raw = (int16_t)(((uint16_t)raw_buf[5]  << 8) | raw_buf[4]);
+
+    int16_t ax_raw = (int16_t)(((uint16_t)raw_buf[7]  << 8) | raw_buf[6]);
+    int16_t ay_raw = (int16_t)(((uint16_t)raw_buf[9]  << 8) | raw_buf[8]);
+    int16_t az_raw = (int16_t)(((uint16_t)raw_buf[11] << 8) | raw_buf[10]);
+    s_last_raw = (BMI160_RawData_t){gx_raw, gy_raw, gz_raw, ax_raw, ay_raw, az_raw};
+
+    // Chuyển đổi sang đơn vị vật lý và trừ giá trị lệch tĩnh Gyro Bias
+    data->gx = ((float)gx_raw * BMI160_GYRO_SCALE_2000DPS) - gyro_bias_x;
+    data->gy = ((float)gy_raw * BMI160_GYRO_SCALE_2000DPS) - gyro_bias_y;
+    data->gz = ((float)gz_raw * BMI160_GYRO_SCALE_2000DPS) - gyro_bias_z;
+
+    data->ax = (float)ax_raw * BMI160_ACCEL_SCALE_8G;
+    data->ay = (float)ay_raw * BMI160_ACCEL_SCALE_8G;
+    data->az = (float)az_raw * BMI160_ACCEL_SCALE_8G;
+
+    return true;
+}
+
+void BMI160_Calibrate_Gyro(uint16_t samples)
+{
+    uint16_t valid = 0;
+    float sq[3]={0}; bool moved=false; calibration_ok=false;
+    float sum_x = 0.0f, sum_y = 0.0f, sum_z = 0.0f;
+    const float previous[3] = {gyro_bias_x, gyro_bias_y, gyro_bias_z};
+
+    gyro_bias_x = 0.0f;
+    gyro_bias_y = 0.0f;
+    gyro_bias_z = 0.0f;
+
+    for (uint16_t i = 0; i < samples; i++)
+    {
+        BMI160_Data_t sample;
+        if (BMI160_Read_All(&sample))
+        {
+            int16_t gx = s_last_raw.gx_raw;
+            int16_t gy = s_last_raw.gy_raw;
+            int16_t gz = s_last_raw.gz_raw;
+            float norm = sample.ax*sample.ax + sample.ay*sample.ay + sample.az*sample.az;
+            if (norm < .72f || norm > 1.32f) moved = true;
+
+            sum_x += (float)gx * BMI160_GYRO_SCALE_2000DPS;
+            sum_y += (float)gy * BMI160_GYRO_SCALE_2000DPS;
+            sum_z += (float)gz * BMI160_GYRO_SCALE_2000DPS;
+            float rates[3]={gx*BMI160_GYRO_SCALE_2000DPS,gy*BMI160_GYRO_SCALE_2000DPS,gz*BMI160_GYRO_SCALE_2000DPS};
+            for(unsigned j=0;j<3;j++) {sq[j]+=rates[j]*rates[j];if(fabsf(rates[j])>3.0f)moved=true;}
+            valid++;
+        }
+        HAL_Delay(10); // ODR 100 Hz: avoid counting the same update twice.
+    }
+
+    if (valid) {
+        gyro_bias_x = sum_x / (float)valid;
+        gyro_bias_y = sum_y / (float)valid;
+        gyro_bias_z = sum_z / (float)valid;
+        float means[3]={gyro_bias_x,gyro_bias_y,gyro_bias_z};
+        calibration_ok=valid==samples && samples>=200 && !moved;
+        for(unsigned j=0;j<3;j++) if(sq[j]/valid-means[j]*means[j]>.04f)calibration_ok=false;
+    }
+    if (!calibration_ok) {
+        gyro_bias_x = previous[0]; gyro_bias_y = previous[1]; gyro_bias_z = previous[2];
+    }
+}
+
+void BMI160_GetLastRaw(BMI160_RawData_t *raw) { *raw = s_last_raw; }
+void BMI160_GetBias(float bias[3]) {
+    bias[0] = gyro_bias_x; bias[1] = gyro_bias_y; bias[2] = gyro_bias_z;
+}
+bool BMI160_GetConfig(uint8_t config[6]) {
+    config[0] = s_bmi160_i2c_addr >> 1;
+    return BMI160_ReadReg(BMI160_REG_CHIP_ID, config + 1, 1) &&
+           BMI160_ReadReg(BMI160_REG_ACC_CONF, config + 2, 4);
+}
+
+void BMI160_Test_Run(void)
+{
+    printf("\r\n=======================================================\r\n");
+    printf("   CHUONG TRINH TEST BOSCH BMI160 TREN STM32 (115200)  \r\n");
+    printf("   Cau hinh 6 chan: 3V3, GND, PB8(SCL), PB9(SDA), CS, SA0\r\n");
+    printf("   Luu y: HOAN TOAN BO TRONG CHAN VIN                  \r\n");
+    printf("=======================================================\r\n");
+
+    // 1. Quét bus I2C1 tìm thiết bị
+    printf("[1] Dang quet bus I2C1 (PB8-SCL, PB9-SDA)...\r\n");
+    uint8_t found_addr = 0;
+    for (uint8_t addr = 0x08; addr <= 0x77; addr++) {
+        if (HAL_I2C_IsDeviceReady(&hi2c1, (addr << 1), 2, 5) == HAL_OK) {
+            printf("  -> Tim thay thiet bi I2C tai dia chi: 0x%02X", addr);
+            if (addr == 0x68) {
+                printf(" [BOSCH BMI160 - SA0 noi GND]\r\n");
+                found_addr = addr;
+            } else if (addr == 0x69) {
+                printf(" [BOSCH BMI160 - SA0 noi 3.3V]\r\n");
+                found_addr = addr;
+            } else {
+                printf("\r\n");
+            }
+        }
+    }
+
+    if (found_addr == 0) {
+        printf("\r\n[LOI] Khong tim thay thiet bi I2C nao!\r\n");
+        printf("Kiem tra: 3V3->3.3V (BO TRONG VIN), GND, PB8->SCL, PB9->SDA, CS->3.3V, SA0->GND.\r\n");
+        return;
+    }
+
+    // 2. Đọc thanh ghi CHIP_ID (0x00)
+    printf("\r\n[2] Doc thanh ghi CHIP_ID (0x00)...\r\n");
+    uint8_t chip_id = 0;
+    s_bmi160_i2c_addr = (found_addr << 1);
+    if (BMI160_ReadReg(BMI160_REG_CHIP_ID, &chip_id, 1)) {
+        printf("  -> Gia tri Chip ID: 0x%02X\r\n", chip_id);
+        if (chip_id == 0xD1) {
+            printf("  -> [PASS] Chinh xac la cam bien Bosch BMI160!\r\n");
+        } else {
+            printf("  -> [CANH BAO] Chip ID khac 0xD1!\r\n");
+        }
+    }
+
+    // 3. Khởi tạo chip
+    printf("\r\n[3] Khoi tao BMI160 (ODR 100Hz, Accel +-8g, Gyro +-2000 dps)...\r\n");
+    if (BMI160_Init()) {
+        printf("  -> [PASS] Khoi tao thanh cong!\r\n");
+    } else {
+        printf("  -> [LOI] Khoi tao that bai!\r\n");
+        return;
+    }
+
+    // 4. Hiệu chuẩn bù trôi tĩnh Gyro
+    printf("\r\n[4] Hieu chuan Gyro Zero-Rate Bias (Dat yen xe trong 2s)...\r\n");
+    HAL_Delay(500);
+    BMI160_Calibrate_Gyro(400);
+    if (!BMI160_CalibrationOK()) { printf("  -> [LOI] Hieu chuan that bai!\r\n"); return; }
+    printf("     Bias X = %+6.2f deg/s | Bias Y = %+6.2f deg/s | Bias Z = %+6.2f deg/s\r\n",
+           gyro_bias_x, gyro_bias_y, gyro_bias_z);
+
+    // 5. Khởi tạo bộ lọc bù
+    BMI160_Data_t imu_init;
+    if (!BMI160_Read_All(&imu_init)) return;
+    float init_pitch = Filter_CalibratedRawPitch(imu_init.ax, imu_init.az);
+    Filter_Init(init_pitch);
+    printf("  -> Goc Pitch ban dau tu Accel: %.2f do\r\n", init_pitch);
+
+    // 6. Vòng lặp đọc dữ liệu liên tục
+    printf("\r\n[5] BAT DAU DOC DU LIEU REAL-TIME (Chu ky 100ms - 10Hz):\r\n");
+    printf("Dinh dang: Accel [g] (X, Y, Z) | Gyro [deg/s] (X, Y, Z) | Pitch, Roll, Pitch_Filt\r\n");
+    printf("---------------------------------------------------------------------------------\r\n");
+
+    BMI160_Data_t imu;
+    uint32_t count = 0;
+    while (1) {
+        if (BMI160_Read_All(&imu)) {
+            count++;
+            float pitch_acc = atan2f(imu.ax, imu.az) * RAD_TO_DEG;
+            float roll_acc  = atan2f(imu.ay, imu.az) * RAD_TO_DEG;
+            float pitch_filt = Filter_Complementary_Update(imu.gy, imu.ax, imu.az, 0.1f);
+
+            printf("#%04lu | Acc[g]: %+5.2f %+5.2f %+5.2f | Gyro[dps]: %+6.1f %+6.1f %+6.1f | Pit: %+5.1f | Rol: %+5.1f | Filt: %+5.1f\r\n",
+                   (unsigned long)count, imu.ax, imu.ay, imu.az, imu.gx, imu.gy, imu.gz, pitch_acc, roll_acc, pitch_filt);
+
+            HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+        } else {
+            printf("[CANH BAO] Mat ket noi I2C voi BMI160!\r\n");
+        }
+        HAL_Delay(100);
+    }
+}

@@ -1,0 +1,37 @@
+Động cơ GA25-370 DC Servo Geared Motor 12V 280RPM được tích hợp sẵn Encoder Hall 2 kênh AB giúp đọc chính xác tốc độ, vị trí và chiều quay của động cơ, rất phù hợp cho các ứng dụng yêu cầu độ chính xác cao như robot tự hành, điều khiển PID, AGV, xe thông minh và cơ cấu tự động hóa.
+
+Động cơ GA25-370 DC Servo Geared Motor 12V 280RPM có cấu tạo hoàn toàn bằng kim loại cho độ bền và độ ổn định cao. Hộp số giảm tốc chất lượng tốt giúp tăng moment kéo và giảm tốc độ phù hợp cho các ứng dụng robot. Encoder sử dụng cảm biến Hall từ trường với tín hiệu xung AB lệch pha giúp dễ dàng xác định chiều quay và đo tốc độ động cơ.
+
+Động cơ GA25-370 DC Servo Geared Motor 12V 280RPM được gia công từ vật liệu chất lượng cao như lõi dây đồng nguyên chất, nam châm từ mạnh và lá thép kỹ thuật cao, cho hiệu suất và độ bền vượt trội hơn các loại động cơ giá rẻ trên thị trường.
+THÔNG SỐ KỸ THUẬT
+
+Loại động cơ: GA25-370 DC Servo Geared Motor
+Điện áp hoạt động động cơ: 12VDC
+Đường kính động cơ: 25 mm
+Tỉ số truyền: 21.3:1
+Tốc độ không tải: 280 RPM
+Tốc độ trung bình có tải: 215 RPM
+Dòng không tải: 0.07A
+Dòng tối đa khi tải: 1.8A
+Moment định mức: 0.4 Kg.cm
+Moment tối đa: 2 Kg.cm
+Chiều dài hộp số: 19 mm
+Encoder tích hợp
+
+Loại Encoder: Hall Sensor 2 kênh AB
+Số xung Encoder:
+11 xung / 1 kênh / 1 vòng Encoder
+Tổng 22 xung khi đọc đồng thời 2 kênh
+Điện áp cấp cho Encoder: 3.3V – 5VDC
+Hỗ trợ xác định:
+Tốc độ
+Chiều quay
+Vị trí động cơ
+Sơ đồ chân của động cơ:
+
+Đỏ  - Red - M1 : Dây cấp nguồn cho động cơ. 
+Đen - Black - GND : Dây cấp nguồn cho Encoder, 0VDC.
+Vàng  - Yellow - C1/A: Kênh trả xung A
+Xanh lá  - Green - C2/B: Kênh trả xung B
+Xanh dương  - Blue - VCC: Dây cấp nguồn cho Encoder 3.3~5VDC
+Trắng  - White - M2: Dây cấp nguồn cho động cơ
