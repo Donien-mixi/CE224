@@ -1,28 +1,13 @@
-# Sơ đồ nguyên lý xe hai bánh tự cân bằng
+# Thiết kế PCB TWIP
 
-Project KiCad **10.0**, sơ đồ revision **1.3**, cập nhật 30/10/2026.
+Mở bằng **KiCad 10.0 hoặc mới hơn**.
 
-## Mở project
+1. Chuyển sang nhánh `pcb`, tải/clone repo và giữ nguyên thư mục `Hardware`.
+2. Mở `TWIP_Mainboard/TWIP_Mainboard.kicad_pro`.
+3. Mở `.kicad_sch` trong Schematic Editor và `.kicad_pcb` trong PCB Editor.
 
-1. Tải hoặc clone repo, giữ toàn bộ thư mục `Hardware`.
-2. Mở `TWIP_Mainboard/TWIP_Mainboard.kicad_pro` trong KiCad.
-3. Mở `TWIP_Mainboard.kicad_sch` để xem/sửa sơ đồ nguyên lý.
+Thư viện symbol `TWIP_Modules.kicad_sym`, thư viện footprint `TWIP_Carrier.pretty`, `sym-lib-table` và `fp-lib-table` đi kèm project. Đường dẫn thư viện dùng `${KIPRJMOD}` nên không cần đường dẫn máy tác giả. Giữ các thư viện này cùng project.
 
-Giữ `TWIP_Modules.kicad_sym` và `sym-lib-table` cùng thư mục project. Thư viện được tham chiếu bằng `${KIPRJMOD}`, không phụ thuộc đường dẫn trên máy tác giả.
+Bản PCB hiện tại có khung 160 × 65 mm, lắp các module STM32F411 Black Pill, ESP32-S3, A4950, BMI160 và XL4015. Thư viện gồm cả footprint cầu nối dây của bản một lớp.
 
-## Nội dung và phạm vi
-
-- Năm bo/module có sẵn: STM32F411 Black Pill, ESP32-S3 N16R8, GY-BMI160, Dual A4950 và XL4015.
-- Nguồn pin LiPo 3S, nguồn 5 V từ XL4015 và nguồn 3,3 V từ Black Pill.
-- UART, I2C, PWM, hai giắc motor/encoder 6 dây và còi hai chân.
-- INT1 BMI160 → STM32 PB2; còi (+) → PB12, còi (−) → GND: người dùng xác nhận đã nối trên breadboard.
-- C1–C9 là tụ bổ sung để lắp trên PCB mới; breadboard hiện tại chưa có các tụ ngoài này. Tất cả tụ đều được đánh dấu sẽ lắp. Giá trị và vị trí theo tên các khung trong sơ đồ.
-- Không thêm đầu nối ST-LINK riêng; dùng chân SWD có sẵn trên Black Pill.
-
-Đây là sơ đồ **kết nối module**, không phải thiết kế lại mạch bên trong các module. Các tên chân logic của symbol module chưa phải số pad vật lý. Chưa gán footprint; cần xác minh đúng phiên bản bo, kích thước, khoảng cách và thứ tự chân trước khi làm PCB. `TWIP_Mainboard.kicad_pcb` hiện vẫn trống, chưa bố trí hay đi dây.
-
-Sơ đồ đã kiểm tra bằng KiCad CLI: **0 lỗi, 0 cảnh báo ERC** khi bàn giao. Kết quả ERC không xác nhận kích thước module hoặc khả năng vận hành thực tế. Các tụ bổ sung cần được kiểm chứng với XL4015 và tải motor thực tế khi thử bo.
-
-## Trạng thái firmware đi kèm repo
-
-Commit Hardware ban đầu `d6a14af` chưa có firmware mới. Đợt đồng bộ tiếp theo ngày 30/10/2026 bổ sung source STM32 **RT8**, ESP32 **RT8 NET5**, mô phỏng và công cụ kiểm thử hiện hành. Sơ đồ vẫn là revision 1.3; việc đồng bộ source không xác nhận firmware đã nạp trên xe.
+Nhánh này chỉ cập nhật file thiết kế KiCad và các thư viện cần dùng. Không kèm báo cáo AI, log, ảnh xem trước, file in, bản lưu cũ hay file tạm. Firmware và mô phỏng kế thừa từ `main` tại lúc tạo nhánh, không phải bản firmware mới trên máy tác giả.

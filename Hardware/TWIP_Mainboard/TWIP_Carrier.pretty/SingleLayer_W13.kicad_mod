@@ -1,0 +1,65 @@
+(footprint "SingleLayer_W13"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(property "Reference" "W13"
+		(at 0 0 0)
+		(layer "F.SilkS")
+		(hide yes)
+		(uuid "e57a23d2-5ea0-46d4-944e-e0faf5e1e93b")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Value" "INSULATED SOLDER-SIDE WIRE /BUZZER_CTL"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "6c70240d-f8d1-4717-b463-509c824a84a7")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "d4a25dae-b125-475e-b8f4-abfba731465f")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "1065100a-02f9-4ef9-9dc7-cff358c065a0")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(attr smd board_only exclude_from_pos_files)
+	(duplicate_pad_numbers_are_jumpers yes)
+	(pad "1" smd circle
+		(at 0 0)
+		(size 0.3 0.3)
+		(layers "B.Cu")
+		(uuid "c36d95c9-78f4-4cfa-9ade-f4301e1cf0f8")
+	)
+	(pad "1" smd circle
+		(at 83.64 0.12)
+		(size 0.3 0.3)
+		(layers "B.Cu")
+		(uuid "c6f95754-e999-4375-8d9a-779756b23d0f")
+	)
+	(embedded_fonts no)
+)
