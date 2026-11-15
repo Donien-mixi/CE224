@@ -1,3 +1,7 @@
+> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [README](README.md) và [HANDOFF](HANDOFF.md).
+
+> CẤU HÌNH ĐẤU DÂY ĐÃ XÁC NHẬN 03/11/2026: **motor trái đỏ(M1) → AOUT2, trắng(M2) → AOUT1**; motor phải đỏ → BOUT1, trắng → BOUT2. Encoder và PA8/PA9 không đảo. Bảng màu trái ngược trong ghi chép lịch sử không dùng để lắp lại xe.
+
 # HƯỚNG DẪN ĐI DÂY HỆ THỐNG XE HAI BÁNH TỰ CÂN BẰNG
 
 Cập nhật: **30/10/2026**. Project: `D:\DA_HTN`.
@@ -21,7 +25,7 @@ Firmware nguồn dùng để đối chiếu:
 | Phía sau (−x) | WAGO 2 phân phối nguồn 5 V sau XL4015 |
 | Bên trái | Motor trái, encoder TIM2, kênh A của driver |
 | Bên phải | Motor phải, encoder TIM3, kênh B của driver |
-| Tầng 1, trên mica thứ nhất | Pin LiPo 3S và XL4015 |
+| Tầng 1, trên mica thứ nhất | Pin LiPo 3S kê cao thêm 10 mm, XL4015 cạnh pin |
 | Dưới mica thứ hai | Hai cụm WAGO; nguồn pin phía trước, nguồn 5 V phía sau |
 | Tầng 2, trên mica thứ hai | Breadboard chứa STM32, ESP32-S3, BMI160 và Dual A4950 |
 | Cọc giữa các tấm mica | 55 mm |
@@ -155,22 +159,28 @@ PWM khoảng **20 kHz**, TIM1 center-aligned, giới hạn lệnh ±2499. Mỗi 
 
 ### 5.2. Bảng đầy đủ các chân module đang được mô tả
 
-Quy ước hàng dưới đây kế thừa tài liệu đi dây của module đang dùng: hàng 1 ở cạnh có tụ, hàng 2 đối diện. **Ưu tiên nhãn in trên module** khi truy dây; đây không phải pinout chung cho mọi bo Dual A4950.
+**Sửa bảng vị trí ngày02/11/2026:** bảng cũ dùng thứ tự của một biến thể driver khác, đã xếp sai AIN/BIN và AOUT/BOUT giữa hai hàng so với ảnh người dùng cung cấp. Kết nối theo tên chân ở mục5.1/5.3 giữ nguyên; không dùng vị trí hàng của bảng cũ để cắm dây.
+
+Theo ảnh module người dùng, nhìn mặt có tụ đúng hướng ảnh: hàng trên từ trái sang phải là **GND, VM, VCC, BIN2, BIN1, AOUT1, AOUT2**; hàng dưới là **BOUT2, BOUT1, AIN1, AIN2, VCC, VM, GND**. Nếu xoay module thì vị trí trên/dưới/trái/phải đổi; luôn đọc nhãn in thực tế. Nguồn đối chiếu: Hardware/TWIP_Mainboard/Footprint_References/A4950_OWNER_PIN_MAP.json.
 
 | Hàng | Nhãn chân | Điểm nối trong sơ đồ đã lưu |
 |---|---|---|
-| 1 | VM | WAGO 1 (+), nguồn pin |
-| 1 | GND | WAGO 1 (−), dây nguồn riêng |
-| 1 | VCC | WAGO 2 (+), 5 V |
-| 1 | AIN2 | STM32 PA9 |
-| 1 | AIN1 | STM32 PA8 |
-| 1 | BOUT1 | Dây đỏ M1 motor phải |
-| 1 | BOUT2 | Dây trắng M2 motor phải |
-| 2 | AOUT2 | Dây trắng M2 motor trái |
-| 2 | AOUT1 | Dây đỏ M1 motor trái |
-| 2 | BIN1 | STM32 PA10 |
-| 2 | BIN2 | STM32 PA11 |
-| 2 | GND | WAGO 2 (−), dây riêng theo sơ đồ lưu |
+| Trên, chân1 | GND | WAGO1 (−), dây riêng theo cấu hình đã lưu |
+| Trên, chân2 | VM | Nguồn pin WAGO1 (+) |
+| Trên, chân3 | VCC | Nguồn5V WAGO2 (+) |
+| Trên, chân4 | BIN2 | STM32 PA11 |
+| Trên, chân5 | BIN1 | STM32 PA10 |
+| Trên, chân6 | AOUT1 | Dây trắng M2 motor trái |
+| Trên, chân7 | AOUT2 | Dây đỏ M1 motor trái |
+| Dưới, chân1 | BOUT2 | Dây trắng M2 motor phải |
+| Dưới, chân2 | BOUT1 | Dây đỏ M1 motor phải |
+| Dưới, chân3 | AIN1 | STM32 PA8 |
+| Dưới, chân4 | AIN2 | STM32 PA9 |
+| Dưới, chân5 | VCC | Nhãn nguồn5V lặp lại; chưa xác nhận có cắm thêm dây này trên breadboard |
+| Dưới, chân6 | VM | Nhãn nguồn pin lặp lại; chưa xác nhận có cắm thêm dây này trên breadboard |
+| Dưới, chân7 | GND | WAGO2 (−), dây riêng theo cấu hình đã lưu |
+
+Hai chân VM/VCC lặp được ghi đủ theo ảnh14chân; không lấy thông tin này để khẳng định cả hai đều đã cắm dây ở cấu hình cũ. Không đưa5V vào AIN/BIN hoặc OUT. Nếu nhãn thực tế khác bảng ảnh thì dừng và đối chiếu đúng biến thể module trước.
 
 Giữ nguyên đường GND đã đấu của xe đang hoạt động. Không suy ra hai chân GND trên module là hai miền cách ly hoặc mỗi chân chỉ mang một loại dòng nếu chưa đối chiếu đường đồng của bo.
 
@@ -180,8 +190,8 @@ Màu dây khớp file `thông số động cơ.txt`. Số pin là quy ước c�
 
 | Dây | Chức năng | Motor/encoder trái | Motor/encoder phải |
 |---|---|---|---|
-| Đỏ — pin 1 | M1, cuộn dây motor | AOUT1 | BOUT1 |
-| Trắng — pin 6 | M2, cuộn dây motor | AOUT2 | BOUT2 |
+| Đỏ — pin 1 | M1, cuộn dây motor | AOUT2 | BOUT1 |
+| Trắng — pin 6 | M2, cuộn dây motor | AOUT1 | BOUT2 |
 | Đen — pin 2 | GND encoder | Ray GND | Ray GND |
 | Xanh dương — pin 5 | VCC encoder | 3,3 V từ STM32 | 3,3 V từ STM32 |
 | Vàng — pin 3 | Encoder kênh A | PA0 — TIM2_CH1 | PB4 — TIM3_CH1 |

@@ -1,8 +1,12 @@
+> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+
 # Thông số xe và mô hình hiện hành
 
-Snapshot bàn giao R10S1; các giá trị số thực thi nằm trong mã/config. Tài liệu này không phải dữ liệu đo mới.
+## Cấu hình kê pin 10 mm
 
-Hiện tại mô phỏng dùng **thiết kế xe 888 g**, vòng điều khiển **R10**, cùng quy trình khởi động **R10S1**. Dưới đây là các thông số đang dùng; những giá trị suy tính hoặc giả định được ghi rõ.
+Pin LiPo 3S (190 g theo mô hình) vẫn nằm ở tầng dưới. Ngày 08/11/2026, người vận hành xác nhận đã kê pin cao thêm **10 mm** so với vị trí cũ. Mô hình đã có biến `battery_riser_height = 0.010 m`, đưa tâm pin từ 35,8 lên **45,8 mm so với trục bánh**. Giữ giả định vị trí ngang của pin và bỏ qua khối lượng miếng kê cho đến khi có số đo. 888 g là tổng khối lượng mô hình, chưa cân lại sau thay đổi. Không cộng thêm 10 mm lần nữa.
+
+Bản mã trong workspace là STM32 **RT21-ANTISTALL** và ESP32 **NET18**. Xem [HANDOFF](../HANDOFF.md) để phân biệt bản mã, bản đã thử và kết quả lịch sử. Kết quả thử cũ chỉ được quy cho cấu hình kê pin khi hồ sơ lượt thử xác nhận điều kiện này.
 
 **Thiết kế cơ khí**
 
@@ -43,16 +47,16 @@ Bố trí chính: pin và XL4015 ở tầng dưới; breadboard, STM32, ESP32, *
 | Tám cọc | 48 g |
 | Hai bánh và khớp nối | 100 g |
 
-Từ cách phân bố này, mô hình tính được:
+Pin được nâng 10 mm theo phương đứng, đưa tâm pin lên 45,8 mm so với trục bánh. Khối lượng phần kê được bỏ qua. Từ cách phân bố này, mô hình tính được:
 
 | Đại lượng | Giá trị |
 |---|---:|
-| Trọng tâm thân cao hơn trục bánh | **36,933 mm** |
-| Trọng tâm toàn xe cao hơn trục bánh | 32,774 mm |
+| Trọng tâm thân cao hơn trục bánh | **39,344 mm** |
+| Trọng tâm toàn xe cao hơn trục bánh | 34,914 mm |
 | Lệch trọng tâm trước/sau | **0 mm — giả định phân bố đối xứng** |
 | Lệch trọng tâm ngang | Khoảng 1,739 mm |
-| Mô-men quán tính thân quanh trọng tâm, theo trục nghiêng | 0,001368297 kg·m² |
-| Mô-men quán tính thân quanh trục bánh | 0,002443180 kg·m² |
+| Mô-men quán tính thân quanh trọng tâm, theo trục nghiêng | 0,001378410 kg·m² |
+| Mô-men quán tính thân quanh trục bánh | 0,002598220 kg·m² |
 
 **Các giá trị trọng tâm và quán tính là kết quả tính từ mô hình bố trí, chưa phải phép đo độc lập trên xe.** Một số kích thước linh kiện và cách chia khối lượng vẫn là giả định.
 
@@ -99,7 +103,7 @@ Trong đợt kiểm tra khởi động mới nhất, mô phỏng khảo sát ba 
 | Chu kỳ điều khiển | **5 ms, tương đương 200 Hz** |
 | Thang gia tốc | ±8 g, 4096 LSB/g |
 | Thang gyro | ±2000°/s, 16,4 LSB/(°/s) |
-| Bộ lọc bù góc | α = **0,98** |
+| Bộ lọc bù góc | α cố định **0,998** |
 | Mốc góc lắp đặt đã trừ | 2,166943° |
 | Trim điều khiển | 0° |
 | Quy ước góc điều khiển | Nghiêng về WAGO nguồn pin là dương |
@@ -114,30 +118,12 @@ Hiệu chỉnh gia tốc kế dùng công thức `(raw_g − bias)/scale`:
 
 Mô phỏng còn giữ sai số góc dư khoảng **±0,529812°** để kiểm tra bất định. Các hệ số hiệu chuẩn này đang được sử dụng, nhưng bộ dữ liệu trước đó vẫn có cảnh báo tư thế/chuyển động nên chưa coi là hiệu chuẩn vật lý hoàn toàn được xác nhận.
 
-**Bộ điều khiển R10 hiện hành**
+**Bộ điều khiển R12 BASE60**
 
-| Thành phần | Hệ số |
-|---|---:|
-| Kp góc | **48** |
-| Kd góc | **3,6** |
-| Kp vận tốc | **32** |
-| Ki vận tốc | **0,5** |
-| Kp vị trí | **0,3** |
-| Giới hạn góc mục tiêu | ±8° |
-| Giới hạn tích phân vận tốc | ±2° |
-| Bắt đầu cho phép tích phân | Sau 3 giây |
-| Bù chống xoay | Kp = 500; Kd = 40; giới hạn **±8 PWM** |
+Phản hồi trạng thái STATE4_OBS14, không phải bộ PID góc/vận tốc cũ. Gain lực Kx/Kv/Kθ/Kω = `[9.150813420, 6.128855436, 14.32794546, 1.160483551]`, đầu vào SI(m, m/s, rad, rad/s), đầu ra N. Bộ ước lượng14trạng thái, blend0,25; phân bổ lực từng bánh có back-EMF/ma sát riêng; giữ hướng PI/PD giới hạn0,08Nm và tích phân0,04Nm. Không cộng thêm deadband PID vào đầu ra R12.
 
-Phản hồi góc giữ nguyên trong vùng ±3°; tăng dần tới **1,75 lần** khi góc đạt ±6°. R10S1 giữ nguyên phần điều khiển này.
+Khởi động đến ±60°, gyro/bánh yên200ms. Ngân sách trôi tăng theo góc, trần1m; pha dựng3giây hoặc4giây nếu bật trên58°. Sau dựng ổn ngắt ở25°/0,8m/s. Xem [đầy đủ ngưỡng vận hành](Van_Hanh_R12_60.md).
 
-**Điều kiện bắt đầu R10S1 và bảo vệ**
+Nguồn cấu hình: `Core/Inc/phase1_catalog_control.h`, `phase1_catalog_params.h`, `balance_profile.h`, `balance_startup.h`; hình học tại `Simulation/model/robot_can_bang_pid_1.sce`. Cửa vào mô phỏng hiện tại chạy R12. Không dùng `team_run.sce` hoặc các hệ số R7 cũ để thay đổi firmware hiện hành.
 
-- Góc trong **±2°**, có kiểm tra dự báo trước 0,15 giây.
-- Gyro mỗi trục dưới **3°/s**; tốc độ mỗi bánh dưới **0,02 m/s**.
-- Góc lọc và góc accel chênh không quá **0,75°**.
-- Giữ điều kiện **0,3 giây**; chờ thêm **1,5 giây** sau hiệu chuẩn.
-- Ngắt khi góc vượt **25°**, quãng encoder vượt **30 cm**, hoặc tốc độ vượt **0,8 m/s**.
-
-Nguồn cấu hình: [mô hình cơ khí và cảm biến](../Simulation/model/robot_can_bang_pid_1.sce), [cấu hình lượt mô phỏng nhóm](../Simulation/config/team_run.sce), [thông số firmware](../Xe_Can_Bang/Core/Inc/balance_profile.h).
-
-**Phần còn thiếu chính để mô phỏng bám sát xe là đáp ứng motor dưới tải và kiểm chứng độc lập trọng tâm, khoảng bánh, chu vi lăn.** Hiện mô hình chưa tái hiện đầy đủ những lượt R10 trôi rồi ngã ngoài thực tế.
+**Giới hạn mô hình:** giữ bố trí và khối lượng; chưa tự suy ra CG lệch chỉ từ chiều ngã. Mô hình động cơ dưới tải/góc lớn chưa dự đoán đúng toàn bộ thực tế. Thành công khởi động60° là quan sát người vận hành; cần log/đo riêng nếu định hiệu chỉnh mô hình góc lớn tiếp.

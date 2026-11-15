@@ -1,0 +1,40 @@
+{
+  "source": "Owner image2026-11-01",
+  "photo_view": "component/capacitor side",
+  "photo_top_left_to_right": [
+    "GND",
+    "VM",
+    "VCC",
+    "BIN2",
+    "BIN1",
+    "AOUT1",
+    "AOUT2"
+  ],
+  "photo_bottom_left_to_right": [
+    "BOUT2",
+    "BOUT1",
+    "AIN1",
+    "AIN2",
+    "VCC",
+    "VM",
+    "GND"
+  ],
+  "pcb_orientation": "photo rotated90deg clockwise; capacitor faces up",
+  "old_mechanical_pad_to_name": {
+    "1": "BOUT2",
+    "2": "BOUT1",
+    "3": "AIN1",
+    "4": "AIN2",
+    "5": "VCC",
+    "6": "VM",
+    "7": "GND",
+    "8": "AOUT2",
+    "9": "AOUT1",
+    "10": "BIN1",
+    "11": "BIN2",
+    "12": "VCC",
+    "13": "VM",
+    "14": "GND"
+  },
+  "nets": "assigned by existing schematic terminal names; no change to circuit topology"
+}

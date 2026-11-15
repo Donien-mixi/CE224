@@ -1,0 +1,142 @@
+(footprint "XL4015_Envelope_VERIFY"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(property "Reference" "U1"
+		(at 0 -13 0)
+		(layer "F.SilkS")
+		(uuid "6342f19f-afd3-4a98-870f-7e2575126b83")
+		(effects
+			(font
+				(size 0.8 0.8)
+			)
+		)
+	)
+	(property "Value" "XL4015 MODULE / SET 5.0 V"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "e4c15e28-fb86-456a-a416-b598b5ac68f4")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "a1f1993c-88df-444e-a903-907bb373d20b")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "b5e257a1-a682-47ff-a085-453817c9c82a")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -27.25 -12.25)
+		(end 27.25 -12.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "126b0cc5-27a2-4e40-a8b2-d4b24e3c1a35")
+	)
+	(fp_line
+		(start -27.25 12.25)
+		(end -27.25 -12.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "aff48549-02c3-4a3e-aef3-6a13e3376352")
+	)
+	(fp_line
+		(start 27.25 -12.25)
+		(end 27.25 12.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "4c91de6c-722d-47d7-a715-e8c653228fb7")
+	)
+	(fp_line
+		(start 27.25 12.25)
+		(end -27.25 12.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "5437cbe6-e87a-4455-b4fa-a09dc2702ce8")
+	)
+	(fp_line
+		(start -27 -12)
+		(end 27 -12)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "7949e943-ff81-4914-9030-78b7e49d35e6")
+	)
+	(fp_line
+		(start -27 12)
+		(end -27 -12)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "ff3988de-150d-4efd-b145-b3fbc759a185")
+	)
+	(fp_line
+		(start 27 -12)
+		(end 27 12)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "92e90bbf-a650-4093-9cef-488fa201c7bc")
+	)
+	(fp_line
+		(start 27 12)
+		(end -27 12)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "0f14a3a3-f93d-44ce-9254-c5e51e766e62")
+	)
+	(fp_text user "ENVELOPE - NO PAD MAP"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(uuid "3adf8ded-ca97-4a5b-8f63-15a00a608114")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.13)
+			)
+		)
+	)
+	(embedded_fonts no)
+)

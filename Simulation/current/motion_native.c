@@ -2,20 +2,33 @@ static float study_speed=.72f;
 #define BALANCE_MOTION_SPEED study_speed
 #include "balance_turn.h"
 #include "phase2_motion_control.h"
+#include "balance_recovery.h"
 #define API __declspec(dllexport)
+static int motion_previous_recovery_active;
 static BalanceMotion decode(const double *s){
- return (BalanceMotion){.x_ref=s[0],.v_ref=s[1],.last_word=s[2],.last_ms=s[3],.stable=s[4],
+ BalanceMotion result=(BalanceMotion){.x_ref=s[0],.v_ref=s[1],.last_word=s[2],.last_ms=s[3],.stable=s[4],
  .ready=s[5]!=0,.release_required=s[6]!=0,.used=s[7]!=0,.flags=s[9],.cancel_origin=s[8],
- .requested=s[10],.blocked_ticks=s[11],.cancel_flags=s[12],.inhibited=s[13]!=0,.speed_preset=s[14],.cancel_started_ms=s[15],.braking=s[23]!=0,.stop_ticks=s[24]};
+ .requested=s[10],.blocked_ticks=s[11],.cancel_flags=s[12],.inhibited=s[13]!=0,.speed_preset=s[14],.cancel_started_ms=s[15],.braking=s[23]!=0,.stop_ticks=s[24],
+ .post_rec_ticks=(uint16_t)s[28]};
+#ifdef BALANCE_RECOVERY_LIVE_COMMANDS
+ result.recovery_limited=((unsigned)result.flags&32768U)!=0;
+#endif
+ return result;
 }
 API void twip_motion_reference(double *in,double *state,double *out){
  BalanceMotion s=decode(state);
+#ifdef BALANCE_RECOVERY_LIVE_COMMANDS
+ s.recovery_active=motion_previous_recovery_active!=0;
+#endif
  s.speed_preset=study_speed>.50f;
  BalanceTurn t={.psi_ref=state[16],.w_ref=state[17],.requested=state[18],.used=state[19]!=0,.release_required=state[20]!=0,.blocked_ticks=state[21],.quiet=state[22],.braking=state[25]!=0,.stop_ticks=state[26],.rate_mode=state[27]};
- int valid=BalanceMotion8_Update(&s,&t,in[0]!=0,(uint32_t)in[1],(int)in[7],in[2],in[3],in[4],in[5],in[8],in[9],(uint32_t)in[6]);
- double a[29]={s.x_ref,s.v_ref,s.last_word,s.last_ms,s.stable,s.ready,s.release_required,s.used,s.cancel_origin,
- s.flags,s.requested,s.blocked_ticks,s.cancel_flags,s.inhibited,s.speed_preset,s.cancel_started_ms,t.psi_ref,t.w_ref,t.requested,t.used,t.release_required,t.blocked_ticks,t.quiet,s.braking,s.stop_ticks,t.braking,t.stop_ticks,t.rate_mode,valid};
- for(int i=0;i<29;i++)out[i]=a[i];
+ int valid=BalanceMotion8_Update(&s,&t,(unsigned)in[0],(uint32_t)in[1],(int)in[7],in[2],in[3],in[4],in[5],in[8],in[9],(uint32_t)in[6]);
+#ifdef BALANCE_RECOVERY_LIVE_COMMANDS
+ motion_previous_recovery_active=s.recovery_active;
+#endif
+ double a[30]={s.x_ref,s.v_ref,s.last_word,s.last_ms,s.stable,s.ready,s.release_required,s.used,s.cancel_origin,
+ s.flags,s.requested,s.blocked_ticks,s.cancel_flags,s.inhibited,s.speed_preset,s.cancel_started_ms,t.psi_ref,t.w_ref,t.requested,t.used,t.release_required,t.blocked_ticks,t.quiet,s.braking,s.stop_ticks,t.braking,t.stop_ticks,t.rate_mode,s.post_rec_ticks,valid};
+ for(int i=0;i<30;i++)out[i]=a[i];
 }
 API void twip_motion_impact(double *in,double *state,double *out){
  BalanceMotion s=decode(state);out[0]=BalanceMotion_Impact(&s,in[0]!=0,in[1],in[2]);

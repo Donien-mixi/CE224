@@ -1,0 +1,46 @@
+{
+  "pcb_sha256": "e3231b4a720600000abc2aad065a6f8f9c47d2cafc51c4dfd2647eedd41cd011",
+  "schematic_sha256": "7460c38512c5a5bd89a5d10c221d38b8ad210302e852e4effeb3217c94f905fb",
+  "assembly": "All carrier components THT; C1 D8/P5, C2 D10/P5, C4/C6 polarized D4/P2, remaining ceramics P5",
+  "footprints": 46,
+  "PTH_pads": 148,
+  "SMD_pads": 55,
+  "checks": {
+    "ERC": 0,
+    "DRC": 0,
+    "unconnected": 0,
+    "schematic_parity": 0,
+    "original_netlist_mismatches": 0
+  },
+  "fabrication_approved": false,
+  "pending": "B.Cu only with 31 physical jumper wires. W6 is now copper and W25 is now connected through the GND pour. Load/noise/thermal tests remain.",
+  "board_mm": [
+    160,
+    65
+  ],
+  "NPTH_holes": 4,
+  "mounting_holes": "H1-H4 measured centers per owner MOUNTING_HOLES.json; M3 NPTH3.2",
+  "esp32_dimensions": "Body57.34x28, antenna7 => total64.34, row25.5 retained",
+  "power_distribution": "J1 battery branches; C1 5V branches; dedicated driver/buck returns + shared GND planes. Not strict single-point GND.",
+  "programming_access": "USB LEFT face153mm,20mm access rectangle133..153/y58.5..86.5 clear of other courtyards. SWD right corridor196..210/y94.5..104.5 clear.",
+  "STM32_body": "Edge offsets1/3mm; derived length52.26mm, width20; body+1mm relative pin center, unchanged pads",
+  "module_dimensions": "See MODULE_DIMENSIONS.md; ESP57.34+7, BMI18.10 with0.4stagger, A4950 row-length17.64, XLpad50x20",
+  "copper_layers_used": [
+    "B.Cu"
+  ],
+  "wire_groups": 24,
+  "physical_wire_pieces": 31,
+  "tracks_on_F_Cu": 0,
+  "vias": 0,
+  "physical_smd_components": 0,
+  "notes": "SMD pad objects belong only to insulated wire solder land models, not SMD parts; logical THT annuli remain on F.Cu in KiCad; manufacture B.Cu only",
+  "left_motor_wiring": "J2.1 red M1->U4.AOUT2; J2.6 white M2->U4.AOUT1; PA8/AIN1 PA9/AIN2 unchanged",
+  "bmi160_body_center_mm": [
+    130,
+    81.65
+  ],
+  "board_center_mm": [
+    130,
+    82.5
+  ]
+}

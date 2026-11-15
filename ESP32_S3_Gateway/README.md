@@ -1,9 +1,42 @@
-# Bản hiện tại: RT8 NET5
+> **Trạng thái đồ án · 15/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Giai đoạn điều khiển web đã có 8 hướng và log. Workspace đang ở RT29-NOCUT / NET30, đã build, kiểm thử trên máy và push Git. Mô hình tính pin kê thêm 10 mm. PCB local một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu. Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
 
-Cần nạp cùng STM32 `BAL-20261024-R12-8DIR-RT8`. Web hiển thị `TWIP-WEB-20261024-BAL-R12-8DIR-RT8-NET5`, mở `http://192.168.4.1/ui/r12?v=rt8-net5`.
-Xem `../Docs/Ke_Hoach_Sua_Loi_RT8.md` để kiểm chứng. Mức tốc độ vẫn 50/72 cm/s; chưa mở tốc độ cao hơn. Đóng web làm lệnh di chuyển hết lease rồi hãm và giữ cân bằng. Mở lại phải nhấn lệnh mới, không phát lại thao tác giữ trước đó. Các phần dưới mô tả chức năng log/kết nối kế thừa từ NET1.
+> Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
 
-> **Lịch sử RT4/NET1:** thông tin ở các mục mang tên RT4 phía dưới mô tả nền cũ. Cặp hiện hành là STM32 RT8 / ESP32 RT8 NET5; dùng URL và hướng dẫn đầu tài liệu.
+# Bản hiện tại: RT29-NOCUT / NET30
+
+Cần nạp STM32 `BAL-20261115-R12-8DIR-RT29-NOCUT` và ESP32
+`TWIP-WEB-20261115-BAL-R12-8DIR-RT29-NOCUT-NET30`. Binary, hash và lệnh nạp ở
+[`../Firmware/RT29_NOCUT_20261115/`](../Firmware/RT29_NOCUT_20261115/README.md). Mở
+`http://192.168.4.1/ui/r12?v=RT29-NOCUT-NET30`.
+
+RT29 chỉ thêm một điều kiện trên STM32 (miễn hạn 4 s cho phanh do nhiễu); gateway chỉ đổi literal
+build ID so với NET29. Xem [`../Docs/RT29_Tu_Ngat_4096.md`](../Docs/RT29_Tu_Ngat_4096.md).
+
+## Lịch sử: RT22 SYM / NET23 (14/11/2026)
+
+Cần nạp STM32 `BAL-20261114-R12-8DIR-RT22-SYM` và ESP32 `TWIP-WEB-20261114-BAL-R12-8DIR-RT22-SYM-NET23`. Mở `http://192.168.4.1/ui/r12?v=RT22-SYM-NET23`. Xem `../Docs/RT22_Doi_Xung_Va_Be_Huong.md`.
+
+RT22 sửa phần điều khiển trên STM32 (ESP32 chỉ đổi literal build ID):
+
+- Governor không còn **đóng băng** tham chiếu khi thấy thân nghiêng; nó giới hạn gia tốc còn 0,06 m/s² nên lệnh đang giữ vẫn được thực hiện, không khựng. Ngưỡng nghiêng 5° → **9°** (11° khi khởi hành) và tư thế trung tính học nhanh hơn, giữ qua STOP/ARM.
+- Tiến và lùi tăng tốc như nhau và đạt **đúng** mốc 0,50 / 0,72 / 0,80 m/s (trước đây tiến bị ghìm 0,5–4,8 s, chỉ tới 0,61–0,79).
+- Bẻ hướng gắt hơn: quay tại chỗ 2,4 rad/s, chéo 1,15 rad/s ở preset 80 (trước 0,50), gia tốc yaw 4,5 rad/s², trần gia tốc ngang 0,9 m/s².
+
+Hiệu chuẩn gyro lúc cấp nguồn vẫn **500 mẫu ≈ 5,15 s** (đo 10,3 ms/mẫu ở ODR 100 Hz), nên từ cắm pin đến frame đầu tiên khoảng 5,3 s và tới lúc bấm BẬT ~5,5 s — trang hiện "Chưa nhận STM32" trong khoảng đó là do hiệu chuẩn, không phải Wi-Fi. Bản thử rút còn 200 mẫu (`QUICKSTART`, 14/11) đã được **khôi phục** về 500; xem `../Docs/RT21_QUICKSTART_Hieu_Chuan_Nhanh.md`.
+
+> Bản thử thêm kênh chẩn đoán qua cáp (NET22, 14/11) đã được **gỡ bỏ** theo yêu cầu: chỉ cần dữ liệu qua log tải từ trang web.
+
+NET21 (nền của RT22) sửa đường kết nối và log dự phòng, không sửa điều khiển STM32:
+
+- SoftAP được bật **trước** khi chuẩn bị log Flash; chỉ quét toàn phân vùng 9,9 MB khi mount thất bại. Trước đây mỗi lần reset mất hàng giây trước khi có Wi-Fi.
+- Trang tự đóng WebSocket nếu **3 s** không nhận khung nào từ gateway (kênh nửa-mở sau khi Wi-Fi điện thoại rớt), rồi thử lại sau 0,5 → 1 → 2 → 4 s. Gateway phát `{"hb":1}` 1 Hz và bật ping 20 s. Nhờ vậy "mất kênh lệnh" xuất hiện đúng lúc, không phải chờ TCP timeout.
+- Khung log Flash liệt kê theo **tên tệp trần** (trước đây kèm `/twip-net1/` nên nút tải sẽ 404 dù volume mount được), và việc quét chỉ đọc header khối nên nhanh hơn nhiều.
+- Nếu volume không mount được (`archive_error` khác `ready`), trang hiện nút **SỬA VÙNG LOG FLASH** (`POST /archive-format`, cần xác nhận ERASE, chỉ khi motor dừng). Đây là đường phục hồi duy nhất ngoài việc nạp lại/Erase All Flash — **mất mọi bản log còn trên Flash**.
+- Trang phân biệt "ESP32 khởi động lại" với "STM32 không gửi": `/balance-status` trả `boot_id`, `uptime_ms`, `reset_reason`; sau một lần reset, trang báo `ESP32 ĐÃ KHỞI ĐỘNG LẠI (...)` trong 12 s kèm số mẫu log Flash còn lại.
+
+**Brownout vẫn là lỗi nguồn.** NET21 không ngăn được reset; nó chỉ làm reset ngắn hơn và không mất log. Phải đo 5 V/3V3 tại ESP32 khi motor đảo chiều và thêm tụ bulk 470–1 000 µF.
+
+> **Lịch sử RT4/NET1:** thông tin ở các mục mang tên RT4 phía dưới mô tả nền cũ. Dùng URL và hướng dẫn đầu tài liệu.
 
 Đo lại gyro khóa các thao tác bật/thử bánh tới khi có dữ liệu xác nhận hoàn tất. STM32 hủy lệnh motor đang chờ và yêu cầu kiểm tra đứng yên lại đủ 200 ms; hiệu chuẩn không tự bật motor.
 

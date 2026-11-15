@@ -203,7 +203,9 @@ kt_motor=[0.025 0.050 0.025]; // GA25 tru nam theo y, duong kinh 25mm
 R_cot=0.003; x_cot=0.035; y_cot=0.090;
 // Inferred, not remeasured: 23.3mm is mounting bottom (0.8mm above mica).
 z_day_pin_buck=0.0233;
-z_pin=z_day_pin_buck+kt_pin(3)/2; z_buck=z_day_pin_buck+kt_buck(3)/2;
+battery_riser_height=0.010; // Battery lifted 10 mm; spacer mass neglected.
+z_pin=z_day_pin_buck+battery_riser_height+kt_pin(3)/2;
+z_buck=z_day_pin_buck+kt_buck(3)/2;
 // Breadboard rests on mica2; boards rest on its top. Keep measured IMU chip z.
 z_board=z_tren(2)+kt_board(3)/2; z_board_top=z_board+kt_board(3)/2;
 z_mach=z_board_top+kt_stm(3)/2;

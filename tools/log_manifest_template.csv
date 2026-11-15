@@ -1,0 +1,11 @@
+file,preset,direction,turn,hold_s,floor,note
+twip_balance_R12 (1).txt,50,+1,0,4.5,gach,
+twip_balance_R12 (2).txt,50,-1,0,4.5,gach,
+twip_balance_R12 (3).txt,72,+1,0,5.0,gach,
+twip_balance_R12 (4).txt,72,-1,0,5.0,gach,
+twip_balance_R12 (5).txt,80,+1,0,5.0,gach,
+twip_balance_R12 (6).txt,80,-1,0,5.0,gach,
+twip_balance_R12 (7).txt,80,0,+1,3.0,gach,quay trai tai cho
+twip_balance_R12 (8).txt,80,0,-1,3.0,gach,quay phai tai cho
+twip_balance_R12 (9).txt,72,+1,+1,4.0,gach,tien+trai
+twip_balance_R12 (10).txt,72,+1,-1,4.0,gach,tien+phai

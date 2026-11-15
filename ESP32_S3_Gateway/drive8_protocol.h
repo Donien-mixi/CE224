@@ -23,6 +23,6 @@ static inline int Drive8_Parse(const char *s,Drive8Packet *packet){
  if(!Drive8_Trit(&s,&p.turn)||*s++!=',')return 0;
  if(!Drive8_Uint(&s,&p.epoch,0)||*s++!=',')return 0;
  if(!Drive8_Uint(&s,&p.sequence,0)||*s++!=',')return 0;
- if(!Drive8_Uint(&s,&p.preset,1)||*s||p.preset>1)return 0;
+ if(!Drive8_Uint(&s,&p.preset,1)||*s||p.preset>2)return 0;
  *packet=p;return 1;
 }

@@ -1,0 +1,14 @@
+[
+  {
+    "file": "ESP32S3_DevKitC1_official_dimensions.pdf",
+    "sha256": "3f67160841a5a730297b754befab33344c8fce5318950d688717dfc999dca562"
+  },
+  {
+    "file": "WeAct-BlackPillv3.kicad_sym",
+    "sha256": "f4c7cda1e6e637add1822cadb066a7504607fa13e09f2bd39df4d6f700c69047"
+  },
+  {
+    "file": "WeAct-BlackPill_DIP-40_W15.24mm-SWD.kicad_mod",
+    "sha256": "0471e96920efae81ed43f2a1c0a5aa4526ae8c3db9da9c60cd873c9463f2b612"
+  }
+]

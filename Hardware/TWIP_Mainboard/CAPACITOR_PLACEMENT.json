@@ -1,0 +1,71 @@
+{
+  "stage": "Updated selected capacitors; see latest CHECK reports",
+  "positions_mm": {
+    "C1": [
+      117.5,
+      66.5,
+      -90.0
+    ],
+    "C2": [
+      101.5,
+      105.0,
+      180.0
+    ],
+    "C3": [
+      109.5,
+      109.5,
+      -90.0
+    ],
+    "C4": [
+      153.0,
+      54.0,
+      0.0
+    ],
+    "C5": [
+      162.0,
+      54.0,
+      0.0
+    ],
+    "C6": [
+      152.0,
+      112.5,
+      0.0
+    ],
+    "C7": [
+      194.5,
+      112.0,
+      0.0
+    ],
+    "C8": [
+      117.7,
+      91.0,
+      0.0
+    ],
+    "C9": [
+      124.7,
+      91.0,
+      0.0
+    ]
+  },
+  "bulk_package": "C1 D8/P5/H16; C2 D10/P5/H<=20; ESR/ripple qualification pending",
+  "bulk_suggested_parts": {
+    "C1": "Thegioiic 1000uF16V D8x16 P5",
+    "C2": "Thegioiic 470uF35V D10 P5; verify H17/20"
+  },
+  "values_and_nets": "capacitance and original nets unchanged; C5/C7/C8/C9 rated50V; C4/C6 polarized",
+  "resistors": "none added; onboard pullups/current sense retained; buzzer drive pending actual load",
+  "unresolved": [
+    "Exact purchased-part dimensions, antenna clearance and USB/mounting fit still require physical review",
+    "XL4015 startup with1000uF and motor/logic load response not measured",
+    "BMI160 onboard pullups and buzzerGPIO load not verified"
+  ],
+  "XL4015": "Assigned IN+/IN-/OUT+/OUT- pad names and source schematic nets; topology unchanged",
+  "assembly": "All9capacitors through-hole",
+  "ceramic_package": "C3/C5/C7/C8/C9 nonpolar MLCC P5 body<=6x3.5; purchased-part geometry pending",
+  "electrolytic_local_package": "C4/C6 OEM IC4469 10uF16V D4x7 P2; pad1=+5V pad2=GND",
+  "coordinate_origin": "PCB footprint anchor, NOT necessarily body center. C1/C4/C6 origin=positive pad1.",
+  "board_mm": [
+    160,
+    65
+  ]
+}

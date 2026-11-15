@@ -24,7 +24,7 @@ extern "C" {
 #define ENCODER_PPR                 BALANCE_PPR      // Measured 10 wheel turns: L898.45, R898.00; same mean as model.
 #define WHEEL_DIAMETER_M            0.065f          // Đường kính bánh xe cao su (65mm = 0.065m)
 #define WHEEL_CIRCUMFERENCE_M       0.204203522f    // Chu vi bánh: PI * D = 3.14159265 * 0.065
-#define METERS_PER_TICK             (WHEEL_CIRCUMFERENCE_M / ENCODER_PPR) // ~0.0002179m/xung
+#define METERS_PER_TICK             (WHEEL_CIRCUMFERENCE_M / ENCODER_PPR) // ~0.00022734m/tick
 #define ENCODER_LPF_BETA            0.75f           // Hệ số lọc thông thấp vận tốc
 
 /* Structs -------------------------------------------------------------------*/

@@ -1,0 +1,65 @@
+(footprint "SingleLayer_W21"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(property "Reference" "W21"
+		(at 0 0 0)
+		(layer "F.SilkS")
+		(hide yes)
+		(uuid "b71d3ce9-719d-4f43-a252-46ddfdaaeffd")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Value" "INSULATED SOLDER-SIDE WIRE /PWM_L_IN1"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "88db7266-a3a4-4b3b-ad21-c4d9dda69fd5")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "fb564a0b-d96f-405d-8e01-68b3ba86654f")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "e9c3ec1e-e13d-47f3-bf48-d5b384948834")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(attr smd board_only exclude_from_pos_files)
+	(duplicate_pad_numbers_are_jumpers yes)
+	(pad "1" smd circle
+		(at 0 0)
+		(size 0.6 0.6)
+		(layers "B.Cu" "B.Mask")
+		(uuid "91cd8d18-f024-4449-b649-4d49cad822a2")
+	)
+	(pad "1" smd circle
+		(at 7.6005 4.4142)
+		(size 0.3 0.3)
+		(layers "B.Cu")
+		(uuid "8bbe98f1-2ccd-4f5c-895b-c0de802afbe3")
+	)
+	(embedded_fonts no)
+)

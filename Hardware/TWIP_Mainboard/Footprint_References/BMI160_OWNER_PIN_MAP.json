@@ -1,0 +1,22 @@
+{
+  "source": "Owner combined component-side/backside image2026-11-01",
+  "pcb_view": "Component side: upper5-row left->right, lower7-row left->right",
+  "upper5": [
+    "OCS",
+    "INT2",
+    "INT1",
+    "SCX",
+    "SDX"
+  ],
+  "lower7": [
+    "VIN",
+    "3V3",
+    "GND",
+    "SCL",
+    "SDA",
+    "CS",
+    "SA0"
+  ],
+  "alignment": "5-row aligns to middle5 of7-row per image",
+  "note": "OCS not mainCS; auxiliaryOCS/SCX/SDX no net assigned. Other pins follow existing schematic."
+}

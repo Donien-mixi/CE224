@@ -1,0 +1,142 @@
+(footprint "ESP32S3_Envelope_VERIFY"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(property "Reference" "U3"
+		(at 0 -15 0)
+		(layer "F.SilkS")
+		(uuid "1aebdd82-fc18-4b1d-97eb-eb925fd9978e")
+		(effects
+			(font
+				(size 0.8 0.8)
+			)
+		)
+	)
+	(property "Value" "ESP32-S3 N16R8 DEV BOARD"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "ae62f4df-2c78-429f-a59f-bf1d468a2890")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "fc2df71f-80ec-400a-bf78-4e24e43a3e89")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "37927a6d-2efa-4cda-8154-7e283c5673b1")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -32.25 -14.25)
+		(end 32.25 -14.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "75ff6555-c571-4909-8a58-59dec23b76bb")
+	)
+	(fp_line
+		(start -32.25 14.25)
+		(end -32.25 -14.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "47072671-d3fc-4d82-a688-6ce145fe2c8d")
+	)
+	(fp_line
+		(start 32.25 -14.25)
+		(end 32.25 14.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "e8d98c5d-d948-4b54-a20c-0d73c45dc298")
+	)
+	(fp_line
+		(start 32.25 14.25)
+		(end -32.25 14.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "5870a72e-2868-4328-8d16-3c737eb7688b")
+	)
+	(fp_line
+		(start -32 -14)
+		(end 32 -14)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "bbee5e5e-6ce9-4eed-bf11-b2fbbb387750")
+	)
+	(fp_line
+		(start -32 14)
+		(end -32 -14)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "ddf5f1a9-e24f-4529-a43a-d5f3bb47ccd5")
+	)
+	(fp_line
+		(start 32 -14)
+		(end 32 14)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "471d1808-61f0-4960-9568-97fd1a8cd4e8")
+	)
+	(fp_line
+		(start 32 14)
+		(end -32 14)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "e992665a-9211-426d-a093-b6447cf1de7a")
+	)
+	(fp_text user "ENVELOPE - NO PAD MAP"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(uuid "d08819a8-887d-434a-bf3b-94de19abeb5d")
+		(effects
+			(font
+				(size 0.9 0.9)
+				(thickness 0.13)
+			)
+		)
+	)
+	(embedded_fonts no)
+)

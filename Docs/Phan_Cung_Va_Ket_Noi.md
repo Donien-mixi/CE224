@@ -1,3 +1,5 @@
+> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+
 > Bản bàn giao hiện hành: xem [Phát triển tiếp](Phat_Trien_Tiep.md) và [Thông số xe](Thong_So_Xe_Hien_Tai.md). Một số ví dụ/giá trị trong tài liệu nền tảng này thuộc phiên bản trước; mã nguồn quyết định hành vi firmware hiện tại.
 
 # PHẦN CỨNG & KẾT NỐI HỆ THỐNG — XE CÂN BẰNG 2 BÁNH
@@ -162,7 +164,7 @@ Bảng đấu nối chi tiết, không trùng lặp và không xung đột ngo�
                                        │ 4 cọc đồng M3 (dài 6cm)
                              [TẦNG 1: ĐỘNG LỰC & NGUỒN]
         ┌──────────────────────────────┴──────────────────────────────┐
-        │   [Pin LiPo 3S 11.1V]   [Driver A4950]    [Buck XL4015 5A]  │
+        │   [Pin LiPo kê +10 mm]   [Driver A4950]    [Buck XL4015 5A]  │
         └───┬─────────────────────────────────────────────────────┬───┘
             │                                                     │
     [Gá kim loại L] ── [Motor Trái GA25]         [Motor Phải GA25] ── [Gá kim loại L]
@@ -172,8 +174,8 @@ Bảng đấu nối chi tiết, không trùng lặp và không xung đột ngo�
 
 * **Tầng 1 (Đáy)**:
   * Mặt dưới: 2 gá kim loại chữ L giữ motor GA25, **2 trục bánh xe phải nằm thẳng hàng 100%**.
-  * Mặt trên: Driver A4950 đặt giữa 2 motor; Buck XL4015 ở mép sau; Pin LiPo có thể bố trí ở tầng 1 hoặc dời lên tầng 2:
-    * *Lưu ý trọng tâm*: Đặt pin ở tầng 1 giúp xe linh hoạt nhưng trọng tâm $L$ thấp sẽ làm xe ngã rất nhanh (khó tune). Nếu thấy động cơ GA25 bám không kịp gia tốc ngã của xe, hãy dời Pin LiPo lên Tầng 2 để tăng chu kỳ dao động tự nhiên $T_n = 2\pi\sqrt{L/g}$, giúp xe ngã chậm lại để GA25 dễ giữ thăng bằng hơn!
+  * Mặt trên: Driver A4950 đặt giữa 2 motor; Buck XL4015 ở mép sau; Pin LiPo đặt ở tầng 1 và kê cao thêm 10 mm:
+    * *Trọng tâm*: dùng cao độ pin và giả định khối lượng miếng kê ghi trong bảng thông số hiện hành khi đối chiếu mô phỏng.
 * **Tầng 2 (Đỉnh)**:
   * **BMI160**: Đặt tại **chính giữa tâm hình học** ngay trên trục bánh xe. **Dán lên đệm xốp 3M / FPV dày 2-3mm** để hấp thụ rung cơ học từ hộp số. Dây cắm I2C phải dùng dây silicone mềm.
   * **STM32F411**: Đặt cạnh BMI160 để dây I2C ngắn ($< 5\text{cm}$), hướng cổng Type-C ra ngoài để cắm nạp code.

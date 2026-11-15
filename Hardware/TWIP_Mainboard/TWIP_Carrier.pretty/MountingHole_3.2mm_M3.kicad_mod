@@ -1,0 +1,109 @@
+(footprint "MountingHole_3.2mm_M3"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "M3 clearance NPTH3.2, no electrical net; PCB centers per owner MOUNTING_HOLES.json. Copper-free region diameter8mm; verify head overhang at2.5mm edge offset.")
+	(tags "mountinghole M3")
+	(property "Reference" "H2"
+		(at -2.5 -1.7 0)
+		(layer "F.SilkS")
+		(uuid "81fe22ce-840c-4848-919e-7a3e796af6b0")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(property "Value" "M3 / 3.2mm NPTH"
+		(at 0 4.15 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "22d2ca1d-c84b-4219-8299-6e2c2a80619b")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "30b1acb8-856b-4e8c-a419-4bd17e688669")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "15456def-f607-4a12-82f6-a41693565a0c")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "KiLib_Generator" "mounting_hardware/mounting_hole"
+		(at 0 0 0)
+		(layer "F.SilkS")
+		(hide yes)
+		(uuid "dda3c80c-be63-4875-be9e-1089dc7e0631")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr board_only exclude_from_pos_files exclude_from_bom)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_circle
+		(center 0 0)
+		(end 3.2 0)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(fill no)
+		(layer "Cmts.User")
+		(uuid "e5b3581b-dbf0-412a-9290-bd168e561795")
+	)
+	(fp_circle
+		(center 0 0)
+		(end 3.45 0)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "a68ac9f5-5ceb-4842-ab0f-4c5fd790698f")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(uuid "67d5b789-9a1f-47e1-a532-396e10634bfb")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "" np_thru_hole circle
+		(at 0 0)
+		(size 3.2 3.2)
+		(drill 3.2)
+		(layers "B.Cu" "B.Mask")
+		(clearance 2.4)
+		(uuid "d39a86c7-3e4b-4244-927e-e981e8d4bee7")
+	)
+	(embedded_fonts no)
+)

@@ -1,0 +1,77 @@
+(footprint "SingleLayer_W5"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(property "Reference" "W5"
+		(at 0 0 0)
+		(layer "F.SilkS")
+		(hide yes)
+		(uuid "4f52412f-9466-4ffd-b728-400bbba112c5")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Value" "INSULATED SOLDER-SIDE WIRE /VBAT_3S"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "c51a7db3-2d13-452a-b26f-de6b2a1ea2e0")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "f2970516-2dda-4f23-a86d-5a5dd3aa5190")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "9ce84ed4-8fc4-446d-8960-e523134671ec")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(attr smd board_only exclude_from_pos_files)
+	(duplicate_pad_numbers_are_jumpers yes)
+	(pad "1" smd circle
+		(at 0 0)
+		(size 0.3 0.3)
+		(layers "B.Cu")
+		(uuid "2d54a157-6f16-4a83-a99a-810efc4f4495")
+	)
+	(pad "1" smd circle
+		(at 24.04 -3)
+		(size 0.3 0.3)
+		(layers "B.Cu")
+		(uuid "ccb56af6-1a31-4475-9eea-59c1bbd985aa")
+	)
+	(pad "1" smd circle
+		(at 29.54 -1)
+		(size 0.3 0.3)
+		(layers "B.Cu")
+		(uuid "78934872-a203-4f71-92cc-05043ccf3307")
+	)
+	(pad "1" smd circle
+		(at 33.54 0.079999)
+		(size 0.3 0.3)
+		(layers "B.Cu")
+		(uuid "dcc35a52-9c77-4755-b98c-e6496b526a3b")
+	)
+	(embedded_fonts no)
+)

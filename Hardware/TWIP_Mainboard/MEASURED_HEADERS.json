@@ -1,0 +1,43 @@
+{
+  "assembly": "Direct through-hole soldering, no sockets",
+  "measurements_mm": {
+    "STM32_rows": 15.24,
+    "ESP32_rows": 25.5,
+    "A4950_rows": 20,
+    "BMI160_rows": 10,
+    "XL4015_pad_rectangle": [
+      50,
+      20
+    ]
+  },
+  "pitch_mm": 2.54,
+  "assumptions": [
+    "Pitch2.54 within each header row; row spacings retained unless confirmed separately",
+    "BMI upper5row longitudinal offset-0.4 per new owner statement",
+    "Module lead diameters/heights remain to verify"
+  ],
+  "status": "Mapped pad names/nets; current mechanical dimensions and unresolved transverse measurements in MODULE_DIMENSIONS.md",
+  "ESP32_body_mm": [
+    57.34,
+    28
+  ],
+  "BMI160_correction": "5+7pins, upper5row stagger-0.4 relative lower7; owner update supersedes earlier centered-row photo interpretation",
+  "ESP32_total_length_mm": 64.34,
+  "ESP32_antenna_extension_mm": 7,
+  "ESP32_antenna_width": "Reserved28mm conservatively; owner has not measured tab width",
+  "STM32_edge_offsets_mm": {
+    "5V_PB12_to_first_pin_center": 1,
+    "VBAT_3V3_to_last_pin_center": 3
+  },
+  "STM32_body_length_derived_mm": 52.26,
+  "STM32_nominal53mm_superseded": "Derived body length uses new edge offsets; confirm paper fit; pad grid unchanged",
+  "A4950_body_mm": [
+    23,
+    17.64
+  ],
+  "BMI160_body_mm": [
+    18.1,
+    13
+  ],
+  "BMI160_upper5row_stagger_mm": -0.4
+}

@@ -1,25 +1,96 @@
-# Xe hai bánh tự cân bằng — R12 RT8 + NET5
+# Xe hai bánh tự cân bằng (TWIP) — STM32F411 + BMI160 + ESP32-S3
 
-STM32 `BAL-20261024-R12-8DIR-RT8`; ESP32 `TWIP-WEB-20261024-BAL-R12-8DIR-RT8-NET5`. RT8/NET5 cần nạp cả hai board; xem [kế hoạch, thay đổi và cách kiểm chứng](Docs/Ke_Hoach_Sua_Loi_RT8.md). Bổ sung [chẩn đoán reset, giảm tải mạng và log Flash dự phòng](Docs/On_Dinh_Ket_Noi_NET1.md); không đổi bộ cân bằng.
+Đồ án điều khiển xe hai bánh tự cân bằng: STM32 giữ thăng bằng và chạy quỹ đạo ở 200 Hz,
+ESP32-S3 làm gateway Wi-Fi có trang điều khiển và ghi log, Scilab mô phỏng lại đúng phần
+luật điều khiển đang nạp trên xe.
 
-- Mở project `Xe_Can_Bang/` trong STM32CubeIDE, Build rồi nạp ST-LINK.
-- Mở `ESP32_S3_Gateway/ESP32_S3_Gateway.ino` trong Arduino IDE; cấu hình board trong README cùng thư mục.
-- Mô phỏng: xem `Simulation/README.md`, sau đó Execute `robot_can_bang_pid_1.sce` bằng Scilab.
+**Bản phát hành hiện hành: RT29-NOCUT / NET30 (15/11/2026).**
+Firmware đã đóng gói kèm hash trong [`Firmware/RT29_NOCUT_20261115/`](Firmware/RT29_NOCUT_20261115/),
+trạng thái kỹ thuật và việc còn mở ở [`HANDOFF.md`](HANDOFF.md).
 
-Kết nối Wi-Fi ESP32 và mở http://192.168.4.1/ui/r12?v=rt8-net5 . Đo lại gyro khi thân xe yên, xác nhận xe trên nền và bật cân bằng. Chờ sẵn sàng rồi giữ nút hướng; nhả để hãm và giữ cân bằng. Có thể trượt ngón tay giữa các nút để đổi hướng liên tục. Hướng chéo là đường cong; xe không đi ngang. Lùi trái/phải đặt tên theo quỹ đạo lùi.
+## 1. Kiến trúc
 
-Mặc định50cm/s, mức nhanh72cm/s là cấu hình thử cần kiểm chứng trên xe thật. Quay tại chỗ1,2/2,2rad/s (khoảng69/126° mỗi giây); đường cong0,80/0,55rad/s ở mức thường/nhanh trước khi áp dụng giới hạn theo tốc độ bánh, góc thân và khả năng bám. Giữ nút thì bám tốc độ quay liên tục, không đặt một góc tổng phải quay cho xong. Quay tại chỗ không bị nhận nhầm là kẹt do sai lệch vị trí tiến/lùi cũ. Khi thả, tốc độ quay đặt về0 ngay; xóa tích phân của lệnh quay và hãm bằng phản hồi có giới hạn, rồi giữ hướng tại điểm mới. Khi bị kẹt thật hoặc không đủ điều kiện cân bằng, vẫn hủy lệnh và yêu cầu nhả rồi nhấn lại.
+| Khối | Nội dung |
+|---|---|
+| STM32F411CEU6 | Vòng điều khiển 200 Hz (TIM4). Đọc BMI160 qua I2C, hai encoder GA25, xuất PWM cho hai driver A4950. Luật lực R12 (14 trạng thái quan sát, K = 9.1508 / 6.1289 / 14.3279 / 1.1605). Ba mức 0,50 / 0,72 / 0,80 m/s, 8 hướng, quay tại chỗ 1,3–2,4 rad/s. |
+| Lớp giám sát | `balance_startup` (dựng xe từ 60°), `balance_recovery` (REC1), `balance_governor` (dự phòng mô-men), `balance_interlock` (trần tốc độ), `balance_motion` / `balance_turn` (quỹ đạo, mốc vị trí, mốc hướng). Không đổi gain/observer/phân bổ lực R12. |
+| ESP32-S3 | SoftAP `TWIP_RACER_S3` / `12345678`, HTTP :80, WebSocket :81, UART1 115200 (GPIO18/17). Trang `/ui/r12`, log 122 byte/khung, 40 cột, 50 Hz, lưu RAM và vùng Flash. |
+| Scilab + GCC | Mô phỏng dùng **chính header C của firmware** (`Simulation/current`, biên dịch native) nên không có bản sao luật điều khiển. |
+| KiCad | Bo chuyển tiếp 160 × 65 mm, một mặt đồng B.Cu, 31 dây cầu. |
 
-Mỗi lần nhấn/đổi chiều lấy mốc vị trí hiện tại, bỏ điểm đặt của thao tác trước. Thả nút bỏ mục tiêu vị trí cũ và hãm tiến/lùi theo đường giảm tốc0,60m/s²; đảo chiều dùng0,45m/s² để tránh nghiêng mạnh. Chỉ chốt mốc giữ mới sau khi thân/bánh đủ yên; hãm chưa ổn có giới hạn1m/4giây. Xe cần thời gian và quãng đường hãm theo vận tốc thực; thả nút không khóa bánh hoặc tắt motor.
+## 2. Firmware phát hành
 
-Web gửi ngay khi nhấn/nhả/đổi hướng, làm mới lệnh40ms, lấy trạng thái200ms và cập nhật bảng chi tiết500ms. Mục xác nhận STM32 đo thời gian từ gửi lệnh tới khi nhận dữ liệu xác nhận qua web, có cả chu kỳ hiển thị; không phải độ trễ một chiều hoặc cam kết thời gian thực cứng của Wi-Fi. Log40 cột,50Hz, khung122byte có số thứ tự/thời điểm STM32 nhận lệnh.
+| Board | Build ID | Tệp | SHA-256 (rút gọn) |
+|---|---|---|---|
+| STM32 | `BAL-20261115-R12-8DIR-RT29-NOCUT` | `STM32_BAL_R12_RT29_NOCUT.bin` (+`.hex`, `.elf`) | `16effa542e76975a…` |
+| ESP32-S3 | `TWIP-WEB-20261115-BAL-R12-8DIR-RT29-NOCUT-NET30` | `ESP32_RT29_NOCUT_NET30.app.bin` (+ bootloader, partitions, boot_app0) | `0581361f1b797e00…` |
 
-Giữ luật lực/observer R12, hiệu chuẩn và dựng xe60°. Khi tốc độ đang tiến gần trần0,8m/s và vượt điểm đặt, vào chế độ phục hồi có giới hạn trước khi chạm ngưỡng cắt. Sau khi mất lệnh và đã đứng ổn định, tiếp tục giữ cân bằng, chờ thao tác mới. Bảo vệ I2C, thời gian vòng lặp, heartbeat, góc, tốc độ, quãng trôi và phục hồi4giây vẫn có hiệu lực; đóng/ẩn/mất trang điều khiển làm hết lease di chuyển 350 ms để hãm rồi giữ cân bằng; gateway tiếp tục heartbeat khi thấy STM32 đang cân bằng. STOP và bảo vệ cứng vẫn dừng motor.
+Hash đầy đủ ở `Firmware/RT29_NOCUT_20261115/SHA256.json`; hash của **12 tệp nguồn đã sinh ra
+đúng cặp binary này** ở `SOURCE_SHA256.json` trong cùng thư mục. Hai board phải nạp cùng bản:
+gateway đối chiếu build ID với STM32 và từ chối điều khiển nếu lệch ngày/bản.
 
-Chạy thử mức thường trước, rồi mức nhanh; thử tiến/lùi, quay tại chỗ, giữ cả bốn hướng chéo, nhả và đổi hướng. Dừng rồi chờ2giây để tải log. Bộ nhớ đầy không tự dừng xe nhưng không ghi thêm; cần tải và xóa khi dừng trước lượt tiếp theo. Tốc độ cao làm giảm dự trữ chịu va đập; không có bảo đảm phục hồi sau mọi cú va hoặc khi bánh trượt.
+Cách nạp và kiểm hash: xem [`Firmware/RT29_NOCUT_20261115/README.md`](Firmware/RT29_NOCUT_20261115/README.md).
 
-**Lịch sử RT4, không dùng làm thông số RT8:** Bản RT4 bổ sung sửa log `(26)`: thao tác mới bắt đầu từ vận tốc đo được, không kế thừa đường tốc độ cũ. Ngưỡng phục hồi góc khi có thao tác hợp lệ/đang hãm là12°, khi giữ yên vẫn8°; ngưỡng gyro60°/s, sai lệch tốc độ0,35m/s và bảo vệ thường không đổi. Quay tại chỗ giữ tâm và giảm tốc quay nếu tâm lệch; không nhận nhầm là kẹt tịnh tiến. Sau phục hồi, mốc giữ không trôi theo xe mãi. Web xử lý thêm sự kiện nhả trên iOS, báo đã nhả ngay và không lưu lệnh khi chưa sẵn sàng. Các sửa log24/25 vẫn giữ. Cửa mô phỏng là `robot_can_bang_pid_1.sce`. Chưa tự nạp xe hoặc bảo đảm dừng tức thời trong mọi điều kiện.
+## 3. Cấu trúc repo
 
-## Bàn giao source RT8 / NET5 — 30/10/2026
+| Thư mục | Nội dung |
+|---|---|
+| `Xe_Can_Bang/` | Project STM32CubeIDE. Luật điều khiển và giám sát ở `Core/Inc/balance_*.h`, FSM và vòng 200 Hz ở `Core/Src/robot_fsm.c`. |
+| `ESP32_S3_Gateway/` | Sketch Arduino + trang web (`dashboard_html.h`), giao thức UART (`balance_wire.h`), phiên điều khiển, log RAM/Flash. |
+| `Simulation/` | Mô hình Scilab, harness native dùng chung header firmware, bộ 36 ca kiểm tra. |
+| `tools/` | Host test (`test_*.cjs`), script build/mô phỏng, tải log cứu hộ. `tools/legacy/` giữ test của các bản RT8/RT9 đã bỏ. |
+| `Firmware/` | Binary phát hành + hash + hướng dẫn nạp. |
+| `Hardware/` | Schematic, PCB KiCad, bo chuyển tiếp. |
+| `Docs/` | Báo cáo từng vòng RT10→RT29, thiết kế, thông số xe, bảng mã lỗi tự dừng. |
 
-Source firmware và mô phỏng trong nhánh này được đồng bộ từ laptop, không đổi luật điều khiển trong lượt bàn giao. Tài liệu hiện hành: [HANDOFF](HANDOFF.md), [mô phỏng](Simulation/README.md), [Hardware KiCad](Hardware/README.md). Không có xác nhận thử RT8 mới trên xe. Log người dùng, đầu ra build và DLL không được đưa lên Git.
+## 4. Chạy nhanh
+
+```powershell
+# Kiểm thử trên máy (cần Node.js; các test biên dịch C cần GCC tại C:/msys64/ucrt64/bin)
+Get-ChildItem tools/test_*.cjs | ForEach-Object { node $_.FullName }
+
+# Mô phỏng native: 12 ca tốc độ / 12 ca biên / 12 ca khởi hành 50 cm/s, mỗi ca 20 s
+node tools/run_governor_sim.cjs --stress
+node tools/run_governor_sim.cjs --stress --edge
+node tools/run_governor_sim.cjs --stress --launch --launch50
+```
+
+- **STM32:** mở `Xe_Can_Bang/` bằng STM32CubeIDE, Build rồi nạp ST-LINK (hoặc
+  `tools/build_stm32.ps1` khi đã có cấu hình `Debug/`).
+- **ESP32:** mở `ESP32_S3_Gateway/ESP32_S3_Gateway.ino` bằng Arduino IDE, cấu hình board theo
+  [`ESP32_S3_Gateway/README.md`](ESP32_S3_Gateway/README.md).
+- **Scilab:** chạy `Simulation/build_native.ps1` rồi Execute `robot_can_bang_pid_1.sce` ở gốc repo.
+- **Trên xe:** nối Wi-Fi `TWIP_RACER_S3`, mở `http://192.168.4.1/ui/r12`, đo lại gyro khi xe yên,
+  xác nhận xe đặt trên nền rồi bật cân bằng. Dừng xe rồi chờ ~2 s trước khi tải log.
+
+## 5. Đã kiểm chứng
+
+| Hạng mục | Kết quả | Điều kiện |
+|---|---|---|
+| Host test | **30/30 pass** | Node.js 24, GCC 13 (msys2), mỗi test tự biên dịch phần C tương ứng |
+| Mô phỏng native | **36/36 ca đủ 20/20 s, không fault** | 12 ca tốc độ + 12 ca biên + 12 ca khởi hành 50 cm/s |
+| Nguồn ↔ binary | 12/12 tệp khớp `SOURCE_SHA256.json` | Hash tính lại tại máy này, 15/11/2026 |
+| Log xe thật | Dùng để sửa RT22 → RT29 | Log gần nhất `(12)(3)` chạy bản RT28: 3 lần tự ngắt oan `fault 4096`, đã sửa ở RT29 |
+
+## 6. Giới hạn đã biết
+
+- Trần tốc độ thực tế khoảng **0,9–1,0 m/s** do điện áp pack và sức phản điện động; trên 0,9 m/s
+  lực còn dùng được chỉ khoảng ±0,2 N nên cú đẩy rất mạnh vẫn có thể làm xe ngã. Muốn nới cần
+  đổi pack 4S hoặc motor/giảm tốc, kèm cập nhật `CAT_VNL` và `CAT_PARAM[2]/[4]`.
+- Chưa có log xe cho bản RT29 (phần sửa chỉ là miễn hạn 4 s cho phanh do nhiễu).
+- Firmware không có watchdog độc lập: nếu MCU treo, TIM1 vẫn giữ duty cuối.
+- Mô hình mô phỏng chưa nhận dạng đầy đủ tải, ma sát, trượt; kết quả 36 ca không chứng minh
+  phục hồi với mọi cú va.
+
+## 7. Tài liệu
+
+- [`HANDOFF.md`](HANDOFF.md) — trạng thái từng bản, số đo và việc còn mở.
+- [`Docs/Tong_Quan_Do_An.md`](Docs/Tong_Quan_Do_An.md) — tổng quan đồ án.
+- [`Docs/Bang_Ma_Loi_Tu_Dong_Dung.md`](Docs/Bang_Ma_Loi_Tu_Dong_Dung.md) — mọi trường hợp firmware tự cắt motor.
+- [`Docs/Thuat_Toan_Dieu_Khien.md`](Docs/Thuat_Toan_Dieu_Khien.md) — luật điều khiển và các lớp giám sát.
+- [`Docs/Thong_So_Xe_Hien_Tai.md`](Docs/Thong_So_Xe_Hien_Tai.md) — thông số cơ khí, điện, encoder.
+- [`Docs/RT29_Tu_Ngat_4096.md`](Docs/RT29_Tu_Ngat_4096.md) — bản sửa mới nhất; các vòng trước ở `Docs/RT*.md`.
+- [`Simulation/README.md`](Simulation/README.md), [`Hardware/README.md`](Hardware/README.md) — hướng dẫn riêng từng phần.
+
+Log xe thô, dữ liệu đo và script phân tích từng vòng không đưa vào repo; số liệu dùng trong báo cáo
+đã chép lại trong `Docs/` và `HANDOFF.md`.

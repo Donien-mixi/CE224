@@ -1,0 +1,232 @@
+{
+  "source": "Owner attached ESP32 pinout image 2026-11-01",
+  "image_view": "component side, antenna top, USB bottom",
+  "image_left_top_to_bottom": [
+    "3V3",
+    "3V3",
+    "RST",
+    "GPIO4",
+    "GPIO5",
+    "GPIO6",
+    "GPIO7",
+    "GPIO15",
+    "GPIO16",
+    "GPIO17",
+    "GPIO18",
+    "GPIO8",
+    "GPIO3",
+    "GPIO46",
+    "GPIO9",
+    "GPIO10",
+    "GPIO11",
+    "GPIO12",
+    "GPIO13",
+    "GPIO14",
+    "5V",
+    "GND"
+  ],
+  "image_right_top_to_bottom": [
+    "GND",
+    "GPIO43",
+    "GPIO44",
+    "GPIO1",
+    "GPIO2",
+    "GPIO42",
+    "GPIO41",
+    "GPIO40",
+    "GPIO39",
+    "GPIO38",
+    "GPIO37",
+    "GPIO36",
+    "GPIO35",
+    "GPIO0",
+    "GPIO45",
+    "GPIO48",
+    "GPIO47",
+    "GPIO21",
+    "GPIO20",
+    "GPIO19",
+    "GND",
+    "GND"
+  ],
+  "pcb_orientation": "antenna left, USB right",
+  "old_mechanical_number_to_signal": {
+    "1": {
+      "signal": "GND",
+      "logical_pad": "GND"
+    },
+    "2": {
+      "signal": "GPIO43",
+      "logical_pad": "43"
+    },
+    "3": {
+      "signal": "GPIO44",
+      "logical_pad": "44"
+    },
+    "4": {
+      "signal": "GPIO1",
+      "logical_pad": "1"
+    },
+    "5": {
+      "signal": "GPIO2",
+      "logical_pad": "2"
+    },
+    "6": {
+      "signal": "GPIO42",
+      "logical_pad": "42"
+    },
+    "7": {
+      "signal": "GPIO41",
+      "logical_pad": "41"
+    },
+    "8": {
+      "signal": "GPIO40",
+      "logical_pad": "40"
+    },
+    "9": {
+      "signal": "GPIO39",
+      "logical_pad": "39"
+    },
+    "10": {
+      "signal": "GPIO38",
+      "logical_pad": "38"
+    },
+    "11": {
+      "signal": "GPIO37",
+      "logical_pad": "37"
+    },
+    "12": {
+      "signal": "GPIO36",
+      "logical_pad": "36"
+    },
+    "13": {
+      "signal": "GPIO35",
+      "logical_pad": "35"
+    },
+    "14": {
+      "signal": "GPIO0",
+      "logical_pad": "0"
+    },
+    "15": {
+      "signal": "GPIO45",
+      "logical_pad": "45"
+    },
+    "16": {
+      "signal": "GPIO48",
+      "logical_pad": "48"
+    },
+    "17": {
+      "signal": "GPIO47",
+      "logical_pad": "47"
+    },
+    "18": {
+      "signal": "GPIO21",
+      "logical_pad": "21"
+    },
+    "19": {
+      "signal": "GPIO20",
+      "logical_pad": "20"
+    },
+    "20": {
+      "signal": "GPIO19",
+      "logical_pad": "19"
+    },
+    "21": {
+      "signal": "GND",
+      "logical_pad": "GND"
+    },
+    "22": {
+      "signal": "GND",
+      "logical_pad": "GND"
+    },
+    "23": {
+      "signal": "GND",
+      "logical_pad": "GND"
+    },
+    "24": {
+      "signal": "5V",
+      "logical_pad": "5V"
+    },
+    "25": {
+      "signal": "GPIO14",
+      "logical_pad": "14"
+    },
+    "26": {
+      "signal": "GPIO13",
+      "logical_pad": "13"
+    },
+    "27": {
+      "signal": "GPIO12",
+      "logical_pad": "12"
+    },
+    "28": {
+      "signal": "GPIO11",
+      "logical_pad": "11"
+    },
+    "29": {
+      "signal": "GPIO10",
+      "logical_pad": "10"
+    },
+    "30": {
+      "signal": "GPIO9",
+      "logical_pad": "9"
+    },
+    "31": {
+      "signal": "GPIO46",
+      "logical_pad": "46"
+    },
+    "32": {
+      "signal": "GPIO3",
+      "logical_pad": "3"
+    },
+    "33": {
+      "signal": "GPIO8",
+      "logical_pad": "8"
+    },
+    "34": {
+      "signal": "GPIO18",
+      "logical_pad": "18"
+    },
+    "35": {
+      "signal": "GPIO17",
+      "logical_pad": "17"
+    },
+    "36": {
+      "signal": "GPIO16",
+      "logical_pad": "16"
+    },
+    "37": {
+      "signal": "GPIO15",
+      "logical_pad": "15"
+    },
+    "38": {
+      "signal": "GPIO7",
+      "logical_pad": "7"
+    },
+    "39": {
+      "signal": "GPIO6",
+      "logical_pad": "6"
+    },
+    "40": {
+      "signal": "GPIO5",
+      "logical_pad": "5"
+    },
+    "41": {
+      "signal": "GPIO4",
+      "logical_pad": "4"
+    },
+    "42": {
+      "signal": "RST",
+      "logical_pad": "RST"
+    },
+    "43": {
+      "signal": "3V3",
+      "logical_pad": "3V3"
+    },
+    "44": {
+      "signal": "3V3",
+      "logical_pad": "3V3"
+    }
+  },
+  "body_offset_status": "Provisional, not fabrication approved"
+}

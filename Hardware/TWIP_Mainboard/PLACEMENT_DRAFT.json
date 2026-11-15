@@ -1,0 +1,248 @@
+{
+  "status": "ROUTED_ELECTRICALLY_CHECKED_MECHANICAL_RF_LOAD_VALIDATION_PENDING",
+  "board_mm": [
+    160,
+    65
+  ],
+  "copper_tracks": 546,
+  "schematic_modified": "Electronic schematic unchanged by board resize; mounting holes board-only",
+  "modules": [
+    {
+      "ref": "U1",
+      "x_mm": 83.5,
+      "y_mm": 70.0,
+      "width_mm": 54,
+      "height_mm": 24,
+      "status": "ROUTED; physical offsets and purchased-part fit require final check",
+      "footprint": "XL4015_Measured_50x20_Edge2",
+      "rotation_deg": 0.0,
+      "body_name": "XL4015 / BUCK 5V"
+    },
+    {
+      "ref": "U3",
+      "x_mm": 181.5,
+      "y_mm": 72.5,
+      "width_mm": 64.34,
+      "height_mm": 28,
+      "status": "ROUTED; physical offsets and purchased-part fit require final check",
+      "footprint": "ESP32S3_2x22_Row25.5_VERIFY_MAP",
+      "rotation_deg": 180.0,
+      "body_name": "ESP32-S3 N16R8",
+      "body_length_mm": 57.34,
+      "antenna_extension_mm": 7,
+      "total_length_mm": 64.34,
+      "origin": "Center of57mm main body; not center of64mm envelope",
+      "antenna_width_mm_provisional": 28,
+      "body_bounds_kicad_mm": [
+        152.83,
+        58.5,
+        210.17,
+        86.5
+      ],
+      "antenna_bounds_kicad_mm": [
+        210.17,
+        58.5,
+        217.17,
+        86.5
+      ]
+    },
+    {
+      "ref": "U4",
+      "x_mm": 123.5,
+      "y_mm": 103.0,
+      "width_mm": 23,
+      "height_mm": 17.64,
+      "status": "ROUTED; physical offsets and purchased-part fit require final check",
+      "footprint": "DualA4950_2x07_Row20_VERIFY_MAP",
+      "rotation_deg": 0.0,
+      "body_name": "DUAL A4950"
+    },
+    {
+      "ref": "U5",
+      "x_mm": 123.5,
+      "y_mm": 82.0,
+      "width_mm": 18.1,
+      "height_mm": 13,
+      "status": "ROUTED; physical offsets and purchased-part fit require final check",
+      "footprint": "GY_BMI160_5plus7_Row10_VERIFY_MAP",
+      "rotation_deg": 0.0,
+      "body_name": "BMI160 / IMU",
+      "body_center_kicad_mm": [
+        123.1,
+        82
+      ],
+      "body_bounds_kicad_mm": [
+        114.05,
+        75.5,
+        132.15,
+        88.5
+      ],
+      "upper5row_offset_x_mm": -0.4
+    },
+    {
+      "ref": "U2",
+      "x_mm": 168.5,
+      "y_mm": 99.5,
+      "width_mm": 52.26,
+      "height_mm": 20,
+      "status": "ROUTED; physical offsets and purchased-part fit require final check",
+      "footprint": "BlackPill_WeAct_2x20_VERIFY",
+      "rotation_deg": 90.0,
+      "body_name": "STM32 BLACK PILL",
+      "body_center_kicad_mm": [
+        169.5,
+        99.5
+      ],
+      "body_bounds_kicad_mm": [
+        143.37,
+        89.5,
+        195.63,
+        109.5
+      ],
+      "origin": "Pin-array center, NOT body center; body center+1mm in KiCad X",
+      "body_length_source": "Derived:1+19*2.54+3=52.26mm from owner offsets"
+    },
+    {
+      "ref": "J1",
+      "x_mm": 82.5,
+      "y_mm": 108.0,
+      "width_mm": 9.08,
+      "height_mm": 6,
+      "status": "ROUTED; physical offsets and purchased-part fit require final check",
+      "footprint": "Battery_Terminal_2P_5.08",
+      "rotation_deg": 0.0
+    },
+    {
+      "ref": "J2",
+      "x_mm": 68.5,
+      "y_mm": 89.0,
+      "width_mm": 16.7,
+      "height_mm": 3.5,
+      "status": "ROUTED; physical offsets and purchased-part fit require final check",
+      "footprint": "Motor_1x06_2.54",
+      "rotation_deg": 0.0
+    },
+    {
+      "ref": "J3",
+      "x_mm": 97.5,
+      "y_mm": 89.0,
+      "width_mm": 16.7,
+      "height_mm": 3.5,
+      "status": "ROUTED; physical offsets and purchased-part fit require final check",
+      "footprint": "Motor_1x06_2.54",
+      "rotation_deg": 0.0
+    },
+    {
+      "ref": "BZ1",
+      "x_mm": 62.0,
+      "y_mm": 107.0,
+      "width_mm": 6.54,
+      "height_mm": 3.5,
+      "status": "ROUTED; physical offsets and purchased-part fit require final check",
+      "footprint": "Buzzer_Wire_1x02_2.54",
+      "rotation_deg": 0.0
+    },
+    {
+      "ref": "C1",
+      "x_mm": 117.5,
+      "y_mm": 66.5,
+      "width_mm": 8,
+      "height_mm": 8,
+      "status": "Selected THT electrolytic; electrical load testing pending",
+      "footprint": "CP_Radial_D8.0mm_P5.00mm",
+      "rotation_deg": -90.0,
+      "body_height_mm": 16,
+      "origin": "pad1_positive; body center offset in local +X"
+    },
+    {
+      "ref": "C2",
+      "x_mm": 101.5,
+      "y_mm": 105.0,
+      "width_mm": 10,
+      "height_mm": 10,
+      "status": "ROUTED; physical offsets and purchased-part fit require final check",
+      "footprint": "Radial_D10_P5_SELECT_PART",
+      "rotation_deg": 180.0
+    },
+    {
+      "ref": "C3",
+      "x_mm": 109.5,
+      "y_mm": 109.5,
+      "width_mm": 6,
+      "height_mm": 3.5,
+      "status": "THT radial MLCC P5mm; select fitting part",
+      "footprint": "C_Radial_MLCC_L6_W3.5_P5_THT",
+      "rotation_deg": -90.0
+    },
+    {
+      "ref": "C4",
+      "x_mm": 153.0,
+      "y_mm": 54.0,
+      "width_mm": 4,
+      "height_mm": 4,
+      "status": "Selected THT electrolytic; electrical load testing pending",
+      "footprint": "CP_Radial_D4.0mm_P2.00mm",
+      "rotation_deg": 0.0,
+      "body_height_mm": 7,
+      "origin": "pad1_positive; body center offset in local +X"
+    },
+    {
+      "ref": "C5",
+      "x_mm": 162.0,
+      "y_mm": 54.0,
+      "width_mm": 6,
+      "height_mm": 3.5,
+      "status": "THT radial MLCC P5mm; select fitting part",
+      "footprint": "C_Radial_MLCC_L6_W3.5_P5_THT",
+      "rotation_deg": 0.0
+    },
+    {
+      "ref": "C6",
+      "x_mm": 152.0,
+      "y_mm": 112.5,
+      "width_mm": 4,
+      "height_mm": 4,
+      "status": "Selected THT electrolytic; electrical load testing pending",
+      "footprint": "CP_Radial_D4.0mm_P2.00mm",
+      "rotation_deg": 0.0,
+      "body_height_mm": 7,
+      "origin": "pad1_positive; body center offset in local +X"
+    },
+    {
+      "ref": "C7",
+      "x_mm": 194.5,
+      "y_mm": 112.0,
+      "width_mm": 6,
+      "height_mm": 3.5,
+      "status": "THT radial MLCC P5mm; select fitting part",
+      "footprint": "C_Radial_MLCC_L6_W3.5_P5_THT",
+      "rotation_deg": 0.0
+    },
+    {
+      "ref": "C8",
+      "x_mm": 117.7,
+      "y_mm": 91.0,
+      "width_mm": 6,
+      "height_mm": 3.5,
+      "status": "THT radial MLCC P5mm; select fitting part",
+      "footprint": "C_Radial_MLCC_L6_W3.5_P5_THT",
+      "rotation_deg": 0.0
+    },
+    {
+      "ref": "C9",
+      "x_mm": 124.7,
+      "y_mm": 91.0,
+      "width_mm": 6,
+      "height_mm": 3.5,
+      "status": "THT radial MLCC P5mm; select fitting part",
+      "footprint": "C_Radial_MLCC_L6_W3.5_P5_THT",
+      "rotation_deg": 0.0
+    }
+  ],
+  "required": "Exact board photos/model+pin order+row spacing for all5 modules. Envelopes are allocation only, not drill templates.",
+  "body_dimensions_source": "Owner measurements, 2026-11-01; not pin/drill coordinates",
+  "physical_front_rear": "Front=7pin BMI160 row (bottom view in PCB); rear=5pin row (top). Owner confirmed.",
+  "copper_tracks_and_vias": 569,
+  "assembly": "ALL_THT",
+  "mounting_holes_file": "MOUNTING_HOLES.json"
+}

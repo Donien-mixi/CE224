@@ -1,0 +1,76 @@
+{
+  "board_mm": [
+    160,
+    65
+  ],
+  "status": "Hole centers supplied by owner; screw/washer fit pending",
+  "user_coordinate_units": "cm",
+  "user_origin": "PCB bottom-right edge corner near H3, NOT the H3 hole center",
+  "user_axes": "X toward H4 (left in KiCad); Y toward H2 (up in KiCad)",
+  "kicad_board_top_left_mm": [
+    50,
+    50
+  ],
+  "conversion": "KiCad_x_mm=210-10*user_X_cm; KiCad_y_mm=115-10*user_Y_cm",
+  "hole_drill_mm": 3.2,
+  "hole_type": "NPTH board-only, no electrical net",
+  "copper_keepout_diameter_mm": 8,
+  "hole_pitch_mm": [
+    145,
+    60
+  ],
+  "edge_to_center_mm": {
+    "short_left_right_edges": 7.5,
+    "long_top_bottom_edges": 2.5
+  },
+  "minimum_hole_edge_to_board_edge_mm": 0.9,
+  "holes": [
+    {
+      "ref": "H1",
+      "user_xy_cm": [
+        15.25,
+        6.25
+      ],
+      "pcb_center_mm": [
+        57.5,
+        52.5
+      ]
+    },
+    {
+      "ref": "H2",
+      "user_xy_cm": [
+        0.75,
+        6.25
+      ],
+      "pcb_center_mm": [
+        202.5,
+        52.5
+      ]
+    },
+    {
+      "ref": "H3",
+      "user_xy_cm": [
+        0.75,
+        0.25
+      ],
+      "pcb_center_mm": [
+        202.5,
+        112.5
+      ]
+    },
+    {
+      "ref": "H4",
+      "user_xy_cm": [
+        15.25,
+        0.25
+      ],
+      "pcb_center_mm": [
+        57.5,
+        112.5
+      ]
+    }
+  ],
+  "vehicle_front": "BMI160 7-pin row; toward board bottom / decreasing user Y",
+  "vehicle_rear": "BMI160 5-pin row; toward board top / increasing user Y",
+  "mechanical_note": "3.2mm-radius head projects0.7mm beyond top/bottom edge; 4mm-radius washer projects1.5mm. Confirm actual hardware and support. H2 near antenna: review RF clearance."
+}

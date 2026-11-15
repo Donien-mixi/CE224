@@ -17,7 +17,12 @@ static float gyro_bias_z = 0.0f;
 static uint8_t s_bmi160_i2c_addr = (0x68 << 1);
 static BMI160_RawData_t s_last_raw;
 static bool calibration_ok;
+static uint16_t read_errors, retry_ok;
+static uint32_t last_error, last_error_ms;
 bool BMI160_CalibrationOK(void) { return calibration_ok; }
+void BMI160_GetHealth(uint32_t health[4]) {
+    health[0]=read_errors;health[1]=retry_ok;health[2]=last_error;health[3]=last_error_ms;
+}
 
 /* Hàm phụ trợ ghi 1 byte vào thanh ghi I2C */
 static bool BMI160_WriteReg(uint8_t reg, uint8_t value)
@@ -30,18 +35,64 @@ static bool BMI160_WriteReg(uint8_t reg, uint8_t value)
 }
 
 /* Hàm phụ trợ đọc dữ liệu từ thanh ghi I2C */
-static bool BMI160_ReadReg(uint8_t reg, uint8_t *buffer, uint16_t len)
+static bool BMI160_ReadTimed(uint8_t reg,uint8_t *buffer,uint16_t len,uint32_t timeout)
 {
-    if (HAL_I2C_Mem_Read(&hi2c1, s_bmi160_i2c_addr, reg, I2C_MEMADD_SIZE_8BIT, buffer, len, 2) == HAL_OK)
-    {
-        return true;
+    /* Single I2C owner. HAL otherwise waits25ms for BUSY even if timeout=2.
+     * Never spend five control periods waiting for a stuck bus in TIM4. */
+    HAL_StatusTypeDef result;
+    /* A normal STOP may still be leaving the pins when HAL returns. Give it
+     * up to20us, not the HAL's25ms stuck-BUSY wait. Iteration bound also covers
+     * a disabled cycle counter during a diagnostic invocation. */
+    uint32_t stop_wait=DWT->CYCCNT;
+    for(unsigned i=0;HAL_I2C_GetState(&hi2c1)==HAL_I2C_STATE_READY&&
+        __HAL_I2C_GET_FLAG(&hi2c1,I2C_FLAG_BUSY)&&i<2048U;i++){
+        if((uint32_t)(DWT->CYCCNT-stop_wait)>=SystemCoreClock/1000000U*20U)break;
     }
+    if(HAL_I2C_GetState(&hi2c1)!=HAL_I2C_STATE_READY||__HAL_I2C_GET_FLAG(&hi2c1,I2C_FLAG_BUSY)) {
+        last_error=0x80000000U;result=HAL_BUSY;
+    }else{
+        result=HAL_I2C_Mem_Read(&hi2c1,s_bmi160_i2c_addr,reg,I2C_MEMADD_SIZE_8BIT,buffer,len,timeout);
+        if(result==HAL_OK)return true;
+        last_error=HAL_I2C_GetError(&hi2c1);
+        if(!last_error)last_error=result==HAL_TIMEOUT?HAL_I2C_ERROR_TIMEOUT:0x80000000U;
+    }
+    if(read_errors<UINT16_MAX)read_errors++;
+    last_error_ms=HAL_GetTick();
     return false;
+}
+static bool BMI160_ReadReg(uint8_t reg,uint8_t *buffer,uint16_t len){return BMI160_ReadTimed(reg,buffer,len,2);}
+
+/* Only called by Init: startup or explicit CALIB, with motors stopped and
+ * TIM4 paused. Open-drain bus clear cannot repair a broken wire or lost power. */
+static bool BMI160_ResetBus(void){
+    HAL_I2C_DeInit(&hi2c1);
+    GPIO_InitTypeDef pins={0};
+    pins.Pin=GPIO_PIN_8|GPIO_PIN_9;pins.Mode=GPIO_MODE_OUTPUT_OD;
+    pins.Pull=GPIO_PULLUP;pins.Speed=GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_8|GPIO_PIN_9,GPIO_PIN_SET);
+    HAL_GPIO_Init(GPIOB,&pins);HAL_Delay(1);
+    bool free=HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_8)==GPIO_PIN_SET;
+    for(unsigned i=0;free&&i<9&&HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_9)==GPIO_PIN_RESET;i++){
+        HAL_GPIO_WritePin(GPIOB,GPIO_PIN_8,GPIO_PIN_RESET);HAL_Delay(1);
+        HAL_GPIO_WritePin(GPIOB,GPIO_PIN_8,GPIO_PIN_SET);HAL_Delay(1);
+        free=HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_8)==GPIO_PIN_SET;
+    }
+    if(free){
+        HAL_GPIO_WritePin(GPIOB,GPIO_PIN_8|GPIO_PIN_9,GPIO_PIN_RESET);HAL_Delay(1);
+        HAL_GPIO_WritePin(GPIOB,GPIO_PIN_8,GPIO_PIN_SET);HAL_Delay(1);
+        HAL_GPIO_WritePin(GPIOB,GPIO_PIN_9,GPIO_PIN_SET);HAL_Delay(1);
+    }
+    free=free&&HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_8)==GPIO_PIN_SET&&HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_9)==GPIO_PIN_SET;
+    __HAL_RCC_I2C1_FORCE_RESET();__HAL_RCC_I2C1_RELEASE_RESET();
+    bool initialized=HAL_I2C_Init(&hi2c1)==HAL_OK;
+    return free&&initialized;
 }
 
 bool BMI160_Init(void)
 {
     uint8_t chip_id = 0;
+    calibration_ok=false;
+    if(!BMI160_ResetBus())return false;
 
     /* Thử đọc Chip ID tối đa 5 lần kết hợp tự động khôi phục bus I2C */
     for (int retry = 0; retry < 5; retry++)
@@ -49,6 +100,7 @@ bool BMI160_Init(void)
         // 1. Thử địa chỉ 0x68 trước (khi SDO nối GND)
         s_bmi160_i2c_addr = (0x68 << 1);
         HAL_Delay(25);
+        chip_id=0;
         BMI160_ReadReg(BMI160_REG_CHIP_ID, &chip_id, 1);
 
         // 2. Nếu không thấy 0xD1, thử tiếp địa chỉ 0x69 (khi SDO nối 3.3V)
@@ -64,10 +116,7 @@ bool BMI160_Init(void)
         }
 
         // Nếu bus I2C bị nghẽn (cờ BUSY), thực hiện Reset mềm ngoại vi I2C1
-        __HAL_RCC_I2C1_FORCE_RESET();
-        HAL_Delay(5);
-        __HAL_RCC_I2C1_RELEASE_RESET();
-        HAL_I2C_Init(&hi2c1);
+        if(!BMI160_ResetBus())return false;
     }
 
     if (chip_id != 0xD1)
@@ -76,39 +125,45 @@ bool BMI160_Init(void)
     }
 
     // 2. Reset mềm chip để đưa về trạng thái sạch sẽ
-    BMI160_WriteReg(BMI160_REG_CMD, BMI160_CMD_SOFT_RESET);
+    if(!BMI160_WriteReg(BMI160_REG_CMD, BMI160_CMD_SOFT_RESET))return false;
     HAL_Delay(15);
 
     // 3. Đánh thức Accelerometer vào Normal Mode
-    BMI160_WriteReg(BMI160_REG_CMD, BMI160_CMD_ACC_MODE_NORMAL);
+    if(!BMI160_WriteReg(BMI160_REG_CMD, BMI160_CMD_ACC_MODE_NORMAL))return false;
     HAL_Delay(5);
 
-    // 4. Đánh thức Gyroscope vào Normal Mode (Cần tối thiểu 50ms để bộ thạch anh ổn định)
-    BMI160_WriteReg(BMI160_REG_CMD, BMI160_CMD_GYR_MODE_NORMAL);
-    HAL_Delay(55);
+    // Bosch SensorAPI uses80ms for gyro suspend->normal; verify PMU afterward.
+    if(!BMI160_WriteReg(BMI160_REG_CMD, BMI160_CMD_GYR_MODE_NORMAL))return false;
+    HAL_Delay(85);
 
     // 5. Cấu hình Dải đo:
     // Gyro: +-2000 deg/s (Ghi 0x00 vào 0x43)
-    BMI160_WriteReg(BMI160_REG_GYR_RANGE, 0x00);
+    if(!BMI160_WriteReg(BMI160_REG_GYR_RANGE, 0x00))return false;
 
     // Accel: +-8g (Ghi 0x08 vào 0x41)
-    BMI160_WriteReg(BMI160_REG_ACC_RANGE, 0x08);
+    if(!BMI160_WriteReg(BMI160_REG_ACC_RANGE, 0x08))return false;
 
     // 0x28 = ODR 100Hz (0x08), normal bandwidth (0x20).
-    BMI160_WriteReg(BMI160_REG_ACC_CONF, 0x28);
-    BMI160_WriteReg(BMI160_REG_GYR_CONF, 0x28);
-
-    return true;
+    if(!BMI160_WriteReg(BMI160_REG_ACC_CONF, 0x28)||!BMI160_WriteReg(BMI160_REG_GYR_CONF, 0x28))return false;
+    uint8_t cfg[4],pmu;
+    return BMI160_ReadReg(BMI160_REG_ACC_CONF,cfg,4)&&cfg[0]==0x28&&cfg[1]==8&&cfg[2]==0x28&&cfg[3]==0&&
+        BMI160_ReadReg(0x03,&pmu,1)&&(pmu&0x3c)==0x14;
 }
 
 bool BMI160_Read_All(BMI160_Data_t *data)
 {
     uint8_t raw_buf[12];
+    uint32_t started=DWT->CYCCNT;
 
     // Đọc Burst 12 bytes liên tục: 6 bytes Gyro (Gx, Gy, Gz) + 6 bytes Accel (Ax, Ay, Az)
     if (!BMI160_ReadReg(BMI160_REG_DATA_0, raw_buf, 12))
     {
-        return false;
+        /* One immediate retry ONLY for a short address/data NACK. No cached
+         * sample, synthetic zero, bus reset or calibration inside the IRQ. */
+        if(last_error!=HAL_I2C_ERROR_AF||
+           (uint32_t)(DWT->CYCCNT-started)>SystemCoreClock/1000000U*750U||
+           !BMI160_ReadTimed(BMI160_REG_DATA_0,raw_buf,12,1))return false;
+        if(retry_ok<UINT16_MAX)retry_ok++;
     }
 
     // Ghép 2 bytes (LSB trước, MSB sau) thành số nguyên có dấu 16-bit
@@ -140,9 +195,8 @@ void BMI160_Calibrate_Gyro(uint16_t samples)
     float sum_x = 0.0f, sum_y = 0.0f, sum_z = 0.0f;
     uint8_t raw[12];
 
-    gyro_bias_x = 0.0f;
-    gyro_bias_y = 0.0f;
-    gyro_bias_z = 0.0f;
+    /* Transactional calibration: moving/failed attempts must not publish a
+     * spurious6dps bias (RT16 log11 metadata). ARM still stays locked on failure. */
 
     for (uint16_t i = 0; i < samples; i++)
     {
@@ -163,12 +217,10 @@ void BMI160_Calibrate_Gyro(uint16_t samples)
     }
 
     if (valid) {
-        gyro_bias_x = sum_x / (float)valid;
-        gyro_bias_y = sum_y / (float)valid;
-        gyro_bias_z = sum_z / (float)valid;
-        float means[3]={gyro_bias_x,gyro_bias_y,gyro_bias_z};
+        float means[3]={sum_x/valid,sum_y/valid,sum_z/valid};
         calibration_ok=valid==samples && samples>=200 && !moved;
         for(unsigned j=0;j<3;j++) if(sq[j]/valid-means[j]*means[j]>.04f)calibration_ok=false;
+        if(calibration_ok){gyro_bias_x=means[0];gyro_bias_y=means[1];gyro_bias_z=means[2];}
     }
 }
 

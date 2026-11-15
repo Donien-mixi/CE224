@@ -1,4 +1,5 @@
 #include "drive8_protocol.h"
+
 /**
   ******************************************************************************
   * @file    esp32_comm.c
@@ -73,23 +74,12 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
 static void Parse_Packet(const char* packet)
 {
-    if (HardwareTest_Command(packet)) return;
+    if(strncmp(packet,"$ARM,",5)&&strncmp(packet,"$MOVE8,",7)&&strcmp(packet,"$PING")&&strcmp(packet,"$STOP")&&strcmp(packet,"$CALIB"))return;
+
     /* Diagnostic mode accepts STOP only, including after finishing or aborting. */
     if (HardwareTest_IsLocked() && strncmp(packet, "$STOP", 5) != 0) return;
     if (s_command.trigger_calib && strcmp(packet,"$PING") && strncmp(packet,"$STOP",5)) return;
-    if (!strncmp(packet,"$PULSE,",7)) {
-        int wheel=0,dir=0;char tail;
-        if (sscanf(packet,"$PULSE,%d,%d%c",&wheel,&dir,&tail)==2 && wheel>=1 && wheel<=3 &&
-            (dir==1 || dir==-1) && Robot_GetData()->state!=ROBOT_STATE_BALANCING &&
-            Robot_GetData()->state!=ROBOT_STATE_BENCH_TEST && Robot_GetData()->state!=ROBOT_STATE_CALIBRATING &&
-            !s_command.arm_request && !s_command.trigger_calib && !s_command.diag_request && !s_command.emergency_stop) {
-            s_command.pulse_direction=(int8_t)dir;s_command.pulse_request=(uint8_t)wheel;
-            s_command.last_cmd_time=HAL_GetTick();
-        }
-    } else if (!strncmp(packet,"$PROFILE,",9)) {
-        /* Obsolete command deliberately ignored: R12 is fixed at boot. */
-        return;
-    } else if (!strncmp(packet,"$ARM,",5)) {
+    if (!strncmp(packet,"$ARM,",5)) {
         int profile=0;unsigned epoch=0;char tail,canonical[48];
         bool arm_valid=!strcmp(packet,"$ARM,12");
         if(sscanf(packet,"$ARM,%d,%u%c",&profile,&epoch,&tail)==2 && profile==12 && epoch>0 && epoch<=1000000000U){
@@ -115,40 +105,8 @@ static void Parse_Packet(const char* packet)
         s_command.last_cmd_time=HAL_GetTick();
     } else if (!strncmp(packet,"$MOVE,",6)) {
         return; // SPEED2-only command cannot preserve an old turn by accident.
-    } else if (!strcmp(packet,"$MEASURE")) {
-        if (!s_command.emergency_stop && Robot_GetData()->state!=ROBOT_STATE_BALANCING && Robot_GetData()->state!=ROBOT_STATE_BENCH_TEST) s_command.diag_request=2;
-    } else if (!strcmp(packet,"$DIAG")) {
-        if (!s_command.emergency_stop && Robot_GetData()->state!=ROBOT_STATE_BALANCING && Robot_GetData()->state!=ROBOT_STATE_BENCH_TEST) s_command.diag_request=1;
     } else if (!strcmp(packet,"$PING")) {
         s_command.last_cmd_time=HAL_GetTick();
-    } else if (strncmp(packet, "$CMD,", 5) == 0) {
-        char* endp = NULL;
-        float v = strtof(packet + 5, &endp);
-        float st = 0.0f;
-        if (endp && *endp == ',') {
-            st = strtof(endp + 1, NULL);
-        }
-        if (!isfinite(v)||!isfinite(st)||fabsf(v)>1.5f||fabsf(st)>1500) return;
-        /* This release validates only zero-speed balance; ignore drive commands. */
-        s_command.v_target = 0.0f;
-        s_command.steer_cmd = 0.0f;
-        s_command.last_cmd_time = HAL_GetTick();
-    } else if (strncmp(packet, "$PID,", 5) == 0) {
-        char* p = (char*)packet + 5;
-        float kp1 = strtof(p, &p); if (*p == ',') p++;
-        float kd1 = strtof(p, &p); if (*p == ',') p++;
-        float kp2 = strtof(p, &p); if (*p == ',') p++;
-        float ki2 = strtof(p, NULL);
-        /* Frozen candidate during this trial; web values cannot silently diverge. */
-        (void)kp1;(void)kd1;(void)kp2;(void)ki2;
-    } else if (strncmp(packet, "$TRIM,", 6) == 0) {
-        float trim = strtof(packet + 6, NULL);
-        (void)trim; /* Reference zero is distinct from physical COM trim. */
-    } else if (strncmp(packet, "$RACE,", 6) == 0) {
-        s_command.is_racing = 0;
-    } else if (strncmp(packet, "$BENCH,", 7) == 0) {
-        s_command.bench_test = 0; /* Motor tests use the bounded diagnostic jobs. */
-        s_command.last_cmd_time = HAL_GetTick();
     } else if (strncmp(packet, "$CALIB", 6) == 0) {
         if (!strcmp(packet,"$CALIB") && !s_command.emergency_stop &&
             Robot_GetData()->state!=ROBOT_STATE_BALANCING && Robot_GetData()->state!=ROBOT_STATE_BENCH_TEST &&

@@ -6,7 +6,7 @@ static const char *archiveErrorText(){
 static bool archiveSafeToRead(){
  xSemaphoreTake(captureMutex,portMAX_DELAY);
  bool safe=(!balanceSeen||(balanceLatest.state!=3&&balanceLatest.state!=7))&&
-    !balanceDownloading&&(int32_t)(balancePostUntil-millis())<=0&&jobLogs.active<0;
+    !balanceDownloading&&(int32_t)(balancePostUntil-millis())<=0;
  xSemaphoreGive(captureMutex);return safe;
 }
 static int archiveEntryIndex(const String &name){
@@ -19,10 +19,10 @@ static void setupNetworkRoutes(){
   uint32_t joins,leaves,stops,reason;
   portENTER_CRITICAL(&wifiHealthMux);joins=gatewayApConnect;leaves=gatewayApDisconnect;stops=gatewayApStop;reason=gatewayApReason;portEXIT_CRITICAL(&wifiHealthMux);
   char b[1024];snprintf(b,sizeof(b),
-   "{\"boot_id\":%lu,\"reset_code\":%lu,\"reset_reason\":\"%s\",\"uptime_ms\":%lu,\"heap_free\":%u,\"heap_min\":%u,\"psram_free\":%u,\"ap_clients\":%u,\"ap_joins\":%lu,\"ap_leaves\":%lu,\"ap_stops\":%lu,\"ap_reason\":%lu,\"ws_joins\":%lu,\"ws_leaves\":%lu,\"loop_gap_max_ms\":%lu,\"channel\":6,\"archive_ready\":%s,\"archive_error\":\"%s\",\"archive_saved\":%lu,\"archives\":%u}",
+   "{\"boot_id\":%lu,\"reset_code\":%lu,\"reset_reason\":\"%s\",\"uptime_ms\":%lu,\"heap_free\":%u,\"heap_min\":%u,\"psram_free\":%u,\"ap_clients\":%u,\"ap_joins\":%lu,\"ap_leaves\":%lu,\"ap_stops\":%lu,\"ap_reason\":%lu,\"ws_joins\":%lu,\"ws_leaves\":%lu,\"loop_gap_max_ms\":%lu,\"channel\":6,\"archive_ready\":%s,\"archive_error\":\"%s\",\"archive_saved\":%lu,\"archives\":%u,\"archive_format\":%u}",
    (unsigned long)gatewayBootId,(unsigned long)gatewayResetReason,gatewayResetText(gatewayResetReason),(unsigned long)millis(),ESP.getFreeHeap(),ESP.getMinFreeHeap(),ESP.getFreePsram(),WiFi.softAPgetStationNum(),
    (unsigned long)joins,(unsigned long)leaves,(unsigned long)stops,(unsigned long)reason,(unsigned long)gatewayWsConnected,(unsigned long)gatewayWsDisconnected,(unsigned long)gatewayLoopGapMax,
-   archiveMounted&&archiveError==0?"true":"false",archiveErrorText(),(unsigned long)archiveSaved,(unsigned)archiveCount);
+   archiveMounted&&archiveError==0?"true":"false",archiveErrorText(),(unsigned long)archiveSaved,(unsigned)archiveCount,(unsigned)archiveFormatState);
   if(download)server.sendHeader("Content-Disposition",String("attachment; filename=twip_network_boot_")+String(gatewayBootId)+".json");
   server.sendHeader("Cache-Control","no-store");server.send(200,"application/json",b);
  };

@@ -110,7 +110,7 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         if ~audit_motor then error("Observer audit requires motor audit");end
         E=[E;zeros(5,n)];
     end
-    push_state=zeros(7,1);motion_state=zeros(28,1);motion_word=0;push_fault=0;push_events=[];motion_events=[];driver_cancelled=%f;last_plan_wanted=0;last_plan_turn=0;sent_turn=0;
+    push_state=zeros(7,1);motion_state=zeros(29,1);motion_word=0;push_fault=0;push_events=[];motion_events=[];governor_events=[];driver_cancelled=%f;last_plan_wanted=0;last_plan_turn=0;sent_turn=0;
     external_stopped=%f; // Latched gateway/operator STOP, independent of PID stability.
     for k=1:N
         t=(k-1)*S.Ts;
@@ -186,6 +186,11 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         delta=((count(2)-cnt_zero(2))-(count(1)-cnt_zero(1)))*(2*%pi*P.r/S.ppr);
         vraw=mean(vrLR);cnt_prev=count;
         vf=(1-S.enc_beta)*vraw+S.enc_beta*vf; xhat=xhat+vf*S.Ts;
+        // RT16 supervisor uses the same count position as the R12 observer.
+        // Opt in for new studies; archived RT15/older runs keep their frame.
+        if isfield(S,"supervisor_count_position") then
+            if S.supervisor_count_position then xhat=mean(count-cnt_zero)*(2*%pi*P.r/S.ppr);end
+        end
         if isfield(S,"recovery_controller") then
             rc=S.recovery_controller;risk=abs(thhat/rad);
             recovery_vmean=.95*recovery_vmean+.05*vf;
@@ -201,21 +206,21 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
             impact=call("twip_motion_impact",[1;gyro/rad;norm_queue(1)],1,"d",motion_state,2,"d","out",[1,1],3,"d");
             if impact<>0 then push_fault=impact;push_events=[push_events;t,0,25,.8,.3,impact];n=k;break;end
             maneuver=motion_state(6)<>0 & motion_state(13)==0 & motion_state(7)==0 & motion_state(21)==0 & t*1000-motion_state(4)<350 & (motion_state(11)<>0 | motion_state(19)<>0 | motion_state(24)<>0 | motion_state(26)<>0);
-            push_result=call("twip_push_guard",[1;thhat/rad;gyro/rad;vf-motion_state(2);xhat-motion_state(1);.3;t*1000;vf;motion_state(2);bool2s(maneuver)],1,"d",push_state,2,"d","out",[11,1],3,"d");
+            push_result=call("twip_push_guard",[1;thhat/rad;gyro/rad;vf-motion_state(2);xhat-motion_state(1);.3;t*1000;vf;motion_state(2);bool2s(maneuver);norm_queue(1);motion_state(8)],1,"d",push_state,2,"d","out",[11,1],3,"d");
             push_state=push_result(1:7);push_fault=push_result(11);
             wanted=0;wanted_turn=0;
             for j=1:size(S.motion_plan,1)
                 if t>=S.motion_plan(j,1) & t<S.motion_plan(j,2) then wanted=S.motion_plan(j,3);if size(S.motion_plan,2)>=4 then wanted_turn=S.motion_plan(j,4);end;end
             end
             publish=%t;if isfield(S,"motion_freeze_at") then publish=t<S.motion_freeze_at;end
-            // Browser hold state, not plant truth: on a displayed inhibit the
-            // actual UI clears driveHeld and never resumes a held gesture.
+            // Match the actual UI: REC1 alone does not cancel a physical hold.
+            // A closed command/readiness gate does; only a new gesture resumes.
             changed=wanted<>last_plan_wanted | wanted_turn<>last_plan_turn;
             if changed then driver_cancelled=%f;end
             last_plan_wanted=wanted;last_plan_turn=wanted_turn;
-            // RT2 matches the browser: immediate direction/release events and40ms refresh.
-            if publish & (modulo(k-1,8)==0 | changed) then
-                if (wanted<>0 | wanted_turn<>0) & (push_state(6)<>0 | bitand(uint16(motion_state(10)),uint16(1))==0) then driver_cancelled=%t;end
+            // The production browser refreshes the latest hold/neutral every20ms.
+            if publish & (modulo(k-1,4)==0 | changed) then
+                if (wanted<>0 | wanted_turn<>0) & bitand(uint16(motion_state(10)),uint16(1))==0 then driver_cancelled=%t;end
                 sent_direction=wanted;sent_turn=wanted_turn;if driver_cancelled then sent_direction=0;sent_turn=0;end
                 motion_word=4*(floor(motion_word/4)+1);if sent_direction==1 then motion_word=motion_word+1;end;if sent_direction==-1 then motion_word=motion_word+2;end
             end
@@ -226,14 +231,27 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
                 end
                 ack=call("twip_motion_set_speed",selected_speed,1,"d","out",[1,1],2,"d");
             end
-            motion_result=call("twip_motion_reference",[1-push_state(6);motion_word;xhat;thhat/rad;gyro/rad;vf;t*1000;sent_turn;delta/S.coupled_pair(1);(vfLR(2)-vfLR(1))/S.coupled_pair(1)],1,"d",motion_state,2,"d","out",[29,1],3,"d");
-            motion_state=motion_result(1:28);
-            if motion_result(29)<>1 then error("Invalid motion reference");end
+            permission=1-push_state(6);
+            if isfield(S,"live_recovery_commands") then
+                if S.live_recovery_commands then permission=call("twip_recovery_drive_mode",[1;thhat/rad;gyro/rad;vf;motion_state(2)],1,"d",push_state,2,"d","out",[1,1],3,"d");end
+            end
+            motion_result=call("twip_motion_reference",[permission;motion_word;xhat;thhat/rad;gyro/rad;vf;t*1000;sent_turn;delta/S.coupled_pair(1);(vfLR(2)-vfLR(1))/S.coupled_pair(1);norm_queue(1)],1,"d",motion_state,2,"d","out",[30,1],3,"d");
+            motion_state=motion_result(1:29);
+            if motion_result(30)<>1 then error("Invalid motion reference");end
             cancel_fault=call("twip_motion_cancel_fault",[xhat;t*1000],1,"d",motion_state,2,"d","out",[1,1],3,"d");
             if cancel_fault<>0 then push_fault=cancel_fault;push_events=[push_events;t,0,25,.8,.3,cancel_fault];n=k;break;end
-            S.research_control.motion_ref=motion_state([1 2 17 18 28]);
-            motion_events=[motion_events;t,motion_state(1:2)',motion_state([10 11 12 13 14 17 18 19 21 22 24 26 28])'];
+            S.research_control.motion_ref=[motion_state(1);motion_state(2);motion_state(17);motion_state(18);1]; // legacy yaw_mode=1 (unchanged)
+            motion_events=[motion_events;t,motion_state(1:2)',motion_state([10 11 12 13 14 17 18 19 21 22 24 26 29])'];
+            if isfield(S,"governor_trace") then
+                if S.governor_trace then
+                    gg=call("twip_motion_governor","out",[5,1],1,"d");
+                    governor_events=[governor_events;t,gg'];
+                end
+            end
             S.push_diagnostic_limits=push_result([8 10 9]); // angle, distance, speed
+            // Optional scenario override for the acceptance ceiling. The firmware uses
+            // the1.12m/s MAX envelope for preset2, not the ordinary0.8m/s limit.
+            if isfield(S,"trial_speed_ceiling") then S.push_diagnostic_limits(3)=S.trial_speed_ceiling;end
             push_events=[push_events;t,push_state(6),push_result(8:11)'];
             if push_fault<>0 then n=k;break;end
         end
@@ -243,7 +261,13 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         if isfield(S,"trial_interlocks") & ~external_stopped then
             if isfield(S,"push_diagnostic_limits") then
                 lim=S.push_diagnostic_limits;
-                if S.trial_interlocks & (abs(thhat/rad)>lim(1) | abs(xhat-motion_state(1))>lim(2) | abs(vf)>lim(3)) then n=k;break;end
+                trip=0;
+                if abs(thhat/rad)>lim(1) then trip=trip+4;end
+                if abs(xhat-motion_state(1))>lim(2) then trip=trip+8;end
+                if abs(vf)>lim(3) then trip=trip+16;end
+                if S.trial_interlocks & trip<>0 then
+                    push_fault=trip;push_events=[push_events;t,push_state(6),lim(1),lim(3),lim(2),trip];n=k;break;
+                end
             else
                 if S.trial_interlocks & (abs(thhat/rad)>25 | abs(xhat)>.30 | abs(vf)>.80) then n=k;break;end
             end
@@ -384,6 +408,9 @@ function [T,Y,F,U,E]=mo_phong(P,K,S,kf)
         end
         if abs(y(3))>=65*rad | or(isnan(y)) | or(isinf(y)) then n=k+1; break; end
     end
-    if isfield(S,"push_trace_path") then csvWrite(push_events,S.push_trace_path);csvWrite(motion_events,S.push_trace_path+".motion.csv");end
+    if isfield(S,"push_trace_path") then
+        csvWrite(push_events,S.push_trace_path);csvWrite(motion_events,S.push_trace_path+".motion.csv");
+        if size(governor_events,"*")>0 then csvWrite(governor_events,S.push_trace_path+".governor.csv");end
+    end
     T=T(1:n); Y=Y(:,1:n); F=F(1:n); U=U(1:n); E=E(:,1:n);
 endfunction

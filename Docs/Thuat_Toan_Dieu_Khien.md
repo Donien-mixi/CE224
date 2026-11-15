@@ -1,3 +1,7 @@
+> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+
+> Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
+
 > Bản bàn giao hiện hành: xem [Phát triển tiếp](Phat_Trien_Tiep.md) và [Thông số xe](Thong_So_Xe_Hien_Tai.md). Một số ví dụ/giá trị trong tài liệu nền tảng này thuộc phiên bản trước; mã nguồn quyết định hành vi firmware hiện tại.
 
 # THUẬT TOÁN ĐIỀU KHIỂN & MÃ NGUỒN — XE CÂN BẰNG 2 BÁNH (TWIP ROBOT)
@@ -220,7 +224,7 @@ Giá trị enum trong `robot_fsm.h`:
 | Mã | Trạng thái | Ý nghĩa |
 | :-: | :-- | :-- |
 | 0 | `INIT` | Khởi tạo phần cứng |
-| 1 | `CALIBRATING` | Lấy 500 mẫu hiệu chuẩn Gyro tĩnh (~2.5s) |
+| 1 | `CALIBRATING` | Lấy 500 mẫu Gyro Bias (~5,15 s; 200 mẫu là bản thử đã khôi phục) |
 | 2 | `STANDBY` | Chờ dựng xe (đèn nháy chậm) |
 | 3 | `BALANCING` | Cân bằng chế độ thường ($\theta_{\max} = \pm 8^\circ$) |
 | 4 | `RACING` | Cân bằng chế độ đua ($\theta_{\max} = \pm 15^\circ$) |
@@ -232,7 +236,7 @@ Giá trị enum trong `robot_fsm.h`:
 stateDiagram-v2
     [*] --> INIT : Khởi động nguồn
     INIT --> CALIBRATING : Ngoại vi khởi tạo xong
-    CALIBRATING --> STANDBY : Lấy xong 500 mẫu Gyro Bias (~2.5s)
+    CALIBRATING --> STANDBY : Lấy xong 500 mẫu Gyro Bias (~5,15 s)
     STANDBY --> BALANCING : Dựng đứng xe (|θ| < 15°)
     STANDBY --> RACING : Dựng đứng xe + $RACE,1
     BALANCING --> RACING : $RACE,1

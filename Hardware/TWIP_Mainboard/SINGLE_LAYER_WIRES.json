@@ -1,0 +1,1197 @@
+{
+  "migrated_segments": 0,
+  "wire_harnesses": [
+    {
+      "ref": "W1",
+      "net": "/MOTOR_L_M2",
+      "anchors": [
+        {
+          "xy": [
+            74.85,
+            89.0
+          ],
+          "original": [
+            74.85,
+            89.0
+          ],
+          "module_pins": [
+            [
+              "J2",
+              "6"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            133.5,
+            108.08
+          ],
+          "original": [
+            133.5,
+            108.08
+          ],
+          "module_pins": [
+            [
+              "U4",
+              "AOUT1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W2",
+      "net": "/MOTOR_L_M1",
+      "anchors": [
+        {
+          "xy": [
+            62.15,
+            89.0
+          ],
+          "original": [
+            62.15,
+            89.0
+          ],
+          "module_pins": [
+            [
+              "J2",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            129.8123,
+            103.9814
+          ],
+          "original": [
+            129.8123,
+            103.9814
+          ],
+          "module_pins": [],
+          "solder_land_mm": 1.0,
+          "existing_module_hole": false
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W3",
+      "net": "/MOTOR_R_M1",
+      "anchors": [
+        {
+          "xy": [
+            99.4033,
+            97.92
+          ],
+          "original": [
+            99.4033,
+            97.92
+          ],
+          "module_pins": [],
+          "solder_land_mm": 1.0,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            113.5,
+            97.92
+          ],
+          "original": [
+            113.5,
+            97.92
+          ],
+          "module_pins": [
+            [
+              "U4",
+              "BOUT1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W4",
+      "net": "/MOTOR_R_M2",
+      "anchors": [
+        {
+          "xy": [
+            108.2217,
+            95.271
+          ],
+          "original": [
+            108.2217,
+            95.271
+          ],
+          "module_pins": [],
+          "solder_land_mm": 1.0,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            113.5,
+            95.38
+          ],
+          "original": [
+            113.5,
+            95.38
+          ],
+          "module_pins": [
+            [
+              "U4",
+              "BOUT2"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W5",
+      "net": "/VBAT_3S",
+      "anchors": [
+        {
+          "xy": [
+            79.96,
+            108.0
+          ],
+          "original": [
+            79.96,
+            108.0
+          ],
+          "module_pins": [
+            [
+              "J1",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            104.0,
+            105.0
+          ],
+          "original": [
+            104.0,
+            105.0
+          ],
+          "module_pins": [
+            [
+              "C2",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            109.5,
+            107.0
+          ],
+          "original": [
+            109.5,
+            107.0
+          ],
+          "module_pins": [
+            [
+              "C3",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            113.5,
+            108.079999
+          ],
+          "original": [
+            113.5,
+            108.079999
+          ],
+          "module_pins": [
+            [
+              "U4",
+              "VM"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "ref": "W7",
+      "net": "/+3V3",
+      "anchors": [
+        {
+          "xy": [
+            149.45,
+            91.88
+          ],
+          "original": [
+            149.45,
+            91.88
+          ],
+          "module_pins": [
+            [
+              "U2",
+              "3V3"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            192.63,
+            107.12
+          ],
+          "original": [
+            192.63,
+            107.12
+          ],
+          "module_pins": [
+            [
+              "U2",
+              "3V3"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W8",
+      "net": "/+3V3",
+      "anchors": [
+        {
+          "xy": [
+            101.31,
+            89.0
+          ],
+          "original": [
+            101.31,
+            89.0
+          ],
+          "module_pins": [
+            [
+              "J3",
+              "5"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            115.2,
+            91.0
+          ],
+          "original": [
+            115.2,
+            91.0
+          ],
+          "module_pins": [
+            [
+              "C8",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W9",
+      "net": "/+3V3",
+      "anchors": [
+        {
+          "xy": [
+            72.31,
+            89.0
+          ],
+          "original": [
+            72.31,
+            89.0
+          ],
+          "module_pins": [
+            [
+              "J2",
+              "5"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            99.1119,
+            85.2436
+          ],
+          "original": [
+            99.1119,
+            85.2436
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.8,
+          "existing_module_hole": false
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W10",
+      "net": "/+5V",
+      "anchors": [
+        {
+          "xy": [
+            153.0,
+            54.0
+          ],
+          "original": [
+            153.0,
+            54.0
+          ],
+          "module_pins": [
+            [
+              "C4",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            157.37,
+            59.75
+          ],
+          "original": [
+            157.37,
+            59.75
+          ],
+          "module_pins": [
+            [
+              "U3",
+              "5V"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            159.5,
+            54.0
+          ],
+          "original": [
+            159.5,
+            54.0
+          ],
+          "module_pins": [
+            [
+              "C5",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          2
+        ],
+        [
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W11",
+      "net": "/+5V",
+      "anchors": [
+        {
+          "xy": [
+            108.5,
+            60.0
+          ],
+          "original": [
+            108.5,
+            60.0
+          ],
+          "module_pins": [
+            [
+              "U1",
+              "OUT+"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            117.5,
+            66.5
+          ],
+          "original": [
+            117.5,
+            66.5
+          ],
+          "module_pins": [
+            [
+              "C1",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            144.37,
+            91.88
+          ],
+          "original": [
+            144.37,
+            91.88
+          ],
+          "module_pins": [
+            [
+              "U2",
+              "5V"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            152.0,
+            112.5
+          ],
+          "original": [
+            152.0,
+            112.5
+          ],
+          "module_pins": [
+            [
+              "C6",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            187.55,
+            107.12
+          ],
+          "original": [
+            187.55,
+            107.12
+          ],
+          "module_pins": [
+            [
+              "U2",
+              "5V"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            192.0,
+            112.0
+          ],
+          "original": [
+            192.0,
+            112.0
+          ],
+          "module_pins": [
+            [
+              "C7",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          5
+        ]
+      ]
+    },
+    {
+      "ref": "W12",
+      "net": "/+5V",
+      "anchors": [
+        {
+          "xy": [
+            113.5,
+            105.54
+          ],
+          "original": [
+            113.5,
+            105.54
+          ],
+          "module_pins": [
+            [
+              "U4",
+              "VCC"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            124.25,
+            104.75
+          ],
+          "original": [
+            124.25,
+            104.75
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.8,
+          "existing_module_hole": false
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W13",
+      "net": "/BUZZER_CTL",
+      "anchors": [
+        {
+          "xy": [
+            60.73,
+            107.0
+          ],
+          "original": [
+            60.73,
+            107.0
+          ],
+          "module_pins": [
+            [
+              "BZ1",
+              "1"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            144.37,
+            107.12
+          ],
+          "original": [
+            144.37,
+            107.12
+          ],
+          "module_pins": [
+            [
+              "U2",
+              "PB12"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W14",
+      "net": "/ENC_L_A",
+      "anchors": [
+        {
+          "xy": [
+            67.23,
+            89.0
+          ],
+          "original": [
+            67.23,
+            89.0
+          ],
+          "module_pins": [
+            [
+              "J2",
+              "3"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            123.9385,
+            74.3368
+          ],
+          "original": [
+            123.9385,
+            74.3368
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W15",
+      "net": "/ENC_L_B",
+      "anchors": [
+        {
+          "xy": [
+            69.77,
+            89.0
+          ],
+          "original": [
+            69.77,
+            89.0
+          ],
+          "module_pins": [
+            [
+              "J2",
+              "4"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        },
+        {
+          "xy": [
+            132.5933,
+            78.4916
+          ],
+          "original": [
+            132.5933,
+            78.4916
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W16",
+      "net": "/ENC_R_A",
+      "anchors": [
+        {
+          "xy": [
+            88.1232,
+            113.61
+          ],
+          "original": [
+            88.1232,
+            113.61
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            137.4428,
+            112.9318
+          ],
+          "original": [
+            137.4428,
+            112.9318
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W17",
+      "net": "/ENC_R_B",
+      "anchors": [
+        {
+          "xy": [
+            113.0303,
+            82.4457
+          ],
+          "original": [
+            113.0303,
+            82.4457
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            137.9907,
+            92.2595
+          ],
+          "original": [
+            137.9907,
+            92.2595
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W18",
+      "net": "/ESP_TX_STM_RX",
+      "anchors": [
+        {
+          "xy": [
+            178.4898,
+            103.684
+          ],
+          "original": [
+            178.4898,
+            103.684
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            185.7434,
+            103.3929
+          ],
+          "original": [
+            185.7434,
+            103.3929
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W19",
+      "net": "/ESP_TX_STM_RX",
+      "anchors": [
+        {
+          "xy": [
+            154.6115,
+            68.288
+          ],
+          "original": [
+            154.6115,
+            68.288
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            185.309999,
+            59.75
+          ],
+          "original": [
+            185.309999,
+            59.75
+          ],
+          "module_pins": [
+            [
+              "U3",
+              "17"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W20",
+      "net": "/I2C1_SDA",
+      "anchors": [
+        {
+          "xy": [
+            147.289,
+            94.4312
+          ],
+          "original": [
+            147.289,
+            94.4312
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            183.5991,
+            104.2659
+          ],
+          "original": [
+            183.5991,
+            104.2659
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W21",
+      "net": "/PWM_L_IN1",
+      "anchors": [
+        {
+          "xy": [
+            146.9295,
+            102.7058
+          ],
+          "original": [
+            146.9295,
+            102.7058
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            154.53,
+            107.12
+          ],
+          "original": [
+            154.53,
+            107.12
+          ],
+          "module_pins": [
+            [
+              "U2",
+              "PA8"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W22",
+      "net": "/PWM_L_IN2",
+      "anchors": [
+        {
+          "xy": [
+            144.3168,
+            101.9541
+          ],
+          "original": [
+            144.3168,
+            101.9541
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            157.07,
+            107.12
+          ],
+          "original": [
+            157.07,
+            107.12
+          ],
+          "module_pins": [
+            [
+              "U2",
+              "PA9"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W23",
+      "net": "/STM_TX_ESP_RX",
+      "anchors": [
+        {
+          "xy": [
+            154.2813,
+            67.3431
+          ],
+          "original": [
+            154.2813,
+            67.3431
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            182.769999,
+            59.75
+          ],
+          "original": [
+            182.769999,
+            59.75
+          ],
+          "module_pins": [
+            [
+              "U3",
+              "18"
+            ]
+          ],
+          "solder_land_mm": 0.3,
+          "existing_module_hole": true
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W24",
+      "net": "/STM_TX_ESP_RX",
+      "anchors": [
+        {
+          "xy": [
+            176.1025,
+            101.1787
+          ],
+          "original": [
+            176.1025,
+            101.1787
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        },
+        {
+          "xy": [
+            185.1888,
+            101.1787
+          ],
+          "original": [
+            185.1888,
+            101.1787
+          ],
+          "module_pins": [],
+          "solder_land_mm": 0.6,
+          "existing_module_hole": false
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "ref": "W26",
+      "net": "/GND",
+      "anchors": [
+        {
+          "xy": [
+            85.04,
+            108
+          ],
+          "module_pins": [
+            [
+              "J1",
+              "2"
+            ]
+          ],
+          "existing_module_hole": true,
+          "solder_land_mm": 0.3
+        },
+        {
+          "xy": [
+            138.0,
+            101.0
+          ],
+          "module_pins": [],
+          "existing_module_hole": false,
+          "solder_land_mm": 1.2
+        }
+      ],
+      "wire_edges": [
+        [
+          0,
+          1
+        ]
+      ]
+    }
+  ],
+  "copper_layer": "B.Cu only",
+  "physical_wire_side": "Solder side (bottom), insulated, hand soldered",
+  "physical_wire_pieces": 31,
+  "original_module_dimensions_unchanged": true
+}

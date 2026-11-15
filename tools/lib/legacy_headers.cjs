@@ -24,7 +24,11 @@ function ensureLegacyHeaders(root) {
     ['wanted*(s->x_ref-position)>.20f', 'wanted*(s->x_ref-position)>.10f']
   ]);
   patch('balance_turn.h', [
-    ['fmaxf(.40f,fminf(1,(.22f-fabsf', 'fmaxf(.20f,fminf(1,(.16f-fabsf']
+    /* RT23 moved the centre-drift knee22cm->45cm/floor40%->55%; the legacy
+     * baseline is the RT7 16cm/10cm/20% rule these two suites compare against. */
+    ['#define BALANCE_TURN_CENTER_KNEE 0.45f', '#define BALANCE_TURN_CENTER_KNEE 0.16f'],
+    ['#define BALANCE_TURN_CENTER_SPAN 0.20f', '#define BALANCE_TURN_CENTER_SPAN 0.10f'],
+    ['#define BALANCE_TURN_CENTER_FLOOR 0.55f', '#define BALANCE_TURN_CENTER_FLOOR 0.20f']
   ]);
   return legacy;
 }

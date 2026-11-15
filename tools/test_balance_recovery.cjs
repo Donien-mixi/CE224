@@ -32,7 +32,8 @@ int main(void){
   BalanceRecovery_Clear(&s);prime(&s);
   assert(!BalanceRecovery_Update(&s,true,sign*10,sign*100,sign*.5f,sign*.1f,.3f,2000));assert(s.active&&s.episodes==1);
   assert(BalanceRecovery_Angle(&s,25)==50&&BalanceRecovery_Speed(&s,.8f)==1.2f);
-  assert(fabsf(BalanceRecovery_Distance(&s,.3f)-.9f)<1e-6f);
+  /* RT27: the travel allowance is the RT21 0.8m (RT26's 0.35m lifted fault8). */
+  assert(fabsf(BalanceRecovery_Distance(&s,.3f)-.9f)<1e-5f);
   // A second impact cannot refresh the four-second timer.
   assert(!BalanceRecovery_Update(&s,true,sign*10,sign*100,sign*.5f,0,.3f,5999));assert(s.started_ms==2000);
   assert(BalanceRecovery_Update(&s,true,sign*10,sign*100,sign*.5f,0,.3f,6000)==4096);
@@ -40,8 +41,14 @@ int main(void){
   BalanceRecovery_Clear(&s);prime(&s);BalanceRecovery_Update(&s,true,10,100,.5f,0,.3f,2000);
   for(int i=0;i<100;i++){BalanceRecovery_Update(&s,true,0,0,0,.31f,.3f,2100+i*5);}assert(s.active);
   for(int i=0;i<59;i++){BalanceRecovery_Update(&s,true,0,0,0,.1f,.3f,2700+i*5);assert(s.active);}
-  assert(!BalanceRecovery_Update(&s,true,0,0,0,.1f,.3f,2995)&&!s.active&&!s.primed);
+  /* RT25: a settled exit keeps the envelope primed, so a push arriving right
+   * after an episode re-arms at once (log RT25(3): REC1 left at21.42s, the
+   * push came0.14s later and the500ms dwell could not re-prime it in time). */
+  assert(!BalanceRecovery_Update(&s,true,0,0,0,.1f,.3f,2995)&&!s.active&&s.primed);
+
   assert(BalanceRecovery_Angle(&s,25)==25&&BalanceRecovery_Speed(&s,.8f)==.8f&&BalanceRecovery_Distance(&s,.3f)==.3f);
+  /* and the retained priming lets the very next push re-arm the envelope */
+  assert(!BalanceRecovery_Update(&s,true,8,0,.1f,.1f,.3f,3000)&&s.active);
  }
  BalanceRecovery_Clear(&s);prime(&s);BalanceRecovery_Update(&s,true,10,100,.5f,.7f,.3f,2000);assert(s.distance_limit==1);
  assert(!BalanceRecovery_Update(&s,false,0,0,0,0,.3f,2100)&&!s.active&&!s.primed&&s.episodes==0);

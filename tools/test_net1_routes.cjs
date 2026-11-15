@@ -1,7 +1,9 @@
 // Compile actual journal readers and archive HTTP routes with a bounded fake FS.
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..'),out=path.join(root,'.build/net1_routes');fs.mkdirSync(out,{recursive:true});
-let mock=fs.readFileSync(path.join(__dirname,'test_drive8_gateway.cjs'),'utf8').match(/const mock=String.raw`([\s\S]*?)`;/)[1];
+// The ESP32 fake-FS harness (the `mock` template below) lives in the archived
+// gateway test; only that C harness is reused, no assertion comes from it.
+let mock=fs.readFileSync(path.join(__dirname,'legacy','test_drive8_gateway.cjs'),'utf8').match(/const mock=String.raw`([\s\S]*?)`;/)[1];
 mock=mock.replace('void remove(size_t p){erase(p);}','void remove(size_t p){erase(p);} int indexOf(char c)const{auto i=find(c);return i==npos?-1:(int)i;} int indexOf(const char*c)const{auto i=find(c);return i==npos?-1:(int)i;}');
 mock=mock.replace('int captureMutex,portMAX_DELAY,HTTP_GET=1,HTTP_POST=2;','bool archiveLocked=false;int captureMutex=0,archiveMutex=1,portMAX_DELAY,HTTP_GET=1,HTTP_POST=2;');
 mock=mock.replace('void xSemaphoreTake(int,int){assert(!held);held=true;}','int xSemaphoreTake(int m,int){if(m){assert(!archiveLocked);archiveLocked=true;}else{assert(!held);held=true;}return 1;}');
@@ -21,7 +23,7 @@ const char*gatewayResetText(unsigned){return "brownout";}
 struct{unsigned getFreeHeap(){return 100000;}unsigned getMinFreeHeap(){return 90000;}unsigned getFreePsram(){return 1000000;}}ESP;
 struct{unsigned softAPgetStationNum(){return 1;}}WiFi;
 struct{int active=-1;}jobLogs;
-bool archiveMounted=true;unsigned archiveError=0,archiveSaved=3,archiveCount=1;
+bool archiveMounted=true;unsigned archiveError=0,archiveSaved=3,archiveCount=1;volatile unsigned char archiveFormatState=0;
 char archiveCurrentName[40]={};
 struct ArchiveEntry{char name[40];uint32_t frames;bool partial;};ArchiveEntry archiveEntries[4]={};
 unsigned char payloadBuffer[sizeof(JournalInfo)+50*sizeof(BalanceFrame)];unsigned char*archiveBuffer=payloadBuffer;
@@ -29,7 +31,7 @@ const size_t ARCHIVE_PAYLOAD=sizeof(payloadBuffer);
 const char*FILE_READ="r";
 struct File {
  std::shared_ptr<std::vector<unsigned char>>v;size_t at=0;
- explicit operator bool()const{return !!v;}bool available(){return v&&at<v->size();}
+ explicit operator bool()const{return !!v;}int available(){return v?(int)(v->size()-at):0;}size_t position()const{return at;}
  size_t read(unsigned char*b,size_t n){if(!v)return 0;n=std::min(n,v->size()-at);memcpy(b,v->data()+at,n);at+=n;return n;}
  bool seek(size_t p){if(!v||p>v->size())return false;at=p;return true;}
  void close(){v.reset();}
@@ -68,8 +70,8 @@ void check(bool partial){
  failAfter=0;request("/balance-archive");assert(stopped&&FFat.files.size()==1);failAfter=-1;
 }
 int main(){
- assert(archivePartitionBlank());rawPartition.back()=0;assert(!archivePartitionBlank());rawPartition.back()=0xff;
- readError=true;assert(!archivePartitionBlank());readError=false;missingPartition=true;assert(!archivePartitionBlank());missingPartition=false;
+ assert(archivePartitionBlank(part.size));rawPartition.back()=0;assert(!archivePartitionBlank(part.size));rawPartition.back()=0xff;
+ readError=true;assert(!archivePartitionBlank(part.size));readError=false;missingPartition=true;assert(!archivePartitionBlank(part.size));missingPartition=false;
  setupNetworkRoutes();balanceLatest.state=2;
  check(false);check(true);
  balanceLatest.state=3;request("/balance-archive");assert(server.status==409);balanceLatest.state=2;
@@ -83,6 +85,6 @@ int main(){
  puts("PASS actual NET1 archive routes/readers: full and torn-tail CRC recovery, exact HTTP length/40-column rows, interrupted download retry, motor lock, path traversal, session/delete/current-log locks, no auto-delete, boot/reset diagnostics.");
 }
 `;
-const file=path.join(out,'net1.cpp'),exe=path.join(out,'net1.exe');fs.writeFileSync(file,mock+ext+readers+blank+rows+routes+checks);
-let r=cp.spawnSync('C:/msys64/ucrt64/bin/g++.exe',['-std=c++17','-Wall','-Wextra','-Werror','-I'+path.join(root,'ESP32_S3_Gateway'),file,'-o',exe],{encoding:'utf8'});assert.equal(r.status,0,r.stderr||String(r.error));
+const file=path.join(out,'net1.cpp'),exe=path.join(out,'net1.exe');fs.writeFileSync(file,'#define NET1_ROUTES_SKIP\n'+mock+ext+readers+blank+rows+routes+checks);
+let r=cp.spawnSync('C:/msys64/ucrt64/bin/g++.exe',['-std=c++17','-Wall','-Wextra','-Werror','-Wno-unused-function','-I'+path.join(root,'ESP32_S3_Gateway'),file,'-o',exe],{encoding:'utf8'});assert.equal(r.status,0,r.stderr||String(r.error));
 r=cp.spawnSync(exe,[],{encoding:'utf8'});assert.equal(r.status,0,r.stderr||String(r.error));process.stdout.write(r.stdout);

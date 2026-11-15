@@ -3,3 +3,6 @@
 *.lck
 *-backups/
 fp-info-cache
+
+# KiCad local file history (editor auto-backups), not part of the design
+.history/

@@ -9,6 +9,15 @@
 .idea/
 *.suo
 *.user
+# Arduino IDE build output for the gateway sketch
+ESP32_S3_Gateway/build/
+ESP32_S3_Gateway/.ESP32_S3_Gateway.ino.*.tmpdir/
+
+# Phiên làm việc của agent và thư mục tạm, không thuộc đồ án
+.dsh/
+/tmp/
+/log test/
+/output/
 
 # OS generated files
 .DS_Store
@@ -34,7 +43,11 @@ Simulation/current/*.dll
 Simulation/current/*_path.txt
 
 # Local measurement campaigns and automatically generated review material.
-Simulation/data/
+# Chỉ giữ đúng một CSV phát lại mà host test cần (tools/test_rt8_replay.cjs).
+Simulation/data/*
+!Simulation/data/raw/
+Simulation/data/raw/*
+!Simulation/data/raw/twip_balance_R12_27_replay.csv
 Simulation/reports/
 Simulation/archive/
 /test dưới sàn/

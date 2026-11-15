@@ -79,6 +79,9 @@ typedef struct {
   * @retval true nếu tìm thấy Chip ID 0xD1 và khởi tạo thành công, false nếu lỗi I2C
   */
 bool BMI160_Init(void);
+/* Lifetime (saturating16bit) read errors/recovered NACKs, last HAL error,
+ * last error time ms. Error bit31 means bus/HAL busy before transaction. */
+void BMI160_GetHealth(uint32_t health[4]);
 
 /**
   * @brief  Đọc Burst 12 bytes liên tục từ thanh ghi 0x0C đến 0x17

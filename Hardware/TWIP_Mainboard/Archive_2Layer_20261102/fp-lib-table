@@ -1,0 +1,4 @@
+(fp_lib_table
+ (version 7)
+ (lib (name "TWIP_Carrier")(type "KiCad")(uri "${KIPRJMOD}/TWIP_Carrier.pretty")(options "")(descr "Carrier draft / unverified module envelopes"))
+)

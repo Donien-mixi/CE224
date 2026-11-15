@@ -1,4 +1,5 @@
 #include "drive8_protocol.h"
+
 #pragma once
 // Main-loop only: HTTP handlers and WebSocket callbacks share this session state.
 // UART capture fields are read under captureMutex; no UART protocol changes.
@@ -98,7 +99,7 @@ static bool controlMessage(uint8_t client,const String &command) {
     return controlOwner==-1 || controlOwner==client;
   }
   if(command=="$STOP*") {controlStop("stop_button_ws");return false;}
-  if(command.startsWith("$MOVE8,") && command.endsWith("*") && command.length()<64) {
+  if((command.startsWith("$MOVE8,")) && command.endsWith("*") && command.length()<64) {
     if(strlen(command.c_str())!=command.length())return false;
     String body=command.substring(0,command.length()-1);Drive8Packet p;
     if(!Drive8_Parse(body.c_str(),&p)||p.epoch!=controlDriveEpoch||p.sequence<=controlMoveSequence||
@@ -108,7 +109,7 @@ static bool controlMessage(uint8_t client,const String &command) {
       bool ok=balanceSeen&&millis()-balanceReceived<300&&balanceLatest.state==3&&
         balanceLatest.controller==12&&balanceLatest.capture!=1&&(balanceLatest.motion_flags&1U)&&
         balanceLatest.drive_epoch==p.epoch&&balanceLatest.fault==0&&
-        !strncmp(balanceMeta,"$BINFO,BAL-20261024-R12-8DIR-RT8,",sizeof("$BINFO,BAL-20261024-R12-8DIR-RT8,")-1)&&
+        !strncmp(balanceMeta,"$BINFO,BAL-20261115-R12-8DIR-RT29-NOCUT,",sizeof("$BINFO,BAL-20261115-R12-8DIR-RT29-NOCUT,")-1)&&
         balanceCapacity&&millis()-controlPings[client]<600;
       xSemaphoreGive(captureMutex);if(!ok)return false;
     }
@@ -121,7 +122,7 @@ static bool controlMessage(uint8_t client,const String &command) {
     controlConnected(client);
     return false;
   }
-  if(command=="$DIAG*" || command=="$CALIB*") {
+  if(command=="$CALIB*") {
     xSemaphoreTake(captureMutex,portMAX_DELAY);
     bool stopped=balanceLatest.state!=3 && balanceLatest.state!=7;
     xSemaphoreGive(captureMutex);

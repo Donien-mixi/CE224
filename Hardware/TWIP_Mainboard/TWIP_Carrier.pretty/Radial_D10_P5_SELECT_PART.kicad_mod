@@ -1,0 +1,150 @@
+(footprint "Radial_D10_P5_SELECT_PART"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "Proposed radial capacitor D10mm P5mm H20mm; select exact matching part before assembly. C1 suggested Nichicon UHE1C102MPD, C2 UHE1V471MPD. Confirm ordered case variant.")
+	(property "Reference" "C2"
+		(at 0 2.1 180)
+		(layer "F.SilkS")
+		(uuid "4fabf91d-c15d-4144-86ce-27a46c8eaea7")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(property "Value" "470uF / 35V"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "a0f7daaa-ccd3-443c-bd10-318e440bbf27")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "ac027c50-561f-40fd-a109-4d365784df79")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "a34df885-0ad1-47d7-9c9b-8e69eb18c7c4")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -5.25 -5.25)
+		(end 5.25 -5.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "f96a3de7-3c91-4e38-bf5e-38cbda14e150")
+	)
+	(fp_line
+		(start -5.25 5.25)
+		(end -5.25 -5.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "22dbc65f-67a6-4467-a548-e73100ac9300")
+	)
+	(fp_line
+		(start 5.25 -5.25)
+		(end 5.25 5.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "0c91e026-02d8-49b7-8518-93e3977a7965")
+	)
+	(fp_line
+		(start 5.25 5.25)
+		(end -5.25 5.25)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "f4e54cbd-a58d-405a-9bfe-3d02d35f8bdb")
+	)
+	(fp_line
+		(start -5 -5)
+		(end 5 -5)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "2ee66b40-2a69-4ede-b16f-acabaf74b5fb")
+	)
+	(fp_line
+		(start -5 5)
+		(end -5 -5)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "88d9503f-9553-4f18-9aee-6f768b0df803")
+	)
+	(fp_line
+		(start 5 -5)
+		(end 5 5)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "49daa9b4-4198-4930-8249-ebac94320c05")
+	)
+	(fp_line
+		(start 5 5)
+		(end -5 5)
+		(stroke
+			(width 0.15)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "0acbab4b-9bfc-4125-8f46-ef3b7e159578")
+	)
+	(pad "1" thru_hole circle
+		(at -2.5 0)
+		(size 1.8 1.8)
+		(drill 0.8)
+		(layers "*.Cu" "B.Mask")
+		(remove_unused_layers no)
+		(uuid "538b1cf3-3f7c-44a5-a8df-a6ac261bcd62")
+	)
+	(pad "2" thru_hole circle
+		(at 2.5 0)
+		(size 1.8 1.8)
+		(drill 0.8)
+		(layers "*.Cu" "B.Mask")
+		(remove_unused_layers no)
+		(thermal_gap 0.2)
+		(uuid "49ddc6da-8b83-4cb7-b93c-c473b5c7f85b")
+	)
+	(embedded_fonts no)
+)
