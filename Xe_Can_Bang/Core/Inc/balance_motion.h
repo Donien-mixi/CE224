@@ -5,7 +5,12 @@
 #ifndef BALANCE_MOTION_SPEED
 /* RT19: third preset is0.80m/s, not0.95. A measured floor slope puts PWM2499 at
  * ~0.96m/s, so0.95 needed97-99%duty and left no balance authority. */
-#define BALANCE_MOTION_SPEED (s->speed_preset==2? .80f:s->speed_preset? .72f:.50f)
+/* RT32 (chot 17/11/2026): bo toc do cuoi cung 50 /80 /90 cm/s.
+ * Do tu log that (13 226 mau RT19+ va log 37/38): v =1.0008*duty -0.0236, nen
+ * 0.90 can duty0.879@12.2V,0.900@11.9V,0.955@11.2V (tien; lui +2,7%).
+ * Nguong governor 0.90 => 0.90 la moc sat bien: chi dung khi pin>=12.0V.
+ * 0.80 o giua can duty0.790@12.2V /0.823@11.7V /0.859@11.2V. */
+#define BALANCE_MOTION_SPEED (s->speed_preset==2? .90f:s->speed_preset? .80f:.50f)
 #endif
 #ifndef BALANCE_MOTION_ACCEL
 #define BALANCE_MOTION_ACCEL (s->speed_preset?(fabsf(old)>.50f?.40f:.70f):(fabsf(old)>.50f?.30f:.60f))

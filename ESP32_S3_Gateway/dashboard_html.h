@@ -145,8 +145,8 @@ button:focus:not(:focus-visible){outline:none}
    <span class="u" style="font-size:10px;color:var(--muted)">cm/s</span>
    <div class="seg speeds">
     <button type="button" id="speed-normal" class="selected" onclick="selectDriveSpeed(0)">50</button>
-    <button type="button" id="speed-fast" onclick="selectDriveSpeed(1)">72</button>
-    <button type="button" id="speed-max" onclick="selectDriveSpeed(2)">MAX 80</button>
+    <button type="button" id="speed-fast" onclick="selectDriveSpeed(1)">80</button>
+    <button type="button" id="speed-max" onclick="selectDriveSpeed(2)">MAX 90</button>
    </div>
   </div>
  </div>
@@ -343,11 +343,11 @@ function isRunning(){return row[4]===3||row[4]===7;}
 function fresh(){return data&&data.seen&&data.age_ms<500&&Date.now()-lastFresh<500;}
 function activeController(){return row[27];}
 function armAngleLimit(){var m=data?data.meta.split(','):[],a=Number(m[19]);return (activeController()===12&&a===60)?60:0;}
-function matched(){return data&&data.meta.indexOf('$BINFO,BAL-20261115-R12-8DIR-RT29-NOCUT,')===0&&activeController()===12&&Number(data.meta.split(',')[17])===12;}
+function matched(){return data&&data.meta.indexOf('$BINFO,BAL-20261117-R12-8DIR-RT32-508090,')===0&&activeController()===12&&Number(data.meta.split(',')[17])===12;}
 function selectMode(){releaseDrive();mode='balance';updateButtons();}
 function blockers(forMotion){
  if(!fresh())return ['Chưa nhận dữ liệu mới từ STM32. Kiểm tra nguồn STM32 và dây UART; Wi-Fi kết nối chưa đủ.'];
- if(!matched())return ['Chờ thông tin phiên bản STM32 BAL-20261115-R12-8DIR-RT29-NOCUT. Nạp cả STM32 và ESP32 bản R12 chính thức; chờ cấu hình xác nhận.'];
+ if(!matched())return ['Chờ thông tin phiên bản STM32 BAL-20261117-R12-8DIR-RT32-508090. Nạp cả STM32 và ESP32 bản R12 chính thức; chờ cấu hình xác nhận.'];
  if(!wsOK)return ['Mất kênh lệnh từ trình duyệt. Kết nối lại Wi-Fi rồi mở lại trang.'];
  if(!data.capacity)return ['ESP32 chưa cấp được bộ nhớ log. Kiểm tra cấu hình OPI PSRAM khi nạp ESP32.'];
  if(!forMotion&&data.samples>=data.capacity)return ['Log đã đầy. Dừng, tải log rồi xóa log cũ trước lần chạy mới.'];

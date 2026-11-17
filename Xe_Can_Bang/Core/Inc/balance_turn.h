@@ -44,6 +44,10 @@
 #define BALANCE_TURN_WHEEL_ENV_50 0.80f
 #endif
 #ifndef BALANCE_TURN_WHEEL_ENV_72
+/* RT32: preset 1 la 0.80m/s (truoc la0.72) nhung tran banh GIU NGUYEN 0.98:
+ * mot tran banh khong phai tran truc, va o0.80 mot cu cheo1.15rad/s can banh
+ * ngoai0.95m/s - con duoi0.98. Nang len nua se chi lam lenh vuot qua VNL
+ * (0.92-0.96m/s o pin yeu) ma khong tao duoc momen. */
 #define BALANCE_TURN_WHEEL_ENV_72 0.98f
 #endif
 #ifndef BALANCE_TURN_WHEEL_ENV_80

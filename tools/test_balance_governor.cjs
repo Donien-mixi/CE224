@@ -14,14 +14,14 @@ static void init(void){BalanceGovernor_Reset(&gov);BalanceMotion_Clear(&s);Balan
  int main(void){
  init();float old=0,last_a=0;
  for(int i=0;i<1400;i++){step(1,800);assert(fabsf(s.v_ref-old)<.00351f);assert(isfinite(gov.acceleration));if(i<300)assert(fabsf(gov.acceleration-last_a)<.0151f);old=s.v_ref;last_a=gov.acceleration;}
- assert(fabsf(s.v_ref-.80f)<.0001f&&s.ready&&!s.cancel_flags);
- // RT19: preset2 is0.80m/s; the governor must still reach it with reserve.
- for(int i=0;i<10000;i++){step(1,800);assert(fabsf(s.v_ref-.80f)<.0001f);}
+ assert(fabsf(s.v_ref-.90f)<.0001f&&s.ready&&!s.cancel_flags);
+ // RT19: preset2 is0.90m/s; the governor must still reach it with reserve.
+ for(int i=0;i<10000;i++){step(1,800);assert(fabsf(s.v_ref-.90f)<.0001f);}
  float high=s.v_ref;for(int i=0;i<200;i++){step(1,2499);}assert(gov.limited&&s.v_ref<high-.02f&&s.v_ref>high-.15f&&s.requested==1&&s.ready);
- for(int i=0;i<1600;i++){step(-1,800);}assert(fabsf(s.v_ref+.80f)<.0001f);
+ for(int i=0;i<1600;i++){step(-1,800);}assert(fabsf(s.v_ref+.90f)<.0001f);
  init();for(int i=0;i<350;i++){step(1,800);}float before=s.v_ref;
  for(int i=0;i<250;i++){step(1,2380);}/* RT22: pressure crawls at0.06m/s^2 instead of freezing: <=0.075m/s over1.25s */
- assert(gov.limited&&s.v_ref>before-.01f&&s.v_ref<before+.10f&&s.v_ref<.80f&&s.requested==1&&s.ready);
+ assert(gov.limited&&s.v_ref>before-.01f&&s.v_ref<before+.10f&&s.v_ref<.90f&&s.requested==1&&s.ready);
  for(int i=0;i<1000;i++){step(1,800);}assert(!gov.pressure&&s.v_ref>before+.1f);
  for(int i=0;i<800;i++){step(0,2499);}assert(fabsf(s.v_ref)<.0001f); // pressure cannot prevent operator release
  gov.pressure=true;float anchor=1.0f;BalanceGovernor_Anchor(&gov,&anchor,0,1);assert(fabsf(anchor-.10f)<.0001f);
@@ -55,5 +55,5 @@ static void init(void){BalanceGovernor_Reset(&gov);BalanceMotion_Clear(&s);Balan
   for(int i=0;i<400;i++){float next=BalanceGovernor_Step(&gov,v,0,.9f,0,0,0);assert(fabsf(next)<=fabsf(v)+.000001f);assert(next*sign>=-.000001f);v=next;}
   assert(fabsf(v)<.00001f);
  }
- puts("PASS governor: jerk/ramp, preset2(0.80) reach/long hold/reverse, pressure continuous hold/resume, neutral monotonicity both directions and nonfinite.");}
+ puts("PASS governor: jerk/ramp, preset2(0.90) reach/long hold/reverse, pressure continuous hold/resume, neutral monotonicity both directions and nonfinite.");}
 `;fs.writeFileSync('.build/governor_test/test.c',src);let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror','-IXe_Can_Bang/Core/Inc','.build/governor_test/test.c','-lm','-o','.build/governor_test/test.exe'],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);r=cp.spawnSync('.build/governor_test/test.exe',[],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);process.stdout.write(r.stdout);

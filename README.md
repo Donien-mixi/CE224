@@ -4,15 +4,16 @@
 ESP32-S3 làm gateway Wi-Fi có trang điều khiển và ghi log, Scilab mô phỏng lại đúng phần
 luật điều khiển đang nạp trên xe.
 
-**Bản phát hành hiện hành: RT29-NOCUT / NET30 (15/11/2026).**
-Firmware đã đóng gói kèm hash trong [`Firmware/RT29_NOCUT_20261115/`](Firmware/RT29_NOCUT_20261115/),
-trạng thái kỹ thuật và việc còn mở ở [`HANDOFF.md`](HANDOFF.md).
+**Bản phát hành hiện hành: RT32-508090 / NET33 (17/11/2026) — ba mức 50 / 80 / 90 cm/s + bù lệch bánh trái.**
+Firmware đã đóng gói kèm hash trong [`Firmware/RT32_508090_20261117/`](Firmware/RT32_508090_20261117/),
+trạng thái kỹ thuật và việc còn mở ở [`HANDOFF.md`](HANDOFF.md), phân tích ở
+[`Docs/RT32_Bo_Toc_Do_50_80_90.md`](Docs/RT32_Bo_Toc_Do_50_80_90.md).
 
 ## 1. Kiến trúc
 
 | Khối | Nội dung |
 |---|---|
-| STM32F411CEU6 | Vòng điều khiển 200 Hz (TIM4). Đọc BMI160 qua I2C, hai encoder GA25, xuất PWM cho hai driver A4950. Luật lực R12 (14 trạng thái quan sát, K = 9.1508 / 6.1289 / 14.3279 / 1.1605). Ba mức 0,50 / 0,72 / 0,80 m/s, 8 hướng, quay tại chỗ 1,3–2,4 rad/s. |
+| STM32F411CEU6 | Vòng điều khiển 200 Hz (TIM4). Đọc BMI160 qua I2C, hai encoder GA25, xuất PWM cho hai driver A4950. Luật lực R12 (14 trạng thái quan sát, K = 9.1508 / 6.1289 / 14.3279 / 1.1605). Ba mức 0,50 / 0,80 / 0,90 m/s, 8 hướng, quay tại chỗ 1,3–2,4 rad/s. |
 | Lớp giám sát | `balance_startup` (dựng xe từ 60°), `balance_recovery` (REC1), `balance_governor` (dự phòng mô-men), `balance_interlock` (trần tốc độ), `balance_motion` / `balance_turn` (quỹ đạo, mốc vị trí, mốc hướng). Không đổi gain/observer/phân bổ lực R12. |
 | ESP32-S3 | SoftAP `TWIP_RACER_S3` / `12345678`, HTTP :80, WebSocket :81, UART1 115200 (GPIO18/17). Trang `/ui/r12`, log 122 byte/khung, 40 cột, 50 Hz, lưu RAM và vùng Flash. |
 | Scilab + GCC | Mô phỏng dùng **chính header C của firmware** (`Simulation/current`, biên dịch native) nên không có bản sao luật điều khiển. |
@@ -22,14 +23,15 @@ trạng thái kỹ thuật và việc còn mở ở [`HANDOFF.md`](HANDOFF.md).
 
 | Board | Build ID | Tệp | SHA-256 (rút gọn) |
 |---|---|---|---|
-| STM32 | `BAL-20261115-R12-8DIR-RT29-NOCUT` | `STM32_BAL_R12_RT29_NOCUT.bin` (+`.hex`, `.elf`) | `16effa542e76975a…` |
-| ESP32-S3 | `TWIP-WEB-20261115-BAL-R12-8DIR-RT29-NOCUT-NET30` | `ESP32_RT29_NOCUT_NET30.app.bin` (+ bootloader, partitions, boot_app0) | `0581361f1b797e00…` |
+| STM32 | `BAL-20261117-R12-8DIR-RT32-508090` | `STM32_BAL_R12_RT32_508090.bin` (+`.hex`, `.elf`) | `0b037185fb297cb8…` |
+| ESP32-S3 | `TWIP-WEB-20261117-BAL-R12-8DIR-RT32-508090-NET33` | `ESP32_RT32_508090_NET33.app.bin` (+ bootloader, partitions, boot_app0) | `991c33d45ccbfaca…` |
 
-Hash đầy đủ ở `Firmware/RT29_NOCUT_20261115/SHA256.json`; hash của **12 tệp nguồn đã sinh ra
+Hash đầy đủ ở `Firmware/RT32_508090_20261117/SHA256.json`; hash của **13 tệp nguồn đã sinh ra
 đúng cặp binary này** ở `SOURCE_SHA256.json` trong cùng thư mục. Hai board phải nạp cùng bản:
 gateway đối chiếu build ID với STM32 và từ chối điều khiển nếu lệch ngày/bản.
 
-Cách nạp và kiểm hash: xem [`Firmware/RT29_NOCUT_20261115/README.md`](Firmware/RT29_NOCUT_20261115/README.md).
+Cách nạp và kiểm hash: xem [`Firmware/RT32_508090_20261117/README.md`](Firmware/RT32_508090_20261117/README.md).
+Bản chốt trước (RT29, ba mức 50/72/80) vẫn giữ trong `Firmware/RT29_NOCUT_20261115/` để quay lại.
 
 ## 3. Cấu trúc repo
 
@@ -67,17 +69,19 @@ node tools/run_governor_sim.cjs --stress --launch --launch50
 
 | Hạng mục | Kết quả | Điều kiện |
 |---|---|---|
-| Host test | **30/30 pass** | Node.js 24, GCC 13 (msys2), mỗi test tự biên dịch phần C tương ứng |
-| Mô phỏng native | **36/36 ca đủ 20/20 s, không fault** | 12 ca tốc độ + 12 ca biên + 12 ca khởi hành 50 cm/s |
-| Nguồn ↔ binary | 12/12 tệp khớp `SOURCE_SHA256.json` | Hash tính lại tại máy này, 15/11/2026 |
-| Log xe thật | Dùng để sửa RT22 → RT29 | Log gần nhất `(12)(3)` chạy bản RT28: 3 lần tự ngắt oan `fault 4096`, đã sửa ở RT29 |
+| Host test | **31/31 pass** | Node.js 24, GCC 13 (msys2), mỗi test tự biên dịch phần C tương ứng |
+| Mô phỏng native | **36/36 ca đủ 20/20 s** khi chọn mức ≤ 80; **33/36** khi chạy MAX 90 | 12 ca tốc độ + 12 ca biên + 12 ca khởi hành. Ba ca ngã khi MAX 90 là pin 11,2 V và motor yếu 20 % — đúng vùng bị cấm |
+| Nguồn ↔ binary | 13/13 tệp khớp `SOURCE_SHA256.json` | Hash tính lại tại máy này, 17/11/2026 |
+| Log xe thật | RT30 (0,86) và RT31 (0,90) đã chạy trên xe | Vận tốc p95 0,906 / đỉnh 0,938 m/s; 0 lần tự ngắt |
 
 ## 6. Giới hạn đã biết
 
-- Trần tốc độ thực tế khoảng **0,9–1,0 m/s** do điện áp pack và sức phản điện động; trên 0,9 m/s
-  lực còn dùng được chỉ khoảng ±0,2 N nên cú đẩy rất mạnh vẫn có thể làm xe ngã. Muốn nới cần
-  đổi pack 4S hoặc motor/giảm tốc, kèm cập nhật `CAT_VNL` và `CAT_PARAM[2]/[4]`.
-- Chưa có log xe cho bản RT29 (phần sửa chỉ là miễn hạn 4 s cho phanh do nhiễu).
+- Trần tốc độ thực tế khoảng **0,93–0,95 m/s** do điện áp pack và sức phản điện động. Ở mức MAX 90
+  duty đã tới 0,92 nên **chỉ dùng khi pin ≥ 12,0 V**; trên 0,9 m/s lực còn dùng được rất ít nên cú đẩy
+  mạnh vẫn có thể làm xe ngã. Muốn nới cần đổi pack 4S hoặc motor/giảm tốc, kèm cập nhật `CAT_VNL`
+  và `CAT_PARAM[2]/[4]`.
+- Bù lệch bánh trái (110 PWM) chỉ bù mô-men; nó không làm bánh trái khoẻ thêm, nên rẽ phải khi tiến
+  vẫn kém gắt hơn rẽ trái (đo trên log RT31: 1,12 so với 1,29 rad/s). Muốn cân hẳn phải xử lý cơ khí.
 - Firmware không có watchdog độc lập: nếu MCU treo, TIM1 vẫn giữ duty cuối.
 - Mô hình mô phỏng chưa nhận dạng đầy đủ tải, ma sát, trượt; kết quả 36 ca không chứng minh
   phục hồi với mọi cú va.
@@ -89,7 +93,7 @@ node tools/run_governor_sim.cjs --stress --launch --launch50
 - [`Docs/Bang_Ma_Loi_Tu_Dong_Dung.md`](Docs/Bang_Ma_Loi_Tu_Dong_Dung.md) — mọi trường hợp firmware tự cắt motor.
 - [`Docs/Thuat_Toan_Dieu_Khien.md`](Docs/Thuat_Toan_Dieu_Khien.md) — luật điều khiển và các lớp giám sát.
 - [`Docs/Thong_So_Xe_Hien_Tai.md`](Docs/Thong_So_Xe_Hien_Tai.md) — thông số cơ khí, điện, encoder.
-- [`Docs/RT29_Tu_Ngat_4096.md`](Docs/RT29_Tu_Ngat_4096.md) — bản sửa mới nhất; các vòng trước ở `Docs/RT*.md`.
+- [`Docs/RT32_Bo_Toc_Do_50_80_90.md`](Docs/RT32_Bo_Toc_Do_50_80_90.md) — bộ tốc độ 50/80/90 và bù lệch bánh trái (bản hiện hành).\n- [`Docs/RT29_Tu_Ngat_4096.md`](Docs/RT29_Tu_Ngat_4096.md) — bản sửa trước; các vòng cũ hơn ở `Docs/RT*.md`.
 - [`Simulation/README.md`](Simulation/README.md), [`Hardware/README.md`](Hardware/README.md) — hướng dẫn riêng từng phần.
 
 Log xe thô, dữ liệu đo và script phân tích từng vòng không đưa vào repo; số liệu dùng trong báo cáo

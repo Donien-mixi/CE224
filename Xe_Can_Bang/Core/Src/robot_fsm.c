@@ -32,6 +32,7 @@ static BalanceGovernor bal_governor;
 #include "balance_motion.h"
 #include "balance_turn.h"
 #include "balance_interlock.h"
+#include "balance_trim.h"
 
 #include "phase2_motion_control.h"
 static BalanceStartup bal_startup={.budget=.30f,.angle_limit=25.0f};
@@ -385,8 +386,11 @@ void Robot_ControlLoop_200Hz(void) {
             s_robot.pwm_base=0;
             s_robot.v_control=bal_catalog[1];s_robot.theta_control=bal_catalog[2]*RAD_TO_DEG;
         } else {
-            s_robot.pwm_left=(int16_t)output[0];s_robot.pwm_right=(int16_t)output[1];
-            s_robot.pwm_base=.5f*(output[0]+output[1]);
+            /* RT32: bù lệch cơ khí bánh trái — xem balance_trim.h. Đặt sau bộ phân
+             * bổ R12, không sửa gain/quan sát/phân bổ, kẹp ±MOTOR_MAX_PWM. */
+            float pwm_l=BalanceTrim_Left(output[0],BALANCE_TRIM_LEFT_PWM,(float)MOTOR_MAX_PWM);
+            s_robot.pwm_left=(int16_t)pwm_l;s_robot.pwm_right=(int16_t)output[1];
+            s_robot.pwm_base=.5f*(pwm_l+output[1]);
             s_robot.v_control=bal_catalog[1];s_robot.theta_control=bal_catalog[2]*RAD_TO_DEG;
             Motor_SetDuty(s_robot.pwm_left,s_robot.pwm_right);
         }

@@ -19,7 +19,7 @@ static void step(unsigned permission,int dir){
 int main(void){
  reset();
  for(int i=0;i<700;i++)step(1,1);
- assert(fabsf(s.v_ref-.80f)<.01f);            // preset2 reaches0.80
+ assert(fabsf(s.v_ref-.90f)<.01f);            // preset2 reaches0.90
 
  for(int i=0;i<200;i++)step(2,1);             // REC1 active: cap0.25
  assert(s.recovery_limited&&s.recovery_active);
@@ -35,7 +35,7 @@ int main(void){
   if(i<300) assert(fabsf(s.v_ref)<=.505f);   // softening must hold for1.5s
  }
  assert(clear_tick>=295&&clear_tick<=310);   // bounded, not "until next gesture"
- assert(fabsf(s.v_ref-.80f)<.02f);           // preset restored without a new gesture
+ assert(fabsf(s.v_ref-.90f)<.02f);           // preset restored without a new gesture
 
  reset();
  for(int i=0;i<700;i++)step(1,1);
@@ -44,7 +44,7 @@ int main(void){
  int c2=-1;
  for(int i=1;i<=500;i++){step(1,1);if(!s.recovery_limited&&c2<0)c2=i;}
  assert(c2>=295&&c2<=310);                    // same bound for a continuously held press
- assert(fabsf(s.v_ref-.80f)<.02f);
+ assert(fabsf(s.v_ref-.90f)<.02f);
 
  reset();
  for(int i=0;i<700;i++)step(1,1);
@@ -53,7 +53,7 @@ int main(void){
  step(1,-1);
  assert(!s.recovery_limited);                 // direction change still clears immediately
  printf("clear_tick=%d continuous=%d\n",clear_tick,c2);
- puts("PASS RT20: post-REC1 cap is bounded to1.5s, clears for a press made during recovery, still restores0.80, and a direction change clears immediately.");
+ puts("PASS RT20: post-REC1 cap is bounded to1.5s, clears for a press made during recovery, still restores0.90, and a direction change clears immediately.");
  return 0;}
 `;
 fs.writeFileSync(dir+'/test.c',src);

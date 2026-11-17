@@ -2,7 +2,7 @@
 /* Final R12 STATE4_OBS14 baseline. Legacy PID constants below support
  * diagnostic/library code only; they are not a selectable balance controller.
  * Raw test data must never use the following sensor corrections. */
-#define BALANCE_BUILD "BAL-20261115-R12-8DIR-RT29-NOCUT"
+#define BALANCE_BUILD "BAL-20261117-R12-8DIR-RT32-508090"
 /* RT29: the disturbance brake (REC1 entry, hold_anchor) has no4s completion
  * deadline. Log RT28 (12)(3): three auto-cuts, all fault4096, at t=11.52/85.50/
  *156.48s, each exactly4s after a REC1 entry, each on an upright vehicle
@@ -90,7 +90,19 @@
 #define BALANCE_HEADING_LIMIT 8.0f // smaller differential intervention while validating capture
 #define BALANCE_STOP_ANGLE 25.0f
 #define BALANCE_STOP_DISTANCE 0.30f
-#define BALANCE_STOP_SPEED 0.80f
+/* RT32: bo toc do chot 50/80/90 cm/s. Tran thuong = muc cao nhat 0.90.
+ * 0.90 can duty0.879@12.2V /0.900@11.9V /0.955@11.2V (tien, do tu log);
+ * duoi ~11.9V governor se ghìm, nen chi chay MAX khi pin >=12.0V (do bang tay). */
+#ifndef BALANCE_STOP_SPEED
+#define BALANCE_STOP_SPEED 0.90f
+#endif
+/* RT32: bu lech banh trai. Do tren log xe (RT30 0.86 va RT31 0.90): de cung toc
+ * do, banh trai can them ~98 PWM khi tien, ~160 khi lui, ~166 khi quay tai cho
+ * (trung binh ~110 PWM =4,4% thang). Day la bu mo-men hang so dat SAU bo phan bo
+ * R12 (khong sua gain/quan sat/phan bo), co kep +-MOTOR_MAX_PWM. */
+#ifndef BALANCE_TRIM_LEFT_PWM
+#define BALANCE_TRIM_LEFT_PWM 110.0f
+#endif
 #define BALANCE_CAPTURE_SPEED 1.00f // only during bounded startup capture
 #define BALANCE_LARGE_CAPTURE_ANGLE 48.0f // preserve S48T speed guard through48deg
 #define BALANCE_LARGE_CAPTURE_SPEED 1.10f // only active capture started above48deg

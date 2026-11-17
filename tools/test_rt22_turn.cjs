@@ -43,11 +43,11 @@ int main(void){
  for(int i=0;i<120;i++)tick(1,1,2.0f,1.12f,1.0f);
  printf("preset72 runaway measured1.12: w_ref=%.2f\n",t.w_ref);
  assert(t.w_ref<=.11f);
- /* 5. RT23 regression: the observed preset72 diagonal (commanded0.72, measured
+ /* 5. RT23 regression: the observed fast-preset diagonal (RT32: commanded0.80, measured
   *0.79) must hold1.15rad/s; RT22 gave0.10-0.46 and jittered. */
- init();s.speed_preset=1;s.v_ref=.72f;
+ init();s.speed_preset=1;s.v_ref=.80f;
  for(int i=0;i<120;i++)tick(1,1,2.0f,0.79f,1.0f);
- printf("preset72 diag v_ref0.72 measured0.79: w_ref=%.2f flags=0x%x\n",t.w_ref,s.flags);
+ printf("preset80 diag v_ref0.80 measured0.79: w_ref=%.2f flags=0x%x\n",t.w_ref,s.flags);
  assert(t.w_ref>=1.10f&&t.w_ref<=1.20f);
  /* 6. RT23 regression: 15cm of pivot creep is normal, so the requested rate must
   * not fade (RT22 centre taper cut this to0.70*rate =>1.68rad/s). */

@@ -39,7 +39,7 @@ int main(void){
   pos+=v*.005f;
  }
  assert(!s.cancel_flags);
- assert(fabsf(s.v_ref-.80f)<.03f);
+ assert(fabsf(s.v_ref-.90f)<.03f);
  printf("B: v_ref=%.3f v=%.3f pos=%.3f no_cancel\n",s.v_ref,v,pos);
  puts("PASS RT21-A: no low-speed deadlock, preset reached once friction breaks, real wall still cancels.");
  return 0;}
