@@ -1,10 +1,18 @@
-// Fitted to R7 W01-W09 NO-LOAD encoder slopes; W10-W12 (300 PWM) held out.
-// Row order L+,L-,R+,R-. v_abs = gain*abs(PWM)+intercept, fit200..600.
-// Running intercept is NOT the static startup threshold or a torque measurement.
-pair_no_load_curve=[.0004171349529655699,-.03302857486293187; ..
- .00040363461813956855,-.03413098477623709; ..
- .0004066591092192742,-.028490306044233363; ..
- .00042171545397395264,-.02711270473115662];
+// Row order L+,L-,R+,R-. v_abs = gain*abs(PWM)+intercept.
+// RT35 (17/11/2026): refitted from the on-car log twip_balance_R12 (1)(5).txt
+// (8 652 samples, build RT34-CORNER/NET35, pack 11.7 V, chi doan chay thang
+// giu lenh, |v|>0.35, PWM>150). Banh trai da tru bu 110 PWM cua RT32 de ra
+// dung PWM cua LUAT R12. So voi duong cu (R7 W01-W09), chenh lech 1-2 %:
+//   row   gain(log)  icpt(log)   v@2499   v@2499 (cu)
+//   L+    .000417    -.0332      1.010    1.010
+//   L-    .000396    -.0279      0.961    0.975
+//   R+    .000394    -.0187      0.965    0.988
+//   R-    .000432    -.0593      1.019    1.027
+// Ghi chu: intercept la mat do/tai, khong phai nguong khoi dong tinh.
+pair_no_load_curve=[.000417,-.0332; ..
+ .000396,-.0279; ..
+ .000394,-.0187; ..
+ .000432,-.0593];
 pair_no_load_fit_PWM=[200 600];
 pair_loaded_torque_identified=%f;
 pair_feedforward_positive=[23.220000077847235,-.01271658079024256];

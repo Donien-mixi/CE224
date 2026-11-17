@@ -75,7 +75,7 @@ node tools/run_governor_sim.cjs --stress --launch --launch50
 | Hạng mục | Kết quả | Điều kiện |
 |---|---|---|
 | Host test | **31/31 pass** | Node.js 24, GCC 13 (msys2), mỗi test tự biên dịch phần C tương ứng |
-| Mô phỏng native | **36/36 ca đủ 20/20 s** khi chọn mức ≤ 80; **33/36** khi chạy MAX 90 | 12 ca tốc độ + 12 ca biên + 12 ca khởi hành. Ba ca ngã khi MAX 90 là pin 11,2 V và motor yếu 20 % — đúng vùng bị cấm |
+| Mô phỏng native | **36/36 ca đủ 20/20 s** khi chọn mức ≤ 80; **35/36** khi chạy MAX 90 | 12 ca tốc độ + 12 ca biên + 12 ca khởi hành. Ca còn lại khi MAX 90 là pin 11,2 V — đúng vùng bị cấm |
 | Nguồn ↔ binary | 13/13 tệp khớp `SOURCE_SHA256.json` | Hash tính lại tại máy này, 17/11/2026 |
 | Log xe thật | RT30 (0,86) và RT31 (0,90) đã chạy trên xe | Vận tốc p95 0,906 / đỉnh 0,938 m/s; 0 lần tự ngắt |
 
@@ -98,7 +98,7 @@ node tools/run_governor_sim.cjs --stress --launch --launch50
 - [`Docs/Bang_Ma_Loi_Tu_Dong_Dung.md`](Docs/Bang_Ma_Loi_Tu_Dong_Dung.md) — mọi trường hợp firmware tự cắt motor.
 - [`Docs/Thuat_Toan_Dieu_Khien.md`](Docs/Thuat_Toan_Dieu_Khien.md) — luật điều khiển và các lớp giám sát.
 - [`Docs/Thong_So_Xe_Hien_Tai.md`](Docs/Thong_So_Xe_Hien_Tai.md) — thông số cơ khí, điện, encoder.
-- [`Docs/RT32_Bo_Toc_Do_50_80_90.md`](Docs/RT32_Bo_Toc_Do_50_80_90.md) — bộ tốc độ 50/80/90 và bù lệch bánh trái.\n- [`Docs/RT33_On_Dinh_Ket_Noi.md`](Docs/RT33_On_Dinh_Ket_Noi.md) — vì sao ESP32 tự khởi động lại và cách sửa.\n- [`Docs/RT34_Cua_Muot.md`](Docs/RT34_Cua_Muot.md) — trần tốc độ do đường: cua mượt ở MAX 90 (bản hiện hành).\n- [`Docs/RT29_Tu_Ngat_4096.md`](Docs/RT29_Tu_Ngat_4096.md) — bản sửa trước; các vòng cũ hơn ở `Docs/RT*.md`.
+- [`Docs/RT32_Bo_Toc_Do_50_80_90.md`](Docs/RT32_Bo_Toc_Do_50_80_90.md) — bộ tốc độ 50/80/90 và bù lệch bánh trái.\n- [`Docs/RT33_On_Dinh_Ket_Noi.md`](Docs/RT33_On_Dinh_Ket_Noi.md) — vì sao ESP32 tự khởi động lại và cách sửa.\n- [`Docs/RT34_Cua_Muot.md`](Docs/RT34_Cua_Muot.md) — trần tốc độ do đường: cua mượt ở MAX 90.\n- [`Docs/RT35_Mo_Phong_Khop_Log.md`](Docs/RT35_Mo_Phong_Khop_Log.md) — hiệu chỉnh mô phỏng theo log xe thật.\n- [`Docs/RT29_Tu_Ngat_4096.md`](Docs/RT29_Tu_Ngat_4096.md) — bản sửa trước; các vòng cũ hơn ở `Docs/RT*.md`.
 - [`Simulation/README.md`](Simulation/README.md), [`Hardware/README.md`](Hardware/README.md) — hướng dẫn riêng từng phần.
 
 Log xe thô, dữ liệu đo và script phân tích từng vòng không đưa vào repo; số liệu dùng trong báo cáo
