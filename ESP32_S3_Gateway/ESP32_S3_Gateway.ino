@@ -182,8 +182,13 @@ void setup() {
   WiFi.setSleep(false);
   bool apOK=WiFi.softAP(AP_SSID,AP_PASS,6,false,4);
   esp_err_t bwOK=esp_wifi_set_bandwidth(WIFI_IF_AP,WIFI_BW_HT20);
-  bool powerOK=WiFi.setTxPower(WIFI_POWER_17dBm);
-  Serial.printf("[NET1] AP=%d HT20=%d TX17=%d boot=%lu reset=%s\n",apOK,(int)bwOK,powerOK,(unsigned long)gatewayBootId,gatewayResetText(gatewayResetReason));
+  /* NET34: ha cong suat phat tu 17 dBm xuong 11 dBm.
+   * Log RT32 (ba file (3)(5)/(4)(5)/(5)(5)) cho thay ESP32 reset do SUT AP NGUON
+   * (reset=brownout) moi khi motor dao chieu; dinh dong WiFi la mot phan cua xung
+   * do. 11 dBm giam dinh khoang 100 mA, van du tam phong/trong nha. Neu can xa hon
+   * thi doi lai 17 dBm va tang tu nguon (xem Docs/RT33_On_Dinh_Ket_Noi.md). */
+  bool powerOK=WiFi.setTxPower(WIFI_POWER_11dBm);
+  Serial.printf("[NET1] AP=%d HT20=%d TX11=%d boot=%lu reset=%s\n",apOK,(int)bwOK,powerOK,(unsigned long)gatewayBootId,gatewayResetText(gatewayResetReason));
 
   archiveBegin();
   Serial.printf("[LOG] archive_mounted=%d error=%lu saved=%lu\n",archiveMounted?1:0,(unsigned long)archiveError,(unsigned long)archiveSaved);

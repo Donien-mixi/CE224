@@ -76,7 +76,7 @@ static bool archivePartitionBlank(size_t limit){
  return true;
 }
 static void archiveTask(void *){
- File file;uint32_t generation=0xffffffffU,source=0,index=0,lastFlush=0;int entry=-1;
+ File file;uint32_t generation=0xffffffffU,source=0,index=0;int entry=-1;
  for(;;){
   if(archiveFormatRequest){
    /* Never format while the vehicle balances: the RAM log is the only copy. */
@@ -97,13 +97,20 @@ static void archiveTask(void *){
   uint32_t count,gen;bool settled;JournalInfo info={};
   xSemaphoreTake(captureMutex,portMAX_DELAY);
   count=balanceCount;gen=archiveGeneration;
+  bool live=balanceSeen&&(balanceLatest.state==3||balanceLatest.state==7)&&millis()-balanceReceived<500;
   settled=balanceSeen&&balanceLatest.state!=3&&balanceLatest.state!=7&&(int32_t)(balancePostUntil-millis())<=0;
   xSemaphoreGive(captureMutex);
   if(gen!=generation){
    xSemaphoreTake(archiveMutex,portMAX_DELAY);if(file)file.close();archiveCurrentName[0]=0;xSemaphoreGive(archiveMutex);
    generation=gen;source=0;index=0;entry=-1;archiveSaved=0;
   }
-  if(count>source&&(count-source>=JOURNAL_BATCH||settled||millis()-lastFlush>=1000)&&!archiveError){
+  /* NET34: khong ghi Flash khi xe dang can bang/chay.
+   * Log RT32 (3)(5)(4)(5)(5)(5): ESP32 reset lien tuc, hai nguyen nhan da do duoc
+   * (8 log reset=brownout, 1 log reset=interrupt_watchdog). Moi lan ghi Flash la mot
+   * cua so cache bi tat va la luc FAT de bi hong neu nguon sut -> archive_error=1.
+   * Vi vay trong luc chay chi giu log trong RAM (du ~6 phut), va ghi Flash MOT LAN
+   * khi da dung (settled). Trang web cung chi cho tai log sau khi STOP. */
+  if(count>source&&settled&&!live&&!archiveError){
    xSemaphoreTake(archiveMutex,portMAX_DELAY);
    if(entry<0){
     if(archiveCount>=4)archiveError=2;
@@ -135,7 +142,7 @@ static void archiveTask(void *){
     xSemaphoreGive(captureMutex);
     JournalChunk c={CHUNK_MAGIC,index,n,(uint32_t)(sizeof(info)+n*sizeof(BalanceFrame)),0};c.crc=journalCRC(archiveBuffer,c.bytes);
     bool ok=file.write((uint8_t*)&c,sizeof(c))==sizeof(c)&&file.write(archiveBuffer,c.bytes)==c.bytes;
-    file.flush();lastFlush=millis();
+    file.flush();
     if(ok){source+=n;index++;archiveSaved=source;archiveEntries[entry].frames=source;}
     else{archiveError=4;archiveEntries[entry].partial=true;file.close();}
    }
