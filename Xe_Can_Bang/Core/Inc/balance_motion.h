@@ -85,6 +85,16 @@ static inline uint16_t BalanceMotion_Impact(const BalanceMotion *s,bool allow,fl
      * while the body is still upright. Keep this extreme-rate hard stop. */
     return fabsf(gyro)>900.0f?8192U:0U;
 }
+/* RT34 — trần tốc độ do đường (cornering budget).
+ * `BalanceMotion8_Update` đặt giá trị này theo |w_ref| của lượt quay; 0 = không
+ * giới hạn. Chỉ HẠ tham chiếu tốc độ, không bao giờ nâng, và vẫn đi qua ramp
+ * BALANCE_MOTION_ACCEL/DECEL nên tốc độ đổi mượt thay vì bão hoà bánh.
+ * Gọi với b >= 0 để đặt, b < 0 để đọc. */
+static inline float BalanceMotion_corner_budget(float b){
+    static float budget=0.0f;
+    if(b>=0.0f)budget=b;
+    return budget;
+}
 static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word,
     float position,float pitch,float gyro,float speed,uint32_t now){
     if(!isfinite(position)||!isfinite(pitch)||!isfinite(gyro)||!isfinite(speed))return 0;
@@ -155,6 +165,12 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
     bool limited=wanted*(s->x_ref-position)>.20f;
     float speed_limit=s->recovery_limited?fminf(BALANCE_MOTION_SPEED,s->recovery_active?.25f:.50f):BALANCE_MOTION_SPEED;
     float target=limited?0:speed_limit*wanted;
+    /* RT34: giới hạn do đường. Bánh ngoài khi cua cần v + |w|*0,131 mà động cơ chỉ
+     * tới ~0,95 m/s (pack 11,7 V), nên ở MAX 90 mà cua gắt thì bánh ngoài bão hoà
+     * 100%, yaw vọt quá tham chiếu rồi mới hồi (log 38: vọt 37%). Hạ tham chiếu
+     * xuống mức bánh còn làm được để cua êm. */
+    float cb=BalanceMotion_corner_budget(-1.0f);
+    if(cb>0.0f){if(target>cb)target=cb;else if(target<-cb)target=-cb;}
     if(wanted!=0)s->used=true;
     float old=s->v_ref;
     float rate=old*target<0?BALANCE_MOTION_REVERSE_DECEL:

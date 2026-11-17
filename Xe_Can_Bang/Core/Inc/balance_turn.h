@@ -50,6 +50,16 @@
  * (0.92-0.96m/s o pin yeu) ma khong tao duoc momen. */
 #define BALANCE_TURN_WHEEL_ENV_72 0.98f
 #endif
+/* RT34: tran toc do do duong. Banh ngoai khi cua chay v + |w|*0.131; dong co chi
+ * toi ~0.95m/s o pack 11.7V, nen o MAX 90 mot cu cua1.15rad/s can banh ngoai
+ * 1.05m/s = bat kha thi -> banh bao hoa, yaw vot 37% roi moi hoi (log 38). Vi vay
+ * khi dang cua, ha tham chieu toc do con BUDGET - |w|*HALF_TRACK. */
+#ifndef BALANCE_TURN_VNL_BUDGET
+#define BALANCE_TURN_VNL_BUDGET 0.95f
+#endif
+#ifndef BALANCE_TURN_HALF_TRACK
+#define BALANCE_TURN_HALF_TRACK 0.131f
+#endif
 #ifndef BALANCE_TURN_WHEEL_ENV_80
 #define BALANCE_TURN_WHEEL_ENV_80 1.05f
 #endif
@@ -241,5 +251,9 @@ static inline int BalanceMotion8_Update(BalanceMotion *s,BalanceTurn *t,unsigned
   s->flags=(s->flags&~(1U|2U|4U|64U|128U|1024U|2048U))|16U;
  }
  t->requested=(int8_t)(fresh?turn:0);
+ /* RT34: dat tran toc do do duong cho tick sau (5ms). Chi ha, khong nang. */
+ BalanceMotion_corner_budget(fabsf(t->w_ref)>0.30f
+   ? fmaxf(0.35f,BALANCE_TURN_VNL_BUDGET-fabsf(t->w_ref)*BALANCE_TURN_HALF_TRACK)
+   : 0.0f);
  return isfinite(t->psi_ref)&&isfinite(t->w_ref);
 }

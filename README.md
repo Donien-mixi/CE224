@@ -4,7 +4,7 @@
 ESP32-S3 làm gateway Wi-Fi có trang điều khiển và ghi log, Scilab mô phỏng lại đúng phần
 luật điều khiển đang nạp trên xe.
 
-**Bản phát hành hiện hành: STM32 RT32-508090 + ESP32 NET34 (17/11/2026) — ba mức 50 / 80 / 90 cm/s, bù lệch bánh trái, gateway đã sửa lỗi mất kết nối.**
+**Bản phát hành hiện hành: STM32 RT34-CORNER + ESP32 NET35 (17/11/2026) — ba mức 50 / 80 / 90 cm/s, bù lệch bánh trái, cua mượt ở MAX 90, gateway đã sửa lỗi mất kết nối.**
 Firmware đã đóng gói kèm hash trong [`Firmware/RT32_508090_20261117/`](Firmware/RT32_508090_20261117/),
 trạng thái kỹ thuật và việc còn mở ở [`HANDOFF.md`](HANDOFF.md), phân tích ở
 [`Docs/RT32_Bo_Toc_Do_50_80_90.md`](Docs/RT32_Bo_Toc_Do_50_80_90.md).
@@ -23,8 +23,8 @@ trạng thái kỹ thuật và việc còn mở ở [`HANDOFF.md`](HANDOFF.md), 
 
 | Board | Build ID | Tệp | SHA-256 (rút gọn) |
 |---|---|---|---|
-| STM32 | `BAL-20261117-R12-8DIR-RT32-508090` | `STM32_BAL_R12_RT32_508090.bin` (+`.hex`, `.elf`) | `0b037185fb297cb8…` |
-| ESP32-S3 | `TWIP-WEB-20261117-BAL-R12-8DIR-RT32-508090-NET34` | `ESP32_RT32_508090_NET34.app.bin` (+ bootloader, partitions, boot_app0) | `07451aee469e4855…` |
+| STM32 | `BAL-20261117-R12-8DIR-RT34-CORNER` | `STM32_BAL_R12_RT34_CORNER.bin` (+`.hex`, `.elf`) | `0b037185…` → RT34 |
+| ESP32-S3 | `TWIP-WEB-20261117-BAL-R12-8DIR-RT34-CORNER-NET35` | `ESP32_RT34_CORNER_NET35.app.bin` (+ bootloader, partitions, boot_app0) | `6d61ae0c0c004875…` |
 
 > **NET34 (17/11/2026)** là bản sửa lỗi mất kết nối của gateway (TX 11 dBm, không ghi Flash khi xe
 > đang chạy) — **chỉ cần nạp lại ESP32**, STM32 giữ RT32. Xem
@@ -35,7 +35,7 @@ Hash đầy đủ ở `Firmware/RT32_508090_20261117/SHA256.json`; hash của **
 đúng cặp binary này** ở `SOURCE_SHA256.json` trong cùng thư mục. Hai board phải nạp cùng bản:
 gateway đối chiếu build ID với STM32 và từ chối điều khiển nếu lệch ngày/bản.
 
-Cách nạp và kiểm hash: xem [`Firmware/RT32_508090_20261117/README.md`](Firmware/RT32_508090_20261117/README.md) (STM32) và [`Firmware/RT33_NET34_20261117/README.md`](Firmware/RT33_NET34_20261117/README.md) (ESP32 NET34).
+Cách nạp và kiểm hash: xem [`Firmware/RT32_508090_20261117/README.md`](Firmware/RT32_508090_20261117/README.md) (STM32 + ESP32 RT34).
 Bản chốt trước (RT29, ba mức 50/72/80) vẫn giữ trong `Firmware/RT29_NOCUT_20261115/` để quay lại.
 
 ## 3. Cấu trúc repo
@@ -98,7 +98,7 @@ node tools/run_governor_sim.cjs --stress --launch --launch50
 - [`Docs/Bang_Ma_Loi_Tu_Dong_Dung.md`](Docs/Bang_Ma_Loi_Tu_Dong_Dung.md) — mọi trường hợp firmware tự cắt motor.
 - [`Docs/Thuat_Toan_Dieu_Khien.md`](Docs/Thuat_Toan_Dieu_Khien.md) — luật điều khiển và các lớp giám sát.
 - [`Docs/Thong_So_Xe_Hien_Tai.md`](Docs/Thong_So_Xe_Hien_Tai.md) — thông số cơ khí, điện, encoder.
-- [`Docs/RT32_Bo_Toc_Do_50_80_90.md`](Docs/RT32_Bo_Toc_Do_50_80_90.md) — bộ tốc độ 50/80/90 và bù lệch bánh trái.\n- [`Docs/RT33_On_Dinh_Ket_Noi.md`](Docs/RT33_On_Dinh_Ket_Noi.md) — vì sao ESP32 tự khởi động lại và cách sửa (bản NET34).\n- [`Docs/RT29_Tu_Ngat_4096.md`](Docs/RT29_Tu_Ngat_4096.md) — bản sửa trước; các vòng cũ hơn ở `Docs/RT*.md`.
+- [`Docs/RT32_Bo_Toc_Do_50_80_90.md`](Docs/RT32_Bo_Toc_Do_50_80_90.md) — bộ tốc độ 50/80/90 và bù lệch bánh trái.\n- [`Docs/RT33_On_Dinh_Ket_Noi.md`](Docs/RT33_On_Dinh_Ket_Noi.md) — vì sao ESP32 tự khởi động lại và cách sửa.\n- [`Docs/RT34_Cua_Muot.md`](Docs/RT34_Cua_Muot.md) — trần tốc độ do đường: cua mượt ở MAX 90 (bản hiện hành).\n- [`Docs/RT29_Tu_Ngat_4096.md`](Docs/RT29_Tu_Ngat_4096.md) — bản sửa trước; các vòng cũ hơn ở `Docs/RT*.md`.
 - [`Simulation/README.md`](Simulation/README.md), [`Hardware/README.md`](Hardware/README.md) — hướng dẫn riêng từng phần.
 
 Log xe thô, dữ liệu đo và script phân tích từng vòng không đưa vào repo; số liệu dùng trong báo cáo
