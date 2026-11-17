@@ -1,4 +1,4 @@
-> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT34-CORNER + ESP32 NET35** — xem [chức năng](Tinh_Nang_Xe_Hien_Hanh.md) và [HANDOFF](../HANDOFF.md).
 
 # Thông số xe và mô hình hiện hành
 
@@ -122,8 +122,23 @@ Mô phỏng còn giữ sai số góc dư khoảng **±0,529812°** để kiểm 
 
 Phản hồi trạng thái STATE4_OBS14, không phải bộ PID góc/vận tốc cũ. Gain lực Kx/Kv/Kθ/Kω = `[9.150813420, 6.128855436, 14.32794546, 1.160483551]`, đầu vào SI(m, m/s, rad, rad/s), đầu ra N. Bộ ước lượng14trạng thái, blend0,25; phân bổ lực từng bánh có back-EMF/ma sát riêng; giữ hướng PI/PD giới hạn0,08Nm và tích phân0,04Nm. Không cộng thêm deadband PID vào đầu ra R12.
 
-Khởi động đến ±60°, gyro/bánh yên200ms. Ngân sách trôi tăng theo góc, trần1m; pha dựng3giây hoặc4giây nếu bật trên58°. Sau dựng ổn ngắt ở25°/0,8m/s. Xem [đầy đủ ngưỡng vận hành](Van_Hanh_R12_60.md).
+Khởi động đến ±60°, gyro/bánh yên200ms. Ngân sách trôi tăng theo góc, trần1m; pha dựng3giây hoặc4giây nếu bật trên58°. Sau dựng ổn ngắt ở25°/0,8m/s. Xem [chức năng hiện hành](Tinh_Nang_Xe_Hien_Hanh.md) và [bảng mã lỗi](Bang_Ma_Loi_Tu_Dong_Dung.md).
 
 Nguồn cấu hình: `Core/Inc/phase1_catalog_control.h`, `phase1_catalog_params.h`, `balance_profile.h`, `balance_startup.h`; hình học tại `Simulation/model/robot_can_bang_pid_1.sce`. Cửa vào mô phỏng hiện tại chạy R12. Không dùng `team_run.sce` hoặc các hệ số R7 cũ để thay đổi firmware hiện hành.
 
 **Giới hạn mô hình:** giữ bố trí và khối lượng; chưa tự suy ra CG lệch chỉ từ chiều ngã. Mô hình động cơ dưới tải/góc lớn chưa dự đoán đúng toàn bộ thực tế. Thành công khởi động60° là quan sát người vận hành; cần log/đo riêng nếu định hiệu chỉnh mô hình góc lớn tiếp.
+
+## Đường đặc tính bánh đo từ log xe thật (17/11/2026)
+
+Đoạn chạy thẳng giữ lệnh, `|v| > 0,35`, `PWM > 150`, pack 11,7 V; bánh trái đã trừ 110 PWM bù:
+
+| Bánh | v = gain·PWM + intercept | v @ PWM 2499 |
+|---|---|---:|
+| L+ trái tiến | `0,000417·PWM − 0,0332` | 1,010 m/s |
+| L− trái lùi | `0,000396·PWM − 0,0279` | 0,961 m/s |
+| R+ phải tiến | `0,000394·PWM − 0,0187` | 0,965 m/s |
+| R− phải lùi | `0,000432·PWM − 0,0593` | 1,019 m/s |
+
+Suy ra: trần không tải **~0,96 m/s** ở 11,7 V; mức 0,80 cần duty ~0,82, mức 0,90 cần ~0,88–0,92.
+Bốn hệ số này được nạp vào `Simulation/config/motor_pair_r8_20261011.sce` (xem
+[RT35](RT35_Mo_Phong_Khop_Log.md)).

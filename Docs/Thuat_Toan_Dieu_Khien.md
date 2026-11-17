@@ -1,3 +1,8 @@
+> **Lưu ý ngữ cảnh (17/11/2026).** Phần đầu tài liệu mô tả nền R12 và các lớp giám sát còn
+> đang chạy. **Bảng tham số ở cuối là lịch sử của bản R7/PID cũ** (β steering, ngưỡng 45°…) — không
+> dùng để đối chiếu firmware hiện hành; số hiện hành xem
+> [chức năng](Tinh_Nang_Xe_Hien_Hanh.md) và [thông số xe](Thong_So_Xe_Hien_Tai.md).
+
 > **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
 
 > Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
@@ -518,3 +523,14 @@ Giá trị thực tế đang nạp trong mã nguồn (làm mốc để tune theo
 | Ngưỡng ngã | 45.0° | Pitch để cắt động cơ | `robot_fsm.c` |
 | Failsafe | 1000 ms | Mất lệnh → ga/lái về 0 | `esp32_comm.c` |
 | Chu kỳ Telemetry | 50 ms (20Hz) | Phát gói `$TEL` | `main.c` |
+
+## Các lớp giám sát thêm sau RT29 (đang chạy trong RT34)
+
+| Lớp | Tệp | Việc nó làm |
+|---|---|---|
+| Bộ tốc độ 50/80/90 | `balance_motion.h`, `balance_profile.h` | preset 1 = 0,80; preset 2 = 0,90; trần thường `BALANCE_STOP_SPEED` = 0,90 |
+| Bù lệch bánh trái | `balance_trim.h` | cộng 110 PWM cho bánh trái theo dấu quay, kẹp ±2499, đặt **sau** bộ phân bổ R12 |
+| Trần tốc độ do đường | `balance_turn.h` + `balance_motion.h` | khi `|w_ref| > 0,30`, hạ tham chiếu tốc độ về `0,95 − |w_ref|·0,131` (chỉ hạ, qua ramp giảm tốc 0,90 m/s²) |
+| Gateway ổn định | `ESP32_S3_Gateway` | TX 11 dBm; chỉ ghi Flash khi xe đã dừng (tránh hỏng FAT khi brownout) |
+
+Các lớp này **không** sửa gain/observer/phân bổ lực R12 và không đổi khung truyền 122 B.

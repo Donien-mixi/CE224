@@ -19,7 +19,7 @@ hành sau hai vòng thử: RT30 (0,86) và RT31 (0,90).
 
 **Điều kiện vận hành bắt buộc** (firmware không đo pin): MAX 90 chỉ dùng khi pin đo **≥ 12,0 V**;
 11,7–12,0 V dùng 50/80; dưới 11,7 V chỉ 50/80. Bảng đầy đủ trong
-`Firmware/RT32_508090_20261117/README.md`.
+`Firmware/RT34_CORNER_20261117/README.md` (bản hiện hành, đã gồm 50/80/90).
 
 ## 2. Bù lệch bánh trái
 

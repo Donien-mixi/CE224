@@ -22,7 +22,7 @@ RT22 sửa phần điều khiển trên STM32 (ESP32 chỉ đổi literal build 
 - Tiến và lùi tăng tốc như nhau và đạt **đúng** mốc 0,50 / 0,72 / 0,80 m/s (trước đây tiến bị ghìm 0,5–4,8 s, chỉ tới 0,61–0,79).
 - Bẻ hướng gắt hơn: quay tại chỗ 2,4 rad/s, chéo 1,15 rad/s ở preset 80 (trước 0,50), gia tốc yaw 4,5 rad/s², trần gia tốc ngang 0,9 m/s².
 
-Hiệu chuẩn gyro lúc cấp nguồn vẫn **500 mẫu ≈ 5,15 s** (đo 10,3 ms/mẫu ở ODR 100 Hz), nên từ cắm pin đến frame đầu tiên khoảng 5,3 s và tới lúc bấm BẬT ~5,5 s — trang hiện "Chưa nhận STM32" trong khoảng đó là do hiệu chuẩn, không phải Wi-Fi. Bản thử rút còn 200 mẫu (`QUICKSTART`, 14/11) đã được **khôi phục** về 500; xem `../Docs/RT21_QUICKSTART_Hieu_Chuan_Nhanh.md`.
+Hiệu chuẩn gyro lúc cấp nguồn vẫn **500 mẫu ≈ 5,15 s** (đo 10,3 ms/mẫu ở ODR 100 Hz), nên từ cắm pin đến frame đầu tiên khoảng 5,3 s và tới lúc bấm BẬT ~5,5 s — trang hiện "Chưa nhận STM32" trong khoảng đó là do hiệu chuẩn, không phải Wi-Fi. Bản thử rút còn 200 mẫu (`QUICKSTART`, 14/11) đã được **khôi phục** về 500; xem `../(đã gỡ, xem git history)`.
 
 > Bản thử thêm kênh chẩn đoán qua cáp (NET22, 14/11) đã được **gỡ bỏ** theo yêu cầu: chỉ cần dữ liệu qua log tải từ trang web.
 

@@ -7,9 +7,9 @@
 
 # Mô phỏng R12 hiện hành — RT19 HOLD80
 
-RT19 giữ nguyên governor RT17/RT18, chỉ sửa mốc hướng sau quay (tối đa0,6s rồi đóng băng) và chốt lại mốc vị trí200ms sau khi phanh yên; preset cao nhất là80cm/s. Xem `../Docs/RT19_Giu_Huong_Va_Preset80.md`. Chạy `node tools/run_governor_sim.cjs --stress --launch --launch50` để thử 12ca khởi hành50 với mốc±2/±3/±4°. `--launch` yêu cầu kèm `--stress` (12ca) vì vector mốc có12 phần tử. Có thể đặt `TWIP_CASE_IDS=3,6` để đối chiếu ca cụ thể; bỏ biến khi chạy đủ12ca. `--launch` còn kiểm tra tham chiếu đã thực hiện đúng hướng, không tính xe đứng im không nhận lệnh là đạt.
+RT19 giữ nguyên governor RT17/RT18, chỉ sửa mốc hướng sau quay (tối đa0,6s rồi đóng băng) và chốt lại mốc vị trí200ms sau khi phanh yên; preset cao nhất là80cm/s.  Chạy `node tools/run_governor_sim.cjs --stress --launch --launch50` để thử 12ca khởi hành50 với mốc±2/±3/±4°. `--launch` yêu cầu kèm `--stress` (12ca) vì vector mốc có12 phần tử. Có thể đặt `TWIP_CASE_IDS=3,6` để đối chiếu ca cụ thể; bỏ biến khi chạy đủ12ca. `--launch` còn kiểm tra tham chiếu đã thực hiện đúng hướng, không tính xe đứng im không nhận lệnh là đạt.
 
-Nền RT17 dùng cùng điểm vào ở dưới. Model hiện giữ đúng thao tác đang giữ trong REC1 (không tự giả định nhả nút), cập nhật20ms, có phanh chung khi REC1 vào, giới hạn lệnh phục hồi và mốc predictor từ đứng yên. Header được chụp trước biên dịch; thay preset không reset governor mỗi chu kỳ. Xem `../Docs/RT17_Tien_Lui_Va_PhuC_Hoi.md`.
+Nền RT17 dùng cùng điểm vào ở dưới. Model hiện giữ đúng thao tác đang giữ trong REC1 (không tự giả định nhả nút), cập nhật20ms, có phanh chung khi REC1 vào, giới hạn lệnh phục hồi và mốc predictor từ đứng yên. Header được chụp trước biên dịch; thay preset không reset governor mỗi chu kỳ. 
 
 `node tools/run_governor_sim.cjs --stress --disturbance` chạy bộ thử thách1–4N×80ms; có ca không đạt và lệnh trả lỗi khi có ca ngã/cắt bảo vệ. Không xem status=completed của script là mọi tiêu chuẩn đều đạt. Có thể đặt `TWIP_PUSH_SCALE` để khảo sát biên độ khác, nhưng phải công bố hệ số khi trình bày kết quả. `TWIP_HEADER_DIR` cho phép đối chiếu snapshot header, `TWIP_GOVERNOR_HEADER` chỉ thay governor. Mỗi lượt lưu trace `.governor.csv` cho gia tốc/duty/mốc predictor/cờ hạn chế.
 
@@ -17,7 +17,7 @@ Nền RT17 dùng cùng điểm vào ở dưới. Model hiện giữ đúng thao 
 
 Chạy tự động: `node tools/run_governor_sim.cjs --stress`. Thêm `--edge` để chạy 12 ca đứng yên/lệch mốc góc/trọng tâm/quay hai chiều/bấm–nhả nhanh. Không nạp firmware. Kết quả mới bật `supervisor_count_position` để đồng nhất vị trí giám sát với vị trí encoder trong luật lực R12. Không ghi đè kết quả cũ.
 
-Xem `../Docs/RT16_Phan_Tich_7_Log_Va_On_Dinh.md`. 24 ca đủ 20 s không có lỗi bảo vệ chưa chứng minh chạy vô hạn hoặc mọi va chạm. Mô hình vẫn có giả định lực có tải/ma sát; một số ca MAX95 chỉ giữ khoảng80cm/s.
+Các số liệu lịch sử của bộ 24/36 ca nằm trong git history (báo cáo RT16 đã gỡ khỏi cây làm việc). 24 ca đủ 20 s không có lỗi bảo vệ chưa chứng minh chạy vô hạn hoặc mọi va chạm. Mô hình vẫn có giả định lực có tải/ma sát; một số ca MAX95 chỉ giữ khoảng80cm/s.
 
 Phần dưới là hướng dẫn và lịch sử bộ tổng quan RT8. `current/review.sce` / `review_cli.sce` cũ không tích hợp đầy đủ governor hiện hành; không dùng chúng để kết luận đạt RT16/MAX95. `build_native.ps1` vẫn phục vụ các bộ chạy cũ đó.
 
@@ -39,7 +39,7 @@ Giữ nguyên kích thước và bố trí xe. Tải, ma sát, độ trượt v�
 
 Mô phỏng dùng đúng header firmware, gồm tâm quay cố định, tham chiếu vận tốc mới khi nhấn, hãm tiến/lùi và phục hồi phân biệt thao tác chủ động. Cần chạy lại `build_native.ps1` sau khi cập nhật; tên alias `motion_rt5.dll` / `recovery_rt5.dll` là di sản. DLL vừa build sử dụng header STM32 RT8 hiện có, không phải bản firmware RT5.
 
-Lịch sử RT5 (RT8 vẫn giữ cơ chế này, nhưng gyro trigger hiện là 150°/s): xác nhận 60 ms với sai lệch góc/tốc độ trong thao tác hợp lệ; gyro vẫn tác động ngay. `current/speed_limits_cli.sce` chuẩn bị kiểm tra yêu cầu 0,72–0,90 m/s; lượt 23/10 chưa chạy được do JVM thiếu bộ nhớ, không dùng để mở tốc độ firmware. Xem `../Docs/Ke_Hoach_Sua_Loi_RT8.md`.
+Lịch sử RT5 (RT8 vẫn giữ cơ chế này, nhưng gyro trigger hiện là 150°/s): xác nhận 60 ms với sai lệch góc/tốc độ trong thao tác hợp lệ; gyro vẫn tác động ngay. `current/speed_limits_cli.sce` chuẩn bị kiểm tra yêu cầu 0,72–0,90 m/s; lượt 23/10 chưa chạy được do JVM thiếu bộ nhớ, không dùng để mở tốc độ firmware. 
 
 ## Phạm vi dữ liệu và kiểm tra bàn giao
 
