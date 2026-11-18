@@ -1,4 +1,4 @@
-> **Trạng thái đồ án · 15/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Giai đoạn điều khiển web đã có 8 hướng và log. Workspace đang ở RT29-NOCUT / NET30, đã build, kiểm thử trên máy và push Git. Mô hình tính pin kê thêm 10 mm. PCB local một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu. Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
+> **Trạng thái đồ án · 18/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Điều khiển web có 8 hướng và log. Workspace đang ở **RT34-CORNER / NET35**, đã build, kiểm thử trên máy và push Git. Mô hình tính pin kê thêm 10 mm. PCB một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu. Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
 
 > Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
 
@@ -31,4 +31,6 @@ Sơ đồ đã kiểm tra bằng KiCad CLI: **0 lỗi, 0 cảnh báo ERC** khi b
 
 ## Trạng thái firmware đi kèm repo
 
-Commit Hardware ban đầu `d6a14af` chưa có firmware mới. Đợt đồng bộ tiếp theo ngày 30/10/2026 bổ sung source STM32 **RT8**, ESP32 **RT8 NET5**, mô phỏng và công cụ kiểm thử hiện hành. Sơ đồ vẫn là revision 1.3; việc đồng bộ source không xác nhận firmware đã nạp trên xe.
+Commit Hardware ban đầu `d6a14af` chưa có firmware mới. Bản đồng bộ hiện tại của repo là STM32
+**RT34-CORNER** + ESP32 **NET35** (binary và hash trong `Firmware/RT34_CORNER_20261117/`). Sơ đồ vẫn
+là revision 1.3; việc đồng bộ source không xác nhận firmware đã nạp trên xe.

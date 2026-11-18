@@ -36,10 +36,12 @@ Tham số có `#ifndef`: `BALANCE_TURN_VNL_BUDGET` (0,95), `BALANCE_TURN_HALF_TR
 
 - **32/32 host test**, gồm `test_rt34_corner`: thẳng 0,90 giữ 0,90; vào cua hạ về **0,803** và
   **không tick nào nhảy quá 0,012**; nhả cua về 0,90; preset 80 không đổi; **probe tắt giới hạn phải fail**.
-- Mô phỏng: stress@80 12/12, edge 12/12, launch50 12/12; stress@90 **9/12** — vẫn đúng 3 ca
-  11,2 V / motor yếu (vùng bị cấm), **không phát sinh ca mới**.
+- Mô phỏng: stress@80 12/12, edge 12/12, launch50 12/12; stress@90 **11/12** sau khi fit lại plant theo
+  log xe ([RT35](RT35_Mo_Phong_Khop_Log.md)) — ca còn lại là 11,2 V, vùng bị cấm với mức 90.
 - Sửa thêm lỗi test cũ: `test_rt24_sym.cjs` ghi 281 mẫu vào mảng `samples[117]` (tràn mảng) — nay
   `samples[600]` có kiểm biên; test vẫn khẳng định đúng hành vi trước đây.
+- **Đã kiểm trên xe**: log RT34 173 s ở pack 11,7 V — 0 ngã, 0 tự ngắt, cờ 512 trong cua còn 19–26 %
+  (trước 50–77 %).
 
 ## 4. Điều kiện vận hành
 

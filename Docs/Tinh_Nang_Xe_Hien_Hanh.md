@@ -4,7 +4,8 @@
 # Chức năng xe hiện hành — RT34-CORNER / NET35
 
 Danh sách mô tả **đúng** những gì code đang chạy, kèm số đo từ log xe thật. Đây không phải chứng
-nhận mọi tình huống thực tế đã đạt.
+nhận mọi tình huống thực tế đã đạt. Thứ tự ưu tiên giữa các lớp (P0 cắt an toàn → P7 telemetry) và
+sơ đồ pipeline 200 Hz: [HANDOFF mục 2](../HANDOFF.md).
 
 ## 1. Ba mức tốc độ
 

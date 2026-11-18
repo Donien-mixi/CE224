@@ -1,16 +1,23 @@
-> **Trạng thái đồ án · 15/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Giai đoạn điều khiển web đã có 8 hướng và log. Workspace đang ở RT29-NOCUT / NET30, đã build, kiểm thử trên máy và push Git. Mô hình tính pin kê thêm 10 mm. PCB local một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu. Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
+> **Trạng thái đồ án · 18/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Điều khiển web có 8 hướng và log. Workspace đang ở **RT34-CORNER / NET35**, đã build, kiểm thử trên máy và push Git. Mô hình tính pin kê thêm 10 mm. PCB một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu. Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
 
 > Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
 
-# Bản hiện tại: RT29-NOCUT / NET30
+# Bản hiện tại: RT34-CORNER / NET35
 
-Cần nạp STM32 `BAL-20261115-R12-8DIR-RT29-NOCUT` và ESP32
-`TWIP-WEB-20261115-BAL-R12-8DIR-RT29-NOCUT-NET30`. Binary, hash và lệnh nạp ở
-[`../Firmware/RT29_NOCUT_20261115/`](../Firmware/RT29_NOCUT_20261115/README.md). Mở
-`http://192.168.4.1/ui/r12?v=RT29-NOCUT-NET30`.
+Cần nạp STM32 `BAL-20261117-R12-8DIR-RT34-CORNER` và ESP32
+`TWIP-WEB-20261117-BAL-R12-8DIR-RT34-CORNER-NET35`. Binary, hash và lệnh nạp ở
+[`../Firmware/RT34_CORNER_20261117/`](../Firmware/RT34_CORNER_20261117/README.md). Mở
+`http://192.168.4.1/ui/r12?v=RT34-CORNER-NET35`.
 
-RT29 chỉ thêm một điều kiện trên STM32 (miễn hạn 4 s cho phanh do nhiễu); gateway chỉ đổi literal
-build ID so với NET29. Xem [`../Docs/RT29_Tu_Ngat_4096.md`](../Docs/RT29_Tu_Ngat_4096.md).
+NET35 chỉ đổi literal build ID so với NET34; hành vi gateway không đổi. Các thay đổi gateway đang
+chạy, theo thứ tự:
+
+- **NET34**: hạ TX Wi-Fi xuống **11 dBm** và **không ghi Flash khi xe đang cân bằng/chạy** (archive
+  task chỉ ghi khi đã `settled`) — log RT34 có `reset=power_on`, hết brownout. Xem
+  [RT33](../Docs/RT33_On_Dinh_Ket_Noi.md).
+- **NET33**: ba nút **50 / 80 / MAX 90**, trần 0,90 m/s; log 122 byte/40 cột/50 Hz.
+- **NET21**: SoftAP bật trước khi chuẩn bị log; trang tự đóng WebSocket nếu 3 s không nhận khung;
+  route log/archive trả tên tệp trần; nút **SỬA VÙNG LOG FLASH** khi volume không mount.
 
 ## Lịch sử: RT22 SYM / NET23 (14/11/2026)
 
@@ -22,7 +29,7 @@ RT22 sửa phần điều khiển trên STM32 (ESP32 chỉ đổi literal build 
 - Tiến và lùi tăng tốc như nhau và đạt **đúng** mốc 0,50 / 0,72 / 0,80 m/s (trước đây tiến bị ghìm 0,5–4,8 s, chỉ tới 0,61–0,79).
 - Bẻ hướng gắt hơn: quay tại chỗ 2,4 rad/s, chéo 1,15 rad/s ở preset 80 (trước 0,50), gia tốc yaw 4,5 rad/s², trần gia tốc ngang 0,9 m/s².
 
-Hiệu chuẩn gyro lúc cấp nguồn vẫn **500 mẫu ≈ 5,15 s** (đo 10,3 ms/mẫu ở ODR 100 Hz), nên từ cắm pin đến frame đầu tiên khoảng 5,3 s và tới lúc bấm BẬT ~5,5 s — trang hiện "Chưa nhận STM32" trong khoảng đó là do hiệu chuẩn, không phải Wi-Fi. Bản thử rút còn 200 mẫu (`QUICKSTART`, 14/11) đã được **khôi phục** về 500; xem `../(đã gỡ, xem git history)`.
+Hiệu chuẩn gyro lúc cấp nguồn vẫn **500 mẫu ≈ 5,15 s** (đo 10,3 ms/mẫu ở ODR 100 Hz), nên từ cắm pin đến frame đầu tiên khoảng 5,3 s và tới lúc bấm BẬT ~5,5 s — trang hiện "Chưa nhận STM32" trong khoảng đó là do hiệu chuẩn, không phải Wi-Fi. Bản thử rút còn 200 mẫu (`QUICKSTART`, 14/11) đã được **khôi phục** về 500 (bản thử đó đã gỡ, xem git history).
 
 > Bản thử thêm kênh chẩn đoán qua cáp (NET22, 14/11) đã được **gỡ bỏ** theo yêu cầu: chỉ cần dữ liệu qua log tải từ trang web.
 

@@ -1,4 +1,4 @@
-> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT34-CORNER + ESP32 NET35** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
 
 > Bản bàn giao hiện hành: xem [Phát triển tiếp](Phat_Trien_Tiep.md) và [Thông số xe](Thong_So_Xe_Hien_Tai.md). Một số ví dụ/giá trị trong tài liệu nền tảng này thuộc phiên bản trước; mã nguồn quyết định hành vi firmware hiện tại.
 

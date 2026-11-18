@@ -1,4 +1,4 @@
-# Tổng quan đồ án TWIP · 17/11/2026
+# Tổng quan đồ án TWIP · 18/11/2026
 
 TWIP là xe hai bánh tự cân bằng. STM32F411 đọc BMI160 và hai encoder GA25, chạy vòng điều khiển
 200 Hz và điều khiển hai motor GA25 qua driver A4950. ESP32-S3 làm gateway Wi-Fi: trang điều khiển,
@@ -24,7 +24,8 @@ bo chuyển tiếp để lắp các module.
 
 ## Điểm vào khi tiếp nhận
 
-1. [HANDOFF](../HANDOFF.md) — trạng thái, quy tắc vận hành, việc còn mở.
+1. [HANDOFF](../HANDOFF.md) — trạng thái, kiến trúc FSM/pipeline 200 Hz + thứ tự ưu tiên P0–P7,
+   quy tắc vận hành, việc còn mở.
 2. [Firmware STM32](../Xe_Can_Bang) và [firmware ESP32-S3](../ESP32_S3_Gateway) để build lại từ
    source, hoặc nạp thẳng binary trong `Firmware/`.
 3. [Chức năng hiện hành](Tinh_Nang_Xe_Hien_Hanh.md), [thuật toán](Thuat_Toan_Dieu_Khien.md),

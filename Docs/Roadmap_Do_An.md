@@ -1,4 +1,11 @@
-> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT34-CORNER + ESP32 NET35** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+>
+> **Đối chiếu roadmap với hiện tại:** GĐ0 (self-test linh kiện), GĐ1 (cân bằng, chống nhiễu) và GĐ2
+> (điều hướng web + vừa chạy vừa cân bằng) **đã xong**; các mục ❌ ở §0.3 nay đã có: lái 8 hướng,
+> giữ hướng/vị trí, chống kẹt, log 122 B/50 Hz, ba mức 50/80/90, bù bánh trái, trần cua.
+> Việc còn mở **không nằm trong roadmap này** mà ở [HANDOFF §6](../HANDOFF.md#6-việc-còn-mở-theo-thứ-tự):
+> nguồn ESP32, format vùng log, cơ khí bánh trái, 4S, PCB, watchdog. Phần dưới giữ nguyên làm
+> tài liệu phương pháp (một số bước đánh dấu ☐/❌ đã hoàn thành, không cập nhật lại từng ô).
 
 > Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
 

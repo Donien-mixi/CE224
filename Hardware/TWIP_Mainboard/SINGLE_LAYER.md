@@ -1,4 +1,4 @@
-> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [HANDOFF](../../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT34-CORNER + ESP32 NET35** (18/11/2026) — xem [HANDOFF](../../HANDOFF.md).
 
 > CẬP NHẬT03/11: motor trái đỏJ2.1→AOUT2, trắngJ2.6→AOUT1. W1/W2, schematic và danh sáchnet đã đổi đúng cực; kích thước giữ nguyên. Mô tả net không đổi bên dưới là so sánh ở thời điểm chuyển lớp trước sửa cực.
 

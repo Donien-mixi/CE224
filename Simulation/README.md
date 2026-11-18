@@ -1,13 +1,21 @@
-> **Trạng thái đồ án · 15/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Giai đoạn điều khiển web đã có 8 hướng và log. Workspace đang ở **RT29-NOCUT / NET30**, đã build, kiểm thử trên máy và push Git. Mô hình tính pin kê thêm 10 mm. PCB local một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu. Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
+> **Trạng thái đồ án · 18/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Điều khiển web có
+> 8 hướng và log. Workspace đang ở **RT34-CORNER / NET35**, đã build, kiểm thử trên máy và push Git.
+> Mô hình tính pin kê thêm 10 mm. PCB một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu.
+> Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
 >
 > **Mô phỏng dùng chung header firmware hiện hành**, nên chạy lại là kiểm luôn bản đang nạp. Lần
-> chạy 15/11/2026 với RT29: **12 ca tốc độ + 12 ca biên + 12 ca khởi hành 50 cm/s, tất cả 20/20 s,
-> không fault** (`node tools/run_governor_sim.cjs --stress` rồi thêm `--edge`, và
-> `--stress --launch --launch50`). Thư mục `results/` chỉ là đầu ra, không đưa lên Git.
+> chạy 17/11/2026 (plant fit lại theo log RT34, xem [RT35](../Docs/RT35_Mo_Phong_Khop_Log.md)):
+> **36/36 ca** khi mức ≤ 80 và **35/36** ở MAX 90 (ca trượt là pin 11,2 V), tất cả 20/20 s
+> (`node tools/run_governor_sim.cjs --stress`, thêm `--edge`, và `--stress --launch --launch50`).
+> Thư mục `results/` chỉ là đầu ra, không đưa lên Git.
 
-# Mô phỏng R12 hiện hành — RT19 HOLD80
+# Mô phỏng R12 hiện hành — RT35 khớp log RT34
 
-RT19 giữ nguyên governor RT17/RT18, chỉ sửa mốc hướng sau quay (tối đa0,6s rồi đóng băng) và chốt lại mốc vị trí200ms sau khi phanh yên; preset cao nhất là80cm/s.  Chạy `node tools/run_governor_sim.cjs --stress --launch --launch50` để thử 12ca khởi hành50 với mốc±2/±3/±4°. `--launch` yêu cầu kèm `--stress` (12ca) vì vector mốc có12 phần tử. Có thể đặt `TWIP_CASE_IDS=3,6` để đối chiếu ca cụ thể; bỏ biến khi chạy đủ12ca. `--launch` còn kiểm tra tham chiếu đã thực hiện đúng hướng, không tính xe đứng im không nhận lệnh là đạt.
+RT35 fit lại đường đặc tính bánh theo log xe 173 s ở pack 11,7 V (`config/motor_pair_r8_20261011.sce`);
+RT19 vẫn giữ governor, mốc hướng sau quay (tối đa0,6s rồi đóng băng) và chốt mốc vị trí200ms sau khi
+phanh yên; ba mức hiện hành là50/80/90cm/s. Header dùng chung nên **trần tốc độ do đường RT34 cũng
+nằm trong mô hình**, nhưng bộ ca hiện tại chưa có bài cua riêng ở MAX — muốn kiểm cua phải dựng thêm
+kịch bản quay.  Chạy `node tools/run_governor_sim.cjs --stress --launch --launch50` để thử 12ca khởi hành50 với mốc±2/±3/±4°. `--launch` yêu cầu kèm `--stress` (12ca) vì vector mốc có12 phần tử. Có thể đặt `TWIP_CASE_IDS=3,6` để đối chiếu ca cụ thể; bỏ biến khi chạy đủ12ca. `--launch` còn kiểm tra tham chiếu đã thực hiện đúng hướng, không tính xe đứng im không nhận lệnh là đạt.
 
 Nền RT17 dùng cùng điểm vào ở dưới. Model hiện giữ đúng thao tác đang giữ trong REC1 (không tự giả định nhả nút), cập nhật20ms, có phanh chung khi REC1 vào, giới hạn lệnh phục hồi và mốc predictor từ đứng yên. Header được chụp trước biên dịch; thay preset không reset governor mỗi chu kỳ. 
 

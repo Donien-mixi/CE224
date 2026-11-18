@@ -1,19 +1,19 @@
-> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [README](README.md) và [HANDOFF](HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT34-CORNER + ESP32 NET35** (18/11/2026) — xem [README](README.md) và [HANDOFF](HANDOFF.md).
 
 > CẤU HÌNH ĐẤU DÂY ĐÃ XÁC NHẬN 03/11/2026: **motor trái đỏ(M1) → AOUT2, trắng(M2) → AOUT1**; motor phải đỏ → BOUT1, trắng → BOUT2. Encoder và PA8/PA9 không đảo. Bảng màu trái ngược trong ghi chép lịch sử không dùng để lắp lại xe.
 
 # HƯỚNG DẪN ĐI DÂY HỆ THỐNG XE HAI BÁNH TỰ CÂN BẰNG
 
-Cập nhật: **30/10/2026**. Project: `D:\DA_HTN`.
+Cập nhật: **18/11/2026**. Project: `D:\DA_HTN`.
 
 Tài liệu ghi lại cấu hình kết nối của đồ án đang sử dụng, dựa trên sơ đồ đi dây đã lưu, bố trí phần cứng đã được người dùng xác nhận và đối chiếu mã nguồn hiện hành. Xe đã được người dùng đánh giá hoạt động cân bằng ổn định. Việc cập nhật tài liệu không yêu cầu thay dây hoặc hiệu chuẩn lại xe đang chạy tốt.
 
 Firmware nguồn dùng để đối chiếu:
 
-- STM32: `BAL-20261024-R12-8DIR-RT8`.
-- ESP32: `TWIP-WEB-20261024-BAL-R12-8DIR-RT8-NET5`.
+- STM32: `BAL-20261117-R12-8DIR-RT34-CORNER`.
+- ESP32: `TWIP-WEB-20261117-BAL-R12-8DIR-RT34-CORNER-NET35`.
 
-Đây là phiên bản source trên laptop; không dùng thông tin này để khẳng định hai bo trên xe đã được nạp RT8 hoặc ba thay đổi RT8 đã được thử thực tế. Xem thêm [HANDOFF.md](HANDOFF.md).
+Đây là phiên bản source trong repo; không dùng thông tin này để khẳng định hai bo trên xe đã được nạp RT34. Kiểm bằng banner log (`BINFO`) sau khi nạp. Xem thêm [HANDOFF.md](HANDOFF.md).
 
 ## 1. Quy ước hướng và bố trí thực tế
 

@@ -71,7 +71,9 @@ có bảng điện áp ở mục 1.
 
 ## 5. Việc tiếp theo (nếu muốn hoàn thiện hơn)
 
-1. Log xe thật cho RT32 (đủ 3 mức, ghi điện áp) để xác nhận bù bánh trái có tác dụng trong thực tế.
+1. Log xe thật cho RT32 (đủ 3 mức, ghi điện áp) để xác nhận bù bánh trái có tác dụng trong thực tế —
+   đã có ở RT34 (173 s, bốn hướng lái lệch 1–2 %).
 2. Nếu vẫn thấy rẽ phải khi tiến yếu: đo lại độ lệch sau bù; nếu còn, phải xử lý cơ khí hoặc thêm
    luật yaw riêng cho chiều phải (một vòng test riêng, không gộp vào bản này).
-3. Muốn >1,0 m/s: cần pack 4S (xem `Docs/RT31_Toc_Do_090.md`, mục 4S).
+3. Muốn >1,0 m/s: cần pack 4S — xem [HANDOFF §6](../HANDOFF.md#6-việc-còn-mở-theo-thứ-tự) và
+   [thông số xe](Thong_So_Xe_Hien_Tai.md) (trần không tải ~0,96 m/s ở 11,7 V).

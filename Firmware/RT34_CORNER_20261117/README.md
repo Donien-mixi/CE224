@@ -42,7 +42,7 @@ giới hạn = 0,95 − |w_ref| · 0,131      (chỉ HẠ, không bao giờ nân
 |---|---|
 | Host test | **32/32 pass**, có `test_rt34_corner` (thẳng 0,90 giữ nguyên; vào cua hạ về 0,803 **không tick nào nhảy quá 0,012**; nhả cua về lại 0,90; preset 80 không đổi; **probe tắt giới hạn phải fail**) |
 | Mô phỏng `--stress` @MAX 80 | 12/12 |
-| Mô phỏng `--stress` @MAX 90 | 9/12 — vẫn đúng 3 ca **11,2 V / motor yếu 20 %** (vùng bị cấm), **không phát sinh ca mới** |
+| Mô phỏng `--stress` @MAX 90 | **11/12** sau khi fit lại plant theo log xe ([RT35](../../Docs/RT35_Mo_Phong_Khop_Log.md)); ca còn lại là **pin 11,2 V** — vùng bị cấm với mức 90 |
 | `--stress --edge` / `--launch50` | 12/12 và 12/12 |
 | Build | STM32 0 lỗi 0 cảnh báo; ESP32 1 090 923 B |
 
@@ -79,4 +79,6 @@ Kiểm: banner **`RT34-CORNER-NET35`**, ba nút **50 / 80 / MAX 90**.
 - Bản này làm cua **êm hơn** bằng cách giảm tốc trong cua; muốn **vừa 0,90 vừa cua gắt** là bất khả
   thi trên 3S (bánh ngoài cần 1,05 m/s > trần động cơ). Muốn vậy phải 4S.
 - Bù bánh trái (110 PWM) vẫn giữ; nó cân mô-men, không làm bánh trái khoẻ thêm.
-- Chưa kiểm trên xe — cần log để xác nhận: yaw không còn vọt, tốc độ vào cua ~0,80, và không ngã.
+- **Đã kiểm trên xe**: log RT34 173 s ở pack 11,7 V — 0 ngã, 0 tự ngắt, bốn hướng lái lệch 1–2 %,
+  cờ 512 trong cua còn 19–26 % (trước 50–77 %). Còn lại: cua trái vẫn ngả nhiều hơn cua phải
+  (~5° so với ~1,4°) — phần cơ khí, không phải luật điều khiển.

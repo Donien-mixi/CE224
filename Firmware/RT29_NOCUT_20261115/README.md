@@ -1,6 +1,10 @@
-# Firmware phát hành RT29-NOCUT / NET30 — 15/11/2026
+# Firmware RT29-NOCUT / NET30 — bản dự phòng (15/11/2026)
 
-Cặp firmware này là bản mới nhất của đồ án. Phải nạp **cả hai board** cùng bản: gateway đối chiếu
+**Đây là bản dự phòng, không phải bản hiện hành.** Bản chốt đang dùng là
+[`../RT34_CORNER_20261117/`](../RT34_CORNER_20261117/README.md) (RT34-CORNER / NET35, ba mức 50/80/90).
+Số liệu kiểm thử dưới đây là tại thời điểm phát hành 15/11/2026 (30 test, ba mức 50/72/80).
+
+Cặp firmware này nạp **cả hai board** cùng bản: gateway đối chiếu
 build ID nhận được từ STM32 (`$BINFO`), lệch bản/ngày thì trang web khoá điều khiển và nút
 **ĐO LẠI GYRO** không chọn được.
 

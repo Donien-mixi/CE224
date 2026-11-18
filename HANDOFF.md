@@ -8,6 +8,11 @@
 > `D:\DA_HTN_speed086` (nhánh `test/speed-086` @ `7ec9f0e`) và `D:\DA_HTN_speed090`
 > (`test/speed-090` @ `6bc90ac`) cùng hai nhánh local đó — bản chốt RT34 đã bao gồm mức 0,90 cao nhất
 > đã thử, cộng thêm 0,80 và bù bánh trái. Cập nhật lại chính tài liệu này.
+>
+> **Đồng bộ tài liệu 18/11:** mọi banner "bản hiện hành" nay là RT34-CORNER / NET35; `tools/README`
+> ghi 32 test và 35/36 ca MAX 90; `Simulation/README` theo plant RT35; `Bang_Ma_Loi` theo số dòng
+> `robot_fsm.c` hiện tại; `Phat_Trien_Tiep` viết lại (không còn liên kết chết); `Thuat_Toan` đánh dấu
+> rõ phần lịch sử R7/PID và FSM hiện hành; `ESP32_S3_Gateway/README` mô tả NET35.
 
 ## 0. Trạng thái một dòng
 

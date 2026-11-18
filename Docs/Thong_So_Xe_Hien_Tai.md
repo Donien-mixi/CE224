@@ -6,7 +6,7 @@
 
 Pin LiPo 3S (190 g theo mô hình) vẫn nằm ở tầng dưới. Ngày 08/11/2026, người vận hành xác nhận đã kê pin cao thêm **10 mm** so với vị trí cũ. Mô hình đã có biến `battery_riser_height = 0.010 m`, đưa tâm pin từ 35,8 lên **45,8 mm so với trục bánh**. Giữ giả định vị trí ngang của pin và bỏ qua khối lượng miếng kê cho đến khi có số đo. 888 g là tổng khối lượng mô hình, chưa cân lại sau thay đổi. Không cộng thêm 10 mm lần nữa.
 
-Bản mã trong workspace là STM32 **RT21-ANTISTALL** và ESP32 **NET18**. Xem [HANDOFF](../HANDOFF.md) để phân biệt bản mã, bản đã thử và kết quả lịch sử. Kết quả thử cũ chỉ được quy cho cấu hình kê pin khi hồ sơ lượt thử xác nhận điều kiện này.
+Bản mã trong workspace là STM32 **RT34-CORNER** và ESP32 **NET35** (18/11/2026). Xem [HANDOFF](../HANDOFF.md) để phân biệt bản mã, bản đã thử và kết quả lịch sử. Kết quả thử cũ chỉ được quy cho cấu hình kê pin khi hồ sơ lượt thử xác nhận điều kiện này.
 
 **Thiết kế cơ khí**
 
@@ -69,7 +69,7 @@ Pin được nâng 10 mm theo phương đứng, đưa tâm pin lên 45,8 mm so v
 | Tỉ số truyền theo tài liệu | 21,3:1 |
 | Mô-men định mức theo tài liệu | 0,4 kgf·cm/motor |
 | Mô-men tối đa theo tài liệu | 2 kgf·cm/motor |
-| Điện áp pin dùng tính toán | **11,1 V — danh nghĩa, chưa đo khi chạy** |
+| Điện áp pin dùng tính toán | **11,7 V — theo log xe 17/11** (dải 12,2 V đầy – 11,2 V cạn) |
 | Encoder trái đo được | 898,450 ticks/vòng bánh |
 | Encoder phải đo được | 898,000 ticks/vòng bánh |
 | PPR dùng trong bộ điều khiển | **898,225 ticks/vòng** |
@@ -122,7 +122,7 @@ Mô phỏng còn giữ sai số góc dư khoảng **±0,529812°** để kiểm 
 
 Phản hồi trạng thái STATE4_OBS14, không phải bộ PID góc/vận tốc cũ. Gain lực Kx/Kv/Kθ/Kω = `[9.150813420, 6.128855436, 14.32794546, 1.160483551]`, đầu vào SI(m, m/s, rad, rad/s), đầu ra N. Bộ ước lượng14trạng thái, blend0,25; phân bổ lực từng bánh có back-EMF/ma sát riêng; giữ hướng PI/PD giới hạn0,08Nm và tích phân0,04Nm. Không cộng thêm deadband PID vào đầu ra R12.
 
-Khởi động đến ±60°, gyro/bánh yên200ms. Ngân sách trôi tăng theo góc, trần1m; pha dựng3giây hoặc4giây nếu bật trên58°. Sau dựng ổn ngắt ở25°/0,8m/s. Xem [chức năng hiện hành](Tinh_Nang_Xe_Hien_Hanh.md) và [bảng mã lỗi](Bang_Ma_Loi_Tu_Dong_Dung.md).
+Khởi động đến ±60°, gyro/bánh yên200ms. Ngân sách trôi tăng theo góc, trần1m; pha dựng3giây hoặc4giây nếu bật trên58°. Sau dựng ổn ngắt ở25°/0,90m/s. Xem [chức năng hiện hành](Tinh_Nang_Xe_Hien_Hanh.md) và [bảng mã lỗi](Bang_Ma_Loi_Tu_Dong_Dung.md).
 
 Nguồn cấu hình: `Core/Inc/phase1_catalog_control.h`, `phase1_catalog_params.h`, `balance_profile.h`, `balance_startup.h`; hình học tại `Simulation/model/robot_can_bang_pid_1.sce`. Cửa vào mô phỏng hiện tại chạy R12. Không dùng `team_run.sce` hoặc các hệ số R7 cũ để thay đổi firmware hiện hành.
 

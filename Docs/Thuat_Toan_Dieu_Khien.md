@@ -1,9 +1,9 @@
-> **Lưu ý ngữ cảnh (17/11/2026).** Phần đầu tài liệu mô tả nền R12 và các lớp giám sát còn
-> đang chạy. **Bảng tham số ở cuối là lịch sử của bản R7/PID cũ** (β steering, ngưỡng 45°…) — không
+> **Lưu ý ngữ cảnh (18/11/2026).** Phần đầu tài liệu mô tả nền R12 và các lớp giám sát còn
+> đang chạy. **Bảng tham số ở §7 là lịch sử của bản R7/PID cũ** (β steering, deadband PID…) — không
 > dùng để đối chiếu firmware hiện hành; số hiện hành xem
 > [chức năng](Tinh_Nang_Xe_Hien_Hanh.md) và [thông số xe](Thong_So_Xe_Hien_Tai.md).
 
-> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT34-CORNER + ESP32 NET35** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Kiến trúc FSM + pipeline 200 Hz + thứ tự ưu tiên P0–P7: [HANDOFF mục 2](../HANDOFF.md#2-kiến-trúc-điều-khiển).
 
 > Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
 
@@ -224,64 +224,52 @@ $$
 
 ## 4. MÁY TRẠNG THÁI HỆ THỐNG (FSM) — 8 TRẠNG THÁI
 
-Giá trị enum trong `robot_fsm.h`:
+Bản chốt chỉ dùng 5 trạng thái; `RACING` (4) và `BENCH_TEST` (7) **không dùng** (không có chuyển
+controller lúc chạy). Giá trị enum trong `robot_fsm.h`:
 
-| Mã | Trạng thái | Ý nghĩa |
+| Mã | Trạng thái | Ý nghĩa trong bản RT34 |
 | :-: | :-- | :-- |
 | 0 | `INIT` | Khởi tạo phần cứng |
-| 1 | `CALIBRATING` | Lấy 500 mẫu Gyro Bias (~5,15 s; 200 mẫu là bản thử đã khôi phục) |
-| 2 | `STANDBY` | Chờ dựng xe (đèn nháy chậm) |
-| 3 | `BALANCING` | Cân bằng chế độ thường ($\theta_{\max} = \pm 8^\circ$) |
-| 4 | `RACING` | Cân bằng chế độ đua ($\theta_{\max} = \pm 15^\circ$) |
-| 5 | `FALLEN` | Xe ngã ($|\theta| > 45^\circ$) hoặc `$STOP` → cắt PWM |
-| 6 | `EMERGENCY` | Lỗi khẩn cấp (mất I2C BMI160 / khởi tạo lỗi) |
-| 7 | `BENCH_TEST` | Test bàn: quay động cơ trực tiếp, **bỏ qua cảm biến cân bằng** |
+| 1 | `CALIBRATING` | Lấy 500 mẫu Gyro Bias (~5,15 s) |
+| 2 | `STANDBY` | Chờ dựng xe, motor **dừng** |
+| 3 | `BALANCING` | Chạy pipeline 200 Hz; ARM đòi 200 ms đứng yên, `\|θ\| ≤ 60°`, gyro ≤ 6 °/s, bánh < 0,05 m/s, nhịp vòng 4–6 ms |
+| 4 | `RACING` | Không dùng |
+| 5 | `FALLEN` | Mọi lỗi cắt qua `BalanceStop()`; **không tự phục hồi**, phải ARM lại |
+| 6 | `EMERGENCY` | Lỗi BMI160/khởi tạo; cần `$CALIB` hoặc reset nguồn |
+| 7 | `BENCH_TEST` | Không dùng |
 
-```mermaid
-stateDiagram-v2
-    [*] --> INIT : Khởi động nguồn
-    INIT --> CALIBRATING : Ngoại vi khởi tạo xong
-    CALIBRATING --> STANDBY : Lấy xong 500 mẫu Gyro Bias (~5,15 s)
-    STANDBY --> BALANCING : Dựng đứng xe (|θ| < 15°)
-    STANDBY --> RACING : Dựng đứng xe + $RACE,1
-    BALANCING --> RACING : $RACE,1
-    RACING --> BALANCING : $RACE,0
-    BALANCING --> FALLEN : Ngã (|θ| > 45°) hoặc $STOP
-    RACING --> FALLEN : Ngã (|θ| > 45°) hoặc $STOP
-    FALLEN --> BALANCING : Dựng lại (|θ| < 15°)
-    FALLEN --> RACING : Dựng lại + $RACE,1
-    STANDBY --> BENCH_TEST : $BENCH,1
-    BALANCING --> BENCH_TEST : $BENCH,1
-    FALLEN --> BENCH_TEST : $BENCH,1
-    BENCH_TEST --> STANDBY : $BENCH,0
-    INIT --> EMERGENCY : Lỗi khởi tạo BMI160
-    BALANCING --> EMERGENCY : Lỗi đọc BMI160
-    EMERGENCY --> [*] : Cắt PWM + Còi hú (cần reset nguồn)
-```
+Chuyển tiếp thực tế: `INIT → CALIBRATING → STANDBY → BALANCING`. Từ `BALANCING`, **bất kỳ** fault nào
+cũng đưa sang `FALLEN`; chỉ một lệnh ARM mới (khi đã `ready`) mới quay lại `BALANCING`. `$CALIB` từ
+`STANDBY`/`FALLEN` quay về `CALIBRATING`. Không có đường tự dựng lại sau ngã.
 
-> **Ngưỡng tự kích hoạt cân bằng trong code là `|pitch| < 15.0°`** (`robot_fsm.c`),
-> khớp với thông báo trên Web HUD và chú thích trong `robot_fsm.h`.
-> Việc có nên siết về `8–10°` hay không được bàn ở `Roadmap_Do_An.md`.
->
+Sơ đồ chuyển tiếp đầy đủ, 16 bước pipeline 200 Hz và thứ tự ưu tiên P0–P7:
+[HANDOFF mục 2](../HANDOFF.md).
+
 > Lệnh `$CALIB` (nút "HIỆU CHUẨN LẠI IMU" trên web) sẽ **tạm dừng vòng 200Hz**,
-> chạy lại `BMI160_Calibrate_Gyro(500)` + `Filter_Init()` rồi trở về `STANDBY`
-> (hàm `Robot_RecalibrateIMU()` trong `robot_fsm.c`) — phục vụ self-test/hiệu chuẩn lại mà không cần tắt nguồn.
+> chạy lại `BMI160_Calibrate_Gyro(500)` + `Filter_Init()` + `Encoder_Reset()` + `PID_Reset_Integral()`
+> rồi trở về `STANDBY` (hàm `Robot_RecalibrateIMU()` trong `robot_fsm.c`) — phục vụ self-test/hiệu
+> chuẩn lại mà không cần tắt nguồn. Mọi lệnh đang chờ bị xoá; phải chờ đứng yên lại 200 ms mới ARM.
 
 ### Chu trình khởi tạo `Robot_Init()`
 
 ```
 BuzzerLED_Init() → Motor_Init() → Motor_Stop() → Encoder_Init() → PID_Init()
-  → Motor_SelfTest()                       (PWM 1600 ≈ 64%/bánh, mỗi bánh 600ms, có bíp báo)
+  → Filter_SelectController(R12) → bật DWT đếm chu kỳ → đặt ưu tiên ngắt (SysTick 0, TIM4 1)
+  → ESP32_Comm_Init()                      (trước BMI160 để không mất byte lệnh)
   → BMI160_Init()                          (thất bại → EMERGENCY + còi hú)
   → CALIBRATING: BMI160_Calibrate_Gyro(500)
-  → Filter_Init(atan2(ax, az))
-  → STANDBY
-  → ESP32_Comm_Init()                      (đặt CUỐI để tránh lỗi Overrun trong lúc SelfTest/Calib)
+  → BMI160_Read_All() → kiểm cấu hình (0xD1/0x28/8/0x28/0) → Filter_Init(CalibratedRawPitch)
+  → STANDBY + ESP32_Comm_FlushRx()         (bỏ lệnh đến trong lúc hiệu chuẩn)
 ```
 
 ---
 
-## 5. MÃ NGUỒN C HIỆN THỰC THỜI GIAN THỰC (200Hz)
+## 5. MÃ NGUỒN C — BẢN TRÍCH LỊCH SỬ (RT8)
+
+> **Đoạn dưới không còn khớp bản RT34.** Nó được giữ để giải thích cấu trúc vòng lặp thời gian thực;
+> code hiện hành đã khác: không còn `$RACE`/`$PROFILE`, không return sớm khi `EMERGENCY`, mọi lỗi đi
+> qua `BalanceStop()`, và vòng lặp có thêm startup capture / REC1 / governor / motion / turn / trim.
+> Bản đúng: [`robot_fsm.c`](../Xe_Can_Bang/Core/Src/robot_fsm.c) và [HANDOFF mục 2](../HANDOFF.md).
 
 Toàn bộ thuật toán được thực thi trong hàm `Robot_ControlLoop_200Hz()` tại file
 [`robot_fsm.c`](../Xe_Can_Bang/Core/Src/robot_fsm.c),
@@ -499,9 +487,11 @@ thông số hiển thị thực tế.
 
 ---
 
-## 7. BẢNG THÔNG SỐ CẤU HÌNH HIỆN TẠI
+## 7. BẢNG THÔNG SỐ CẤU HÌNH — LỊCH SỬ (R7/PID CŨ)
 
-Giá trị thực tế đang nạp trong mã nguồn (làm mốc để tune theo `Roadmap_Do_An.md`):
+Bảng dưới là giá trị của nền PID cũ, **không phải** bản R12 đang nạp. R12 dùng phản hồi trạng thái
+14 trạng thái với `CAT_K` trong `phase1_catalog_params.h`; số hiện hành xem
+[thông số xe](Thong_So_Xe_Hien_Tai.md) và [chức năng](Tinh_Nang_Xe_Hien_Hanh.md).
 
 | Tham số | Giá trị | Định nghĩa | File |
 | :-- | :--: | :-- | :-- |
@@ -530,7 +520,7 @@ Giá trị thực tế đang nạp trong mã nguồn (làm mốc để tune theo
 |---|---|---|
 | Bộ tốc độ 50/80/90 | `balance_motion.h`, `balance_profile.h` | preset 1 = 0,80; preset 2 = 0,90; trần thường `BALANCE_STOP_SPEED` = 0,90 |
 | Bù lệch bánh trái | `balance_trim.h` | cộng 110 PWM cho bánh trái theo dấu quay, kẹp ±2499, đặt **sau** bộ phân bổ R12 |
-| Trần tốc độ do đường | `balance_turn.h` + `balance_motion.h` | khi `|w_ref| > 0,30`, hạ tham chiếu tốc độ về `0,95 − |w_ref|·0,131` (chỉ hạ, qua ramp giảm tốc 0,90 m/s²) |
+| Trần tốc độ do đường | `balance_turn.h` + `balance_motion.h` | khi `\|w_ref\| > 0,30`, hạ tham chiếu tốc độ về `0,95 − \|w_ref\|·0,131` (chỉ hạ, qua ramp giảm tốc 0,90 m/s²) |
 | Gateway ổn định | `ESP32_S3_Gateway` | TX 11 dBm; chỉ ghi Flash khi xe đã dừng (tránh hỏng FAT khi brownout) |
 
 Các lớp này **không** sửa gain/observer/phân bổ lực R12 và không đổi khung truyền 122 B.

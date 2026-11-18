@@ -1,41 +1,50 @@
-> **Trạng thái:** bản hiện hành **RT29-NOCUT / NET30** — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT34-CORNER + ESP32 NET35** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
 
-> Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
+# Phát triển tiếp sau bản chốt RT34
 
-> **Hiện tại: R12 SPEED2** — chọn 40/60 cm/s; bỏ mục tiêu cũ sau phục hồi/kẹt, chờ lần giữ mới; va chạm mạnh có thể dừng motor. [Nạp và thử](../Docs/Van_Hanh_R12_SPEED2.md). Mức nhanh60 cần xác nhận trên xe thật.
+Bản chốt đã có: cân bằng R12, ba mức 50/80/90 cm/s, 8 hướng, giữ vị trí/hướng, REC1, bù bánh trái,
+trần tốc độ do đường, gateway ổn định. Tài liệu này chỉ liệt kê **việc còn lại** và **hướng mở rộng**,
+kèm cách kiểm để không phải suy đoán.
 
-> **Hiện tại: R12 SPEED1** — tiến/lùi liên tục ở0,40m/s, gấp4lần MOVE1; bỏ chặn quãng đường60cm. Giữ luật cân bằng R12. [Hướng dẫn nạp và thử](../Docs/Van_Hanh_R12_SPEED1.md). Đây là mức tăng tốc cần kiểm chứng trên xe, chưa bảo đảm mọi điều kiện đua.
+## 1. Việc ưu tiên (phần cứng và vận hành)
 
-> **Giai đoạn2 hiện tại: R12 MOVE1** — giai đoạn1 đã được người vận hành xác nhận; thêm giữ nút TIẾN/LÙI, nhả để giảm tốc và cân bằng tại điểm mới. [Nạp và vận hành](Van_Hanh_R12_MOVE1_Tien_Lui.md). Các phần BASE60/REC1 bên dưới là nền đối chiếu; firmware hiện tại là `BAL-20261018-R12-MOVE1` / `TWIP-WEB-20261018-BAL-R12-MOVE1`.
+| # | Việc | Vì sao | Cách kiểm |
+|---|---|---|---|
+| 1 | Bấm “SỬA VÙNG LOG FLASH” một lần khi motor đã dừng | `archive_error=1` trong mọi log gần đây ⇒ log chỉ nằm RAM | Log kế tiếp có `archive_saved > 0` |
+| 2 | Thêm 1000 µF low-ESR + 100/10 µF tại ESP32, cấp từ nhánh riêng | Gốc rễ brownout vẫn là nguồn; TX 11 dBm chỉ giảm đỉnh dòng | 10 log liên tiếp `reset=power_on` |
+| 3 | Xử lý cơ khí motor/hộp giảm tốc trái | Cua trái vẫn ngả ~5° so với ~1,4° cua phải dù tốc độ quay đã cân | So `\|pitch\|` p95 khi quay trái/phải cùng `w_ref` |
+| 4 | Pack 4S nếu muốn > 0,90 m/s | 3S chỉ ~0,96 m/s không tải; 0,90 ở 11,2 V cần duty 0,955 | Đo lại đường đặc tính bánh + chạy lại 36 ca mô phỏng |
+| 5 | Làm bo PCB thật | Chưa kiểm nhiễu, nhiệt, tải dòng của bo chuyển tiếp | Đo 5 V/3V3 khi motor đảo chiều trên bo thật |
+| 6 | Cân nhắc IWDG | Hiện không có watchdog; MCU treo thì TIM1 giữ duty cuối | Phải chứng minh không cắt oan lúc hiệu chuẩn 5 s |
 
-> **Bản thử bổ sung hiện tại: R12 REC1** — giữ luật cân bằng/chống xoay và dựng60° của BASE60, thêm phục hồi sau đẩy có giới hạn. [Cách nạp và thử](Thu_R12_REC1_Phu_Hoi_Sau_Day.md). Mức1,5N/0,1s mới được kiểm tra trên mô hình; chưa đo xác nhận lực trên xe thật.
+## 2. Hướng kỹ thuật
 
-# Phát triển tiếp trên R12 BASE60
+- **Nhanh hơn 0,90 m/s** chỉ có nghĩa khi đổi nguồn (4S) hoặc đổi motor/giảm tốc. Đổi pack phải đo lại
+  đường đặc tính từng bánh rồi cập nhật `Simulation/config/motor_supply.sce` và
+  `motor_pair_r8_20261011.sce`, sau đó chạy lại bộ 36 ca — không sửa gain R12 để “ép” tốc độ.
+- **Vừa 0,90 vừa cua gắt** là bất khả thi trên 3S: bánh ngoài cần `v + |w|·0,131` ≈ 1,05 m/s. RT34 đã
+  chọn hạ tham chiếu khi cua; muốn bỏ hạ thì phải có motor khoẻ hơn, không phải tăng trần.
+- **Bù bánh trái** đang là hằng số 110 PWM đo từ log RT30/RT31. Nếu thay motor, hộp giảm tốc hoặc
+  bánh, phải đo lại ba chế độ (tiến/lùi/quay) trước khi giữ nguyên số cũ.
+- **Tăng tốc/phanh gắt hơn**: đã ở giới hạn thực nghiệm (đảo chiều 0,85–0,90 m/s từng làm xe ngã).
+  Mọi thay đổi phải kèm log có `fault` và so trước/sau, không chỉ cảm nhận.
 
-Cấu hình duy nhất hiện hành là R12 khởi động đến ±60°. Người vận hành đã thử60° thành công và chọn S60X làm nền tảng. BASE60 bỏ lựa chọn R7 khỏi web và luồng cân bằng, giữ nguyên luật điều khiển, bộ ước lượng và pha dựng S60X.
+## 3. Hướng mô phỏng
 
-STM32: `BAL-20261018-R12-REC1`. ESP32: `TWIP-WEB-20261018-BAL-R12-REC1`. Xem [nạp và vận hành](Van_Hanh_R12_60.md), [thông số xe](Thong_So_Xe_Hien_Tai.md).
+Mô hình đang thiếu: trượt bánh, tụt áp theo tải, tư thế trung tính +1,5°, và mô hình cua đầy đủ.
+Thứ tự nên làm: (1) thêm tụt áp theo dòng để kiểm vùng pin yếu; (2) thêm trượt bánh cho cua MAX;
+(3) hiệu chỉnh tiếp xúc ở góc lớn. Sau mỗi lần sửa plant, chạy lại 36 ca và ghi rõ ca nào đổi —
+xem [Simulation/README](../Simulation/README.md) và [RT35](RT35_Mo_Phong_Khop_Log.md).
 
-| Nội dung | Nguồn |
-|---|---|
-| Phản hồi trạng thái, bộ ước lượng, phân bổ lực, giữ hướng | `Xe_Can_Bang/Core/Inc/phase1_catalog_control.h` |
-| Gain/matrix/tham số R12 đóng băng | `Xe_Can_Bang/Core/Inc/phase1_catalog_params.h` |
-| Hiệu chuẩn/ARM/ngưỡng/build ID | `Xe_Can_Bang/Core/Inc/balance_profile.h` |
-| Phục hồi sau đẩy có giới hạn | `Xe_Can_Bang/Core/Inc/balance_recovery.h` |
-| Điểm đặt di chuyển / luật bám điểm đặt | `Core/Inc/balance_motion.h`, `phase2_motion_control.h` |
-| Pha dựng theo góc lúc bật | `Xe_Can_Bang/Core/Inc/balance_startup.h` |
-| Vòng200Hz, ARM/STOP và telemetry | `Xe_Can_Bang/Core/Src/robot_fsm.c` |
-| IMU, bộ lọc góc, encoder | `Core/Src/bmi160.c`, `filter.c`, `encoder.c` |
-| Nhận lệnh từ gateway | `Core/Src/esp32_comm.c` |
-| Web vận hành, trạng thái và tải log | `ESP32_S3_Gateway/dashboard_html.h`, `balance_web.h` |
-| Chủ điều khiển, heartbeat và nguồn STOP | `ESP32_S3_Gateway/control_session.h` |
-| Bài đo motor/encoder/IMU | `wheel_measurement.h`, `wheel_tests_html.h`, `measurement_web.h` |
-| Cửa vào mô phỏng R12 | `robot_can_bang_pid_1.sce` → `Simulation/scripts/run_r12_baseline.sce` |
+## 4. Quy tắc giữ nguyên
 
-Các đường dẫn `Core/...` trong bảng thuộc project `Xe_Can_Bang`. Mã PID cũ còn lại phục vụ tương thích thư viện/chẩn đoán; sửa `pid.c` không tuning được R12. `$PROFILE` bị bỏ qua; `$ARM,7` bị từ chối. Lệnh hiện hành gồm `$ARM,12`, `$STOP`, `$PING`, `$PULSE`, `$CALIB` và các lệnh đo. Giai đoạn2 dùng `$MOVE,direction,epoch,sequence` với nút giữ và lease350ms; `$CMD`/steer cũ vẫn bị khóa, chưa có rẽ.
+- Không sửa gain/observer/phân bổ lực R12, `CAT_VNL`, khung telemetry 122 B.
+- Đổi hành vi phải bump build ID **cả hai board** và mọi literal; `test_build_id_sync` phải PASS.
+- Chạy đủ 32 host test; test mới phải có old-constant probe (fail với hằng số cũ).
+- Không tự nạp board, không tự push `main` khi chưa được yêu cầu.
 
-Giao thức MOVE1: frame104byte, sync0x5ea5, CRC16; controller luôn12. Giữ đồng nhất `balance_wire.h` hai board. Log CSV V6 có35cột, control_phase=0thường/1dựng/2phục hồi, ghi100Hz khi hoạt động và2giây sau dừng, không ghi đè khi đầy. `control_v`/`control_theta` là ước lượng R12, `control_integral` là tích phân hướng Nm.
+## 5. Đọc thêm
 
-Trước khi thay bản nền: chạy `tools/test_r12_controller.cjs`, `test_r12_dashboard.cjs`, `test_r12_gateway.cjs`, `test_hardware_boot.cjs`, `test_wheel_web.cjs` bằng Node.js. `tools/build_balance_firmware.ps1` biên dịch hai board và ghi manifest; `tools/verify_balance_release.py` kiểm tra nguồn/file nạp/trang nhúng. Không tự nạp hoặc push Git.
-
-Mô hình vật lý góc lớn chưa được kiểm chứng đủ; không thay giả định lực/ma sát để ép ca60° đạt. Giữ riêng kết quả mô phỏng, quan sát người vận hành và dữ liệu log. R7 chỉ còn trong lịch sử đối chiếu, không phải nền tảng phát triển tiếp. Bản build/log/kết quả/báo cáo tự sinh không đưa lên Git.
+[Chức năng hiện hành](Tinh_Nang_Xe_Hien_Hanh.md) · [Thuật toán](Thuat_Toan_Dieu_Khien.md) ·
+[Thông số xe](Thong_So_Xe_Hien_Tai.md) · [Mã lỗi](Bang_Ma_Loi_Tu_Dong_Dung.md) ·
+[RT34](RT34_Cua_Muot.md) · [RT35](RT35_Mo_Phong_Khop_Log.md) · [HANDOFF](../HANDOFF.md).
