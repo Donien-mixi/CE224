@@ -52,6 +52,8 @@ vẫn khẳng định đúng hành vi cũ.
 
 ## 3. Nạp
 
+> Muốn nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload): xem [../../Docs/Nap_Bang_IDE.md](../../Docs/Nap_Bang_IDE.md).
+
 `D:\DA_HTN\Firmware\RT34_CORNER_20261117\nap_rt34.bat` (nhập COM ESP32) hoặc lệnh tay:
 
 ```powershell

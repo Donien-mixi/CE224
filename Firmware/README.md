@@ -98,6 +98,13 @@ $es='C:\Users\DONG NHIEN\AppData\Local\Arduino15\packages\esp32\tools\esptool_py
 
 > Dùng **esptool v5**: lệnh là `write-flash` (có gạch nối). Bản v3 cũ dùng `write_flash`.
 
+### Cách D — nạp bằng IDE (Build + Run / Upload)
+
+Nếu muốn mở **STM32CubeIDE** bấm Build → Run và mở **Arduino IDE** bấm Upload thay vì dùng script,
+xem hướng dẫn riêng: [`../Docs/Nap_Bang_IDE.md`](../Docs/Nap_Bang_IDE.md). Ba bản đều có source sẵn
+để mở (RT37 dùng cây hiện tại; RT34/RT29 dùng snapshot trong `.build\ide_src`, tạo lại bằng
+`tools\ide_sources.ps1`).
+
 ## 5. Kiểm sau khi nạp
 
 1. Rút ST-LINK, cấp nguồn xe, chờ ~5 s (STM32 hiệu chuẩn gyro 500 mẫu).

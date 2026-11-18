@@ -51,6 +51,8 @@ $m.PSObject.Properties | ForEach-Object {
 
 ## 3. Nạp STM32 (COM qua ST-LINK)
 
+> Muốn nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload): xem [../../Docs/Nap_Bang_IDE.md](../../Docs/Nap_Bang_IDE.md).
+
 Cách nhanh: nháy đúp `nap_rt29.bat`, nhập COM ESP32 (bỏ trống nếu chỉ nạp STM32). Hoặc nạp tay:
 
 ```powershell

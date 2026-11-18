@@ -45,6 +45,8 @@ Ngập ngừng **không** do nhịp vòng hay mất lệnh; là chính sách gi�
 
 ## 4. Nạp
 
+> Muốn nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload): xem [../../Docs/Nap_Bang_IDE.md](../../Docs/Nap_Bang_IDE.md).
+
 `nap_rt37.bat` (nhập COM ESP32) hoặc lệnh tay:
 
 ```powershell
