@@ -144,7 +144,7 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 | Cây làm việc | sạch (0 thay đổi) |
 | Nhánh | `main`, `pcb` (PCB đã push ở `origin/pcb`) |
 | Nhánh đã xoá 18/11 | `test/speed-086` @ `7ec9f0e`, `test/speed-090` @ `6bc90ac` — còn trong reflog ~90 ngày |
-| Tệp được theo dõi | 461 |
+| Tệp được theo dõi | 464 |
 | Thư mục build local | `.build/` 156 MB, `Xe_Can_Bang/Debug/` 29 MB, `.metadata/` 7 MB — **đã gitignore**, xoá được nếu cần chỗ |
 
 ### 4.2 Bản nạp và hash
@@ -203,6 +203,10 @@ node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 Nháy đúp `nap_rt37.bat` trong thư mục bản nạp → nhập COM của ESP32. Script nạp STM32 bằng
 `STM32_Programmer_CLI.exe`, ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
 Kiểm sau khi nạp: banner `RT37-SMOOTH-NET37`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được.
+
+Ba bản (RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
+banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — hoặc chạy menu
+`Firmware/nap_chon_ban.bat`.
 
 ## 5. Quy tắc vận hành
 

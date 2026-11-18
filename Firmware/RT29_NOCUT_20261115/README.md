@@ -26,6 +26,7 @@ build ID nhận được từ STM32 (`$BINFO`), lệch bản/ngày thì trang we
 | `ESP32_RT29_NOCUT_NET30.app.bin` | esptool `0x10000` (ứng dụng + web). |
 | `SHA256.json` | Hash của các tệp trên — kiểm trước khi nạp. |
 | `SOURCE_SHA256.json` | Hash của 12 tệp nguồn đã sinh ra đúng hai binary này. |
+| `nap_rt29.bat` | Nạp tự động **cả hai board** (nhập COM ESP32). Xem [hướng dẫn chọn bản](../README.md). |
 
 Bản `merged.bin` (ảnh gộp 16 MB để nạp một lần) **không** đưa vào repo; tạo lại bằng:
 
@@ -50,6 +51,8 @@ $m.PSObject.Properties | ForEach-Object {
 
 ## 3. Nạp STM32 (COM qua ST-LINK)
 
+Cách nhanh: nháy đúp `nap_rt29.bat`, nhập COM ESP32 (bỏ trống nếu chỉ nạp STM32). Hoặc nạp tay:
+
 ```powershell
 STM32_Programmer_CLI.exe -c port=SWD -w STM32_BAL_R12_RT29_NOCUT.hex -v -rst
 ```
@@ -61,7 +64,8 @@ giao thức.
 ## 4. Nạp ESP32-S3 (COM3, 16 MB flash)
 
 ```powershell
-esptool.py --chip esp32s3 --port COM3 --baud 921600 write_flash `
+$es = 'C:\Users\DONG NHIEN\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\5.3.1\esptool.exe'
+& $es --chip esp32s3 --port COM3 --baud 921600 write-flash `
   0x0     ESP32_RT29_NOCUT_NET30.bootloader.bin `
   0x8000  ESP32_RT29_NOCUT_NET30.partitions.bin `
   0xe000  ESP32_RT29_NOCUT_NET30.boot_app0.bin `

@@ -35,6 +35,8 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 - Hai board phải nạp cùng bản: gateway đối chiếu build ID với STM32, lệch là khoá điều khiển.
 - Cách nạp: nháy đúp `nap_rt37.bat` (nhập COM ESP32) hoặc lệnh tay trong
   [`Firmware/RT37_SMOOTH_20261118/README.md`](Firmware/RT37_SMOOTH_20261118/README.md).
+- **Chọn giữa ba bản và hướng dẫn nạp đầy đủ:** [`Firmware/README.md`](Firmware/README.md)
+  (menu `Firmware/nap_chon_ban.bat`).
 
 ## 3. Cấu trúc repo
 
