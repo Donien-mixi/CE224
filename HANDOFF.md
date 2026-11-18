@@ -124,8 +124,8 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 
 | Mục | Giá trị |
 |---|---|
-| `origin/main` | `eb27ff0` (commit dọn repo 17/11) — bản chính thức đang trên GitHub |
-| `main` local | `eb27ff0` + commit tài liệu HANDOFF 18/11. Nếu thấy `main` đi trước `origin/main` đúng 1 commit thì đó là commit tài liệu này |
+| `origin/main` | bằng `main` — commit code gần nhất `eb27ff0` (dọn repo 17/11) + commit tài liệu HANDOFF 18/11 đã push |
+| `main` local | bằng `origin/main` (không đi trước, không đi sau) |
 | Cây làm việc | sạch (0 thay đổi) |
 | Nhánh | `main`, `pcb` (PCB đã push ở `origin/pcb`) |
 | Nhánh đã xoá 18/11 | `test/speed-086` @ `7ec9f0e`, `test/speed-090` @ `6bc90ac` — còn trong reflog ~90 ngày |
