@@ -17,7 +17,7 @@ sha256 `bd1c3889…`, `ESP32_RT27_RECOVER_NET28.merged.bin` `6c6c9a4b…`), tran
 | `v_ref` lúc ngã | **−0,87 m/s** | −0,70 | −0,82 |
 | Vận tốc thật lúc đó | −0,87 | −0,68 | −0,85 |
 | Pitch lúc cắt motor | −13,7 → −53° | **+13,8°** (còn dựng được) | −16,9 → −53° |
-| `|x−x_ref|` | 0,05–0,14 m | **0,378 m** | 0,05 m |
+| `\|x−x_ref\|` | 0,05–0,14 m | **0,378 m** | 0,05 m |
 
 Hai lỗi của tôi trong RT25/RT26:
 
