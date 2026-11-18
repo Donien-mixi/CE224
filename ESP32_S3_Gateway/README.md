@@ -1,18 +1,18 @@
-> **Trạng thái đồ án · 18/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Điều khiển web có 8 hướng và log. Workspace đang ở **RT34-CORNER / NET35**, đã build, kiểm thử trên máy và push Git. Mô hình tính pin kê thêm 10 mm. PCB một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu. Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
+> **Trạng thái đồ án · 18/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Điều khiển web có 8 hướng và log. Workspace đang ở **RT36-SYM / NET36**, đã build, kiểm thử trên máy và push Git. Mô hình tính pin kê thêm 10 mm. PCB một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu. Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
 
 > Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
 
-# Bản hiện tại: RT34-CORNER / NET35
+# Bản hiện tại: RT36-SYM / NET36
 
-Cần nạp STM32 `BAL-20261117-R12-8DIR-RT34-CORNER` và ESP32
-`TWIP-WEB-20261117-BAL-R12-8DIR-RT34-CORNER-NET35`. Binary, hash và lệnh nạp ở
-[`../Firmware/RT34_CORNER_20261117/`](../Firmware/RT34_CORNER_20261117/README.md). Mở
-`http://192.168.4.1/ui/r12?v=RT34-CORNER-NET35`.
+Cần nạp STM32 `BAL-20261118-R12-8DIR-RT36-SYM` và ESP32
+`TWIP-WEB-20261118-BAL-R12-8DIR-RT36-SYM-NET36`. Binary, hash và lệnh nạp ở
+[`../Firmware/RT36_SYM_20261118/`](../Firmware/RT36_SYM_20261118/README.md). Mở
+`http://192.168.4.1/ui/r12?v=RT36-SYM-NET36`.
 
-NET35 chỉ đổi literal build ID so với NET34; hành vi gateway không đổi. Các thay đổi gateway đang
+NET36 chỉ đổi literal build ID so với NET35; hành vi gateway không đổi. Các thay đổi gateway đang
 chạy, theo thứ tự:
 
-- **NET34**: hạ TX Wi-Fi xuống **11 dBm** và **không ghi Flash khi xe đang cân bằng/chạy** (archive
+- **NET34/35**: hạ TX Wi-Fi xuống **11 dBm**, **không ghi Flash khi xe đang cân bằng/chạy** (archive
   task chỉ ghi khi đã `settled`) — log RT34 có `reset=power_on`, hết brownout. Xem
   [RT33](../Docs/RT33_On_Dinh_Ket_Noi.md).
 - **NET33**: ba nút **50 / 80 / MAX 90**, trần 0,90 m/s; log 122 byte/40 cột/50 Hz.

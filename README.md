@@ -4,9 +4,10 @@
 làm gateway Wi-Fi có trang điều khiển và ghi log, Scilab mô phỏng lại đúng phần luật điều khiển
 đang nạp trên xe.
 
-**Bản phát hành hiện hành: STM32 `RT34-CORNER` + ESP32 `NET35` (17/11/2026)** — ba mức tốc độ
-**50 / 80 / 90 cm/s**, bù lệch bánh trái, trần tốc độ do đường khi cua, gateway đã sửa lỗi tự khởi
-động lại. Firmware đóng gói kèm hash ở [`Firmware/RT34_CORNER_20261117/`](Firmware/RT34_CORNER_20261117/).
+**Bản phát hành hiện hành: STM32 `RT36-SYM` + ESP32 `NET36` (18/11/2026)** — ba mức tốc độ
+**50 / 80 / 90 cm/s**, bù lệch bánh trái, cua ổn định **~0,75 m/s** ở cả hai chiều, chống trôi khi
+đứng yên, nhả lệnh phanh nhanh hơn. Firmware đóng gói kèm hash ở
+[`Firmware/RT36_SYM_20261118/`](Firmware/RT36_SYM_20261118/).
 Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
 ## 1. Kiến trúc
@@ -14,7 +15,7 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 | Khối | Nội dung |
 |---|---|
 | STM32F411CEU6 | Vòng điều khiển 200 Hz (TIM4). BMI160 qua I2C, hai encoder GA25, PWM cho hai driver A4950. Luật lực R12 (14 trạng thái quan sát, K = 9.1508 / 6.1289 / 14.3279 / 1.1605) — **đóng băng**. Ba mức 0,50 / 0,80 / 0,90 m/s, 8 hướng. |
-| Lớp giám sát | `balance_startup` (dựng từ 60°), `balance_recovery` (REC1), `balance_governor` (dự phòng mô-men), `balance_interlock` (trần tốc độ), `balance_motion` / `balance_turn` (quỹ đạo, mốc vị trí/hướng, **trần tốc độ do đường**), `balance_trim` (**bù lệch bánh trái**). Không đổi gain/observer/phân bổ lực R12. |
+| Lớp giám sát | `balance_startup` (dựng từ 60°), `balance_recovery` (REC1), `balance_governor` (dự phòng mô-men, **neo mốc chỉ khi bão hoà**, phanh nhả 0,85 m/s²), `balance_interlock` (trần tốc độ), `balance_motion` / `balance_turn` (quỹ đạo, mốc vị trí/hướng, **trần cua 0,90 − \|w\|·0,131 → ~0,75 m/s**, **nhả mốc khi đứng yên**), `balance_trim` (**bù lệch bánh trái**). Không đổi gain/observer/phân bổ lực R12. |
 | ESP32-S3 | SoftAP `TWIP_RACER_S3` / `12345678`, HTTP :80, WebSocket :81, UART1 115200 (GPIO18/17). Trang `/ui/r12`, log 122 byte/khung, 40 cột, 50 Hz; TX WiFi 11 dBm; **chỉ ghi Flash khi xe đã dừng**. |
 | Scilab + GCC | Mô phỏng dùng **chính header C của firmware**; đường đặc tính bánh fit lại từ log xe thật (lệch 1–2 %). |
 | KiCad | Bo chuyển tiếp 160 × 65 mm, một mặt đồng B.Cu, 31 dây cầu. |
@@ -23,15 +24,16 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
 | Bản | Board | Build ID | Tệp |
 |---|---|---|---|
-| **RT34-CORNER / NET35** (hiện hành) | STM32 | `BAL-20261117-R12-8DIR-RT34-CORNER` | `STM32_BAL_R12_RT34_CORNER.hex` (+`.bin`, `.elf`) |
-| | ESP32-S3 | `TWIP-WEB-20261117-BAL-R12-8DIR-RT34-CORNER-NET35` | `ESP32_RT34_CORNER_NET35.app.bin` (+ bootloader, partitions, boot_app0) |
+| **RT36-SYM / NET36** (hiện hành) | STM32 | `BAL-20261118-R12-8DIR-RT36-SYM` | `STM32_BAL_R12_RT36_SYM.hex` (+`.bin`, `.elf`) |
+| | ESP32-S3 | `TWIP-WEB-20261118-BAL-R12-8DIR-RT36-SYM-NET36` | `ESP32_RT36_SYM_NET36.app.bin` (+ bootloader, partitions, boot_app0) |
+| RT34-CORNER / NET35 (trước) | cả hai | `BAL-20261117-…-RT34-CORNER` / `…-NET35` | trong `Firmware/RT34_CORNER_20261117/` |
 | RT29-NOCUT / NET30 (dự phòng) | cả hai | `BAL-20261115-R12-8DIR-RT29-NOCUT` / `…-NET30` | trong `Firmware/RT29_NOCUT_20261115/` |
 
 - Hash đầy đủ: `SHA256.json` trong từng thư mục; hash **13 tệp nguồn đã sinh ra binary**:
   `SOURCE_SHA256.json`.
 - Hai board phải nạp cùng bản: gateway đối chiếu build ID với STM32, lệch là khoá điều khiển.
-- Cách nạp: nháy đúp `nap_rt34.bat` (nhập COM ESP32) hoặc lệnh tay trong
-  [`Firmware/RT34_CORNER_20261117/README.md`](Firmware/RT34_CORNER_20261117/README.md).
+- Cách nạp: nháy đúp `nap_rt36.bat` (nhập COM ESP32) hoặc lệnh tay trong
+  [`Firmware/RT36_SYM_20261118/README.md`](Firmware/RT36_SYM_20261118/README.md).
 
 ## 3. Cấu trúc repo
 
@@ -40,10 +42,10 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 | `Xe_Can_Bang/` | Project STM32CubeIDE. Luật điều khiển và giám sát ở `Core/Inc/balance_*.h`, FSM và vòng 200 Hz ở `Core/Src/robot_fsm.c`. |
 | `ESP32_S3_Gateway/` | Sketch Arduino + trang web (`dashboard_html.h`), giao thức UART, phiên điều khiển, log RAM/Flash. |
 | `Simulation/` | Mô hình Scilab, harness native dùng chung header firmware, bộ 36 ca kiểm tra, cấu hình plant. |
-| `tools/` | 32 host test (`test_*.cjs`), script mô phỏng/build, tải log cứu hộ. `tools/legacy/` giữ test của bản RT8/RT9 đã bỏ. |
-| `Firmware/` | Hai bản nạp (RT34 hiện hành, RT29 dự phòng) + hash + hướng dẫn. |
+| `tools/` | 36 host test (`test_*.cjs`), script mô phỏng/build, tải log cứu hộ. `tools/legacy/` giữ test của bản RT8/RT9 đã bỏ. |
+| `Firmware/` | Ba bản nạp (RT36 hiện hành, RT34 trước, RT29 dự phòng) + hash + hướng dẫn. |
 | `Hardware/` | Schematic, PCB KiCad, thư viện footprint, tài liệu lắp ráp. |
-| `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT35 (danh sách ở mục 7). |
+| `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT36 (danh sách ở mục 7). |
 
 ## 4. Chạy nhanh
 
@@ -66,16 +68,17 @@ node tools/run_governor_sim.cjs --stress --launch --launch50
 
 | Hạng mục | Kết quả | Điều kiện |
 |---|---|---|
-| Host test | **32/32 pass** | Node.js 24, GCC (msys2); mỗi test tự biên dịch phần C tương ứng |
-| Mô phỏng native | **36/36 ca đủ 20/20 s** khi chọn mức ≤ 80; **35/36** khi chạy MAX 90 | Ca còn lại là pin 11,2 V — đúng vùng bị cấm với mức 90 |
-| Log xe thật | RT34: 173 s, **0 ngã, 0 tự ngắt**; bốn hướng lái lệch 1–2 % | Pack 11,7 V; xem `Docs/RT34_Cua_Muot.md`, `Docs/RT35_Mo_Phong_Khop_Log.md` |
-| Nguồn ↔ binary | 13/13 tệp khớp `SOURCE_SHA256.json` | Hash tính lại tại máy này, 17/11/2026 |
+| Host test | **36/36 pass** | Node.js 24, GCC (msys2); mỗi test tự biên dịch phần C tương ứng |
+| Mô phỏng native | **36/36 ca đủ 20/20 s** khi chọn mức ≤ 80; **35/36** khi chạy MAX 90 | Ca còn lại là pin 11,2 V — đúng vùng bị cấm với mức 90; chạy lại sau RT36 vẫn vậy |
+| Log xe thật | RT34: 173 s, **0 ngã, 0 tự ngắt**; bốn hướng lái lệch 1–2 %. RT36 **chưa có log** | Pack 11,7 V; xem `Docs/RT34_Cua_Muot.md`, `Docs/RT36_Sua_4_Loi.md` |
+| Nguồn ↔ binary | 13/13 tệp khớp `SOURCE_SHA256.json` | Hash tính lại tại máy này, 18/11/2026 |
 
 ## 6. Giới hạn đã biết
 
 - **Trần tốc độ thực ~0,96 m/s** (đo tại 11,7 V). Mức 0,90 chỉ dùng khi pin **≥ 12,0 V**; dưới
   ~11,9 V governor sẽ ghìm. Muốn nhanh hơn phải lên **4S** hoặc đổi motor/giảm tốc.
-- **Cua ở MAX 90 tự hạ về ~0,80 m/s** (trần tốc độ do đường) — cố ý, để bánh ngoài không bão hoà.
+- **Cua ở MAX 90 tự hạ về ~0,75 m/s** (trần cua RT36) — cố ý, để bánh ngoài còn dư và hai chiều
+  cua đối xứng; chạy thẳng vẫn 0,90 m/s.
 - Bù lệch bánh trái (110 PWM) cân mô-men nhưng không làm bánh trái khoẻ thêm; cua trái vẫn ngả
   nhiều hơn cua phải (phần cơ khí).
 - Buông ga/đảo chiều đột ngột ở 0,85–0,90 m/s có thể làm xe ngã — cần giảm tốc trước khi đảo chiều.
@@ -96,7 +99,8 @@ node tools/run_governor_sim.cjs --stress --launch --launch50
   [`RT24`](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [`RT27`](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) ·
   [`RT28`](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [`RT29`](Docs/RT29_Tu_Ngat_4096.md) ·
   [`RT32`](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [`RT33`](Docs/RT33_On_Dinh_Ket_Noi.md) ·
-  [`RT34`](Docs/RT34_Cua_Muot.md) · [`RT35`](Docs/RT35_Mo_Phong_Khop_Log.md)
+  [`RT34`](Docs/RT34_Cua_Muot.md) · [`RT35`](Docs/RT35_Mo_Phong_Khop_Log.md) ·
+  [`RT36`](Docs/RT36_Sua_4_Loi.md)
 - [`Simulation/README.md`](Simulation/README.md), [`Hardware/README.md`](Hardware/README.md) — hướng dẫn riêng từng phần.
 
 **Lịch sử phát triển** (RT7 → RT21, các bản nạp cũ, log thô và phân tích từng vòng) nằm trong **git

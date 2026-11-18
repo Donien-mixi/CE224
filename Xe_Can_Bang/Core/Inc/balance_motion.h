@@ -21,6 +21,15 @@
 #ifndef BALANCE_MOTION_REVERSE_DECEL
 #define BALANCE_MOTION_REVERSE_DECEL 1.0f
 #endif
+/* RT36: bleed a static hold offset so the position term stops loading stiction.
+ * Acts only after 3 s of true standstill, at 2 cm/s, within 15 cm. See the
+ * comment at the use site. */
+#ifndef BALANCE_MOTION_HOLD_RELAX
+#define BALANCE_MOTION_HOLD_RELAX .02f
+#endif
+#ifndef BALANCE_MOTION_HOLD_SPAN
+#define BALANCE_MOTION_HOLD_SPAN .15f
+#endif
 /* 200Hz. The observer/encoder remain in the physical frame. An abandoned
  * trajectory must never pull a blocked vehicle back toward its old target. */
 typedef struct {
@@ -38,6 +47,7 @@ typedef struct {
     bool hold_anchor; /* RT28: a disturbance brake keeps the position anchor */
     uint16_t stop_ticks;
     uint16_t post_rec_ticks; /* RT20: bounded post-REC1 softening counter */
+    uint16_t settle_ticks;   /* RT36: 3 s of true standstill before anchor bleeds */
 } BalanceMotion;
 static inline void BalanceMotion_Clear(BalanceMotion *s){*s=(BalanceMotion){0};}
 static inline void BalanceMotion_BeginBrake(BalanceMotion *s,float position,uint32_t now){
@@ -207,6 +217,24 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
                fabsf(speed)<.02f&&fabsf(pitch)<=6&&fabsf(gyro)<20){
                 s->stop_ticks++;
                 if(s->stop_ticks>=40U)s->x_ref=position;
+            }
+            /* RT36: standing on a stiction wall. Log idle 80-140 s held x at
+             * -7 cm against a 0 anchor with +300 PWM, and the same loading is
+             * felt as drift after a stop. After3 s of true standstill the anchor
+             * bleeds toward the measured position at2 cm/s, so the loop stops
+             * pressing a friction wall. Never while moving, braking, cancelling
+             * or inside a recovery; bounded to15 cm so a real displacement is
+             * still corrected first. */
+            if(!s->braking&&!s->cancel_flags&&!s->recovery_active&&!s->recovery_limited&&
+               fabsf(s->v_ref)<.005f&&fabsf(speed)<.02f){
+                if(s->settle_ticks<60000U)s->settle_ticks++;
+            }else s->settle_ticks=0;
+            if(s->settle_ticks>=600U){
+                float err=s->x_ref-position;
+                if(fabsf(err)<=BALANCE_MOTION_HOLD_SPAN){
+                    float step=BALANCE_MOTION_HOLD_RELAX*.005f;
+                    s->x_ref=fabsf(err)<=step?position:s->x_ref-copysignf(step,err);
+                }
             }
             s->x_ref+=.5f*(old+s->v_ref)*.005f;
         }

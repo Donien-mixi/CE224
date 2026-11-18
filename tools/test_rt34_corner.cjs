@@ -36,13 +36,13 @@ int main(void){
  assert(BalanceMotion_corner_budget(-1.0f)==0.0f);
 
  /* 2. Giu nguyen lenh tien + bat cua trai (1.15rad/s) o0.90:
-  *    budget phai la0.95-1.15*0.131=0.799 -> v_ref ha ve ~0.80, khong vot. */
+  *    RT36: budget 0.90-1.15*0.131=0.749 -> v_ref ha ve ~0.75, khong vot. */
  float before=s.v_ref;
  for(int i=0;i<200;i++)tick(1,1,s.v_ref);
  float cb=BalanceMotion_corner_budget(-1.0f);
  printf("vao cua: v_ref %.3f -> %.3f (budget=%.3f) w_ref=%.2f\n",before,s.v_ref,cb,t.w_ref);
- assert(fabsf(cb-0.799f)<0.02f);
- assert(s.v_ref<0.83f&&s.v_ref>0.76f);
+ assert(fabsf(cb-0.749f)<0.02f);
+ assert(s.v_ref<0.78f&&s.v_ref>0.72f);
  /* ha phai muot: khong tick nao doi qua 1.5 lan ramp cho phep */
  init();
  for(int i=0;i<600;i++)tick(1,0,s.v_ref);
@@ -55,14 +55,15 @@ int main(void){
  assert(BalanceMotion_corner_budget(-1.0f)==0.0f);
  assert(fabsf(s.v_ref-0.90f)<0.02f);
 
- /* 4. O0.50/0.80 khong bi cua chan: budget0.799 lon hon preset nen khong ha. */
+ /* 4. O0.50/0.80: RT36 ha ca preset80 xuong cung budget 0.749, nen cua o
+  *    preset80 va preset90 co cung toc do ~0.75 (yeu cau 70-75 cm/s). */
  init();s.speed_preset=1;
  for(int i=0;i<900;i++)tick(1,0,s.v_ref);
  float p80=s.v_ref;
  for(int i=0;i<200;i++)tick(1,1,s.v_ref);
  printf("preset80 khi cua: %.3f -> %.3f\n",p80,s.v_ref);
  assert(fabsf(p80-0.80f)<0.01f);
- assert(s.v_ref>0.78f);              /* 0.80 < budget nen khong bi ha */
+ assert(s.v_ref>0.72f&&s.v_ref<0.78f);   /* cung budget voi MAX */
 
  puts("PASS");
  return 0;
@@ -83,9 +84,9 @@ const run=cp.spawnSync(exe,[],{encoding:'utf8'});
 process.stdout.write(run.stdout||'');
 assert.equal(run.status,0,(run.stdout||'')+(run.stderr||''));
 
-/* 5. Old-constant probe: tat gioi han (budget lon) thi test phai fail. */
-const oldExe=build(['-DBALANCE_TURN_VNL_BUDGET=2.0f'],'old');
+/* 5. Old-constant probe: budget cu 0.95 (cua ~0.80) thi test phai fail. */
+const oldExe=build(['-DBALANCE_TURN_VNL_BUDGET=0.95f'],'old');
 const oldRun=cp.spawnSync(oldExe,[],{encoding:'utf8'});
-assert.notEqual(oldRun.status,0,'khong gioi han do duong thi test phai fail');
-console.log('old-constant probe: tat gioi han bi bat (exit '+oldRun.status+')');
-console.log('PASS RT34: cua o MAX ha tham chieu ve ~0,80 muot; thang va preset80 khong doi.');
+assert.notEqual(oldRun.status,0,'budget cu 0.95 thi test phai fail');
+console.log('old-constant probe: budget 0.95 bi bat (exit '+oldRun.status+')');
+console.log('PASS RT34/RT36: cua ha tham chieu ve ~0,75 muot; thang va preset80 = 0,80 khi thang.');

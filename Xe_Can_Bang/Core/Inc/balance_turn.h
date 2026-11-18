@@ -20,6 +20,9 @@
 #ifndef BALANCE_TURN_PURE_RATE
 #define BALANCE_TURN_PURE_RATE (s->speed_preset?2.4f:1.3f)
 #endif
+#ifndef BALANCE_TURN_LATERAL_FROM_MEASURED
+#define BALANCE_TURN_LATERAL_FROM_MEASURED 0
+#endif
 #ifndef BALANCE_TURN_DIAGONAL_RATE
 #define BALANCE_TURN_DIAGONAL_RATE (s->speed_preset?1.15f:.90f)
 #endif
@@ -53,9 +56,12 @@
 /* RT34: tran toc do do duong. Banh ngoai khi cua chay v + |w|*0.131; dong co chi
  * toi ~0.95m/s o pack 11.7V, nen o MAX 90 mot cu cua1.15rad/s can banh ngoai
  * 1.05m/s = bat kha thi -> banh bao hoa, yaw vot 37% roi moi hoi (log 38). Vi vay
- * khi dang cua, ha tham chieu toc do con BUDGET - |w|*HALF_TRACK. */
+ * khi dang cua, ha tham chieu toc do con BUDGET - |w|*HALF_TRACK.
+ * RT36 (18/11): BUDGET 0.95 -> 0.90. Nguoi van hanh yeu cau cua o 70-75cm/s va
+ * hai chieu bang nhau; log fwd_turn cho thay cua 1.15rad/s dat 0.80 thi banh
+ * ngoai 0.95 = sat tran, con 0.90-0.151=0.749 thi con du. */
 #ifndef BALANCE_TURN_VNL_BUDGET
-#define BALANCE_TURN_VNL_BUDGET 0.95f
+#define BALANCE_TURN_VNL_BUDGET 0.90f
 #endif
 #ifndef BALANCE_TURN_HALF_TRACK
 #define BALANCE_TURN_HALF_TRACK 0.131f
@@ -179,7 +185,17 @@ static inline int BalanceMotion8_Update(BalanceMotion *s,BalanceTurn *t,unsigned
   * while a real overspeed still counts. */
  float guard=fmaxf(fabsf(s->v_ref),fabsf(speed)-.10f);
  float wheel_cap=fmaxf(.10f,2.0f*(envelope-guard)/.262f);
+ /* RT36: the lateral ceiling must follow the COMMANDED speed. Using the measured
+  * axle made the cap cross1.15rad/s as |v| moved0.76-0.82, so the reverse right
+  * turn flickered512 and w_ref1.09-1.15 at50Hz (log rev_turn857-866s:87% of
+  * samples limited, w_ref never settled). Same rule as the wheel cap: a
+  * command-derived limit, not a measured one. The old rule is kept only for the
+  * host-test probe. */
+#if BALANCE_TURN_LATERAL_FROM_MEASURED
  float lateral_cap=fabsf(speed)>.1f?BALANCE_TURN_LATERAL_ACCEL/fabsf(speed):max_rate;
+#else
+ float lateral_cap=guard>.1f?BALANCE_TURN_LATERAL_ACCEL/guard:max_rate;
+#endif
  max_rate=fminf(max_rate,fminf(wheel_cap,lateral_cap));
  float target=max_rate*wanted;
  float lead=wanted*(t->psi_ref-yaw);

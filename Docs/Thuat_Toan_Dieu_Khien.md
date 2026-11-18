@@ -3,7 +3,7 @@
 > dùng để đối chiếu firmware hiện hành; số hiện hành xem
 > [chức năng](Tinh_Nang_Xe_Hien_Hanh.md) và [thông số xe](Thong_So_Xe_Hien_Tai.md).
 
-> **Trạng thái:** bản hiện hành **STM32 RT34-CORNER + ESP32 NET35** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Kiến trúc FSM + pipeline 200 Hz + thứ tự ưu tiên P0–P7: [HANDOFF mục 2](../HANDOFF.md#2-kiến-trúc-điều-khiển).
+> **Trạng thái:** bản hiện hành **STM32 RT36-SYM + ESP32 NET36** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Kiến trúc FSM + pipeline 200 Hz + thứ tự ưu tiên P0–P7: [HANDOFF mục 2](../HANDOFF.md#2-kiến-trúc-điều-khiển).
 
 > Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
 
@@ -514,13 +514,16 @@ Bảng dưới là giá trị của nền PID cũ, **không phải** bản R12 �
 | Failsafe | 1000 ms | Mất lệnh → ga/lái về 0 | `esp32_comm.c` |
 | Chu kỳ Telemetry | 50 ms (20Hz) | Phát gói `$TEL` | `main.c` |
 
-## Các lớp giám sát thêm sau RT29 (đang chạy trong RT34)
+## Các lớp giám sát thêm sau RT29 (đang chạy trong RT36)
 
 | Lớp | Tệp | Việc nó làm |
 |---|---|---|
 | Bộ tốc độ 50/80/90 | `balance_motion.h`, `balance_profile.h` | preset 1 = 0,80; preset 2 = 0,90; trần thường `BALANCE_STOP_SPEED` = 0,90 |
 | Bù lệch bánh trái | `balance_trim.h` | cộng 110 PWM cho bánh trái theo dấu quay, kẹp ±2499, đặt **sau** bộ phân bổ R12 |
-| Trần tốc độ do đường | `balance_turn.h` + `balance_motion.h` | khi `\|w_ref\| > 0,30`, hạ tham chiếu tốc độ về `0,95 − \|w_ref\|·0,131` (chỉ hạ, qua ramp giảm tốc 0,90 m/s²) |
+| Trần cua | `balance_turn.h` + `balance_motion.h` | khi `\|w_ref\| > 0,30`, hạ tham chiếu về `0,90 − \|w_ref\|·0,131` → 0,749 ở 1,15 rad/s (RT36) |
+| Neo mốc theo duty | `balance_governor.h` | chỉ kẹp `x_ref` cách 10 cm khi duty > 0,95 (RT36); hết lỗi tiến chậm/cua trái chậm |
+| Nhả mốc khi đứng yên | `balance_motion.h` | sau 3 s đứng yên, mốc chảy 2 cm/s về vị trí trong phạm vi 15 cm (RT36) |
+| Phanh nhả nhanh | `balance_governor.h` | cap ramp phanh 0,85 m/s² thay 0,65 (RT36) |
 | Gateway ổn định | `ESP32_S3_Gateway` | TX 11 dBm; chỉ ghi Flash khi xe đã dừng (tránh hỏng FAT khi brownout) |
 
 Các lớp này **không** sửa gain/observer/phân bổ lực R12 và không đổi khung truyền 122 B.

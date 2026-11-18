@@ -1,7 +1,7 @@
 # Firmware RT29-NOCUT / NET30 — bản dự phòng (15/11/2026)
 
 **Đây là bản dự phòng, không phải bản hiện hành.** Bản chốt đang dùng là
-[`../RT34_CORNER_20261117/`](../RT34_CORNER_20261117/README.md) (RT34-CORNER / NET35, ba mức 50/80/90).
+[`../RT36_SYM_20261118/`](../RT36_SYM_20261118/README.md) (RT36-SYM / NET36, ba mức 50/80/90).
 Số liệu kiểm thử dưới đây là tại thời điểm phát hành 15/11/2026 (30 test, ba mức 50/72/80).
 
 Cặp firmware này nạp **cả hai board** cùng bản: gateway đối chiếu

@@ -2,6 +2,10 @@
 
 Ngày 17/11/2026. Bản chốt trên `main`, **nạp cả hai board**.
 
+> **RT36 (18/11) kế tiếp:** trần cua hạ 0,95 → 0,90 (cua ~0,749 m/s), trần ngang theo tốc độ lệnh,
+> neo mốc chỉ khi duty > 0,95, nhả mốc khi đứng yên, phanh nhả 0,85 m/s². Xem
+> [`RT36_Sua_4_Loi.md`](RT36_Sua_4_Loi.md). Bản RT34 vẫn là bản **đã có log xe 173 s**.
+
 ## 1. Vì sao cua bị giật (số liệu log 38, RT32 ở MAX 90)
 
 | Hiện tượng | Đo được |

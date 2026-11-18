@@ -1,7 +1,8 @@
-> **Trạng thái:** bản hiện hành **STM32 RT34-CORNER + ESP32 NET35** (17/11/2026) — xem
-> [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT36-SYM + ESP32 NET36** (18/11/2026) — xem
+> [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Số đo mới nhất là log RT34 ngày
+> 18/11; RT36 **chưa có log xe** (xem [RT36](RT36_Sua_4_Loi.md)).
 
-# Chức năng xe hiện hành — RT34-CORNER / NET35
+# Chức năng xe hiện hành — RT36-SYM / NET36
 
 Danh sách mô tả **đúng** những gì code đang chạy, kèm số đo từ log xe thật. Đây không phải chứng
 nhận mọi tình huống thực tế đã đạt. Thứ tự ưu tiên giữa các lớp (P0 cắt an toàn → P7 telemetry) và
@@ -17,6 +18,8 @@ sơ đồ pipeline 200 Hz: [HANDOFF mục 2](../HANDOFF.md).
 
 Đo từ log: xe đạt `v_ref` p95 đúng mốc đặt; đỉnh thực tế ~0,93 m/s (bứt tốc). Trần không tải đo được
 **0,96 m/s** ở pack 11,7 V, nên 0,90 là mức sát trần — không tăng thêm được trên 3S.
+RT36 bỏ kẹp mốc không cần thiết của governor nên tốc độ tiến phải bám đúng 0,90 (trước sửa chỉ
+0,79–0,84 vì `x_ref` bị giữ cách 10 cm — [RT36](RT36_Sua_4_Loi.md) mục 1.2).
 
 ## 2. Bẻ hướng 8 hướng
 
@@ -24,13 +27,19 @@ sơ đồ pipeline 200 Hz: [HANDOFF mục 2](../HANDOFF.md).
 - Chéo: 0,90 / 1,15 rad/s, gia tốc yaw 4,5 rad/s², giảm tốc 8 rad/s², trần ngang 0,90 m/s².
 - **Bốn hướng lái cân nhau** sau khi bù lệch bánh trái: lệch trái/phải còn **1 % (tiến), 2 % (lùi),
   0 % (quay tại chỗ)** — trước khi bù là 13 %.
-- **Trần tốc độ do đường**: khi đang cua, tham chiếu tốc độ tự hạ xuống `0,95 − |w_ref|·0,131`, nên
-  cua ở MAX 90 chạy ở ~0,80 m/s thay vì bão hoà bánh. Cờ 512 trong cua giảm từ 50–77 % xuống 19–26 %.
+- **Trần cua**: khi đang cua, tham chiếu tốc độ tự hạ xuống `0,90 − |w_ref|·0,131` → **0,749 m/s**
+  ở 1,15 rad/s, giống nhau cho tiến/lùi và trái/phải (RT36 yêu cầu 70–75 cm/s). Chạy thẳng vẫn 0,90.
+- **Trần ngang** tính theo tốc độ **đã lệnh** `max(|v_ref|, |v|−0,10)`, nên `w_ref` không còn nhảy
+  1,09–1,15 khi `|v|` dao động (RT36 sửa lỗi cua phải-lùi ngập ngừng).
 - Độ nghiêng khi cua: `|pitch|` p95 ~8°; cua trái ngả nhiều hơn cua phải (phần cơ khí, chưa xử lý).
 
 ## 3. Giữ vị trí, giữ hướng, chống đẩy
 
 - Thả tay: hãm theo đường giảm tốc rồi chốt mốc vị trí khi xe yên (cửa sổ 200 ms sau khi hết lăn).
+- Nhả lệnh từ 0,90: `v_ref` về 0 trong ~1,3 s, quãng phanh ~0,63 m (RT36 nâng cap phanh
+  0,65 → 0,85 m/s²); trước sửa là 1,5–1,8 s / ~1 m.
+- Đứng yên: sau 3 s không lệnh và `|v|<0,02`, mốc tự chảy về vị trí đo 2 cm/s trong phạm vi 15 cm,
+  nên xe không còn đẩy mãi vào ma sát nghỉ (RT36 sửa dao động 3–11 cm).
 - Bị đẩy khi đang đứng: REC1 giữ **mốc vị trí cũ** (RT28) để xe quay về chỗ cũ, không trôi.
 - REC1: giới hạn 50° / 1,2 m/s / 1 m / 4 s; phanh do nhiễu **không** bị cắt ở 4 s (RT29).
 - Va chạm rất mạnh (>900 °/s) vẫn cắt motor — an toàn được ưu tiên hơn “không bao giờ ngã”.

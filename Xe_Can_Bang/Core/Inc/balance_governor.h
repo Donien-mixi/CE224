@@ -28,6 +28,14 @@
 #ifndef BALANCE_GOV_CRAWL
 #define BALANCE_GOV_CRAWL 0.06f
 #endif
+/* RT36: a commanded release brakes at up to0.85m/s^2, not0.65. Log spd90
+ * (290.99s) and rev_turn (976.35s) release from0.76-0.92m/s and take1.7-1.8s /
+ * ~1m to stop, felt as "does not stop when the command is released" and as
+ * reverse drift. The reference ramp is still bounded by motion's0.90 decel and
+ * the2.5m/s^3 jerk; only the governor's extra cap moves. */
+#ifndef BALANCE_GOV_BRAKE_CAP
+#define BALANCE_GOV_BRAKE_CAP .85f
+#endif
 #ifndef BALANCE_GOV_REST_DWELL
 #define BALANCE_GOV_REST_DWELL 100U
 #endif
@@ -77,10 +85,21 @@ static inline void BalanceGovernor_Observe(BalanceGovernor *g,int left,int right
     g->duty+=.125f*(fminf(1.0f,duty)-g->duty);
     if(duty>=.985f){if(g->saturated<1000)g->saturated++;}else g->saturated=0;
 }
+/* RT36: the anchor may only bound debt when the wheels are genuinely out of
+ * headroom. Log 18/11 (idle/fwd_turn/rev_turn/spd90) shows the old rule clamping
+ * `x_ref` at +10 cm on a benign steady lag (duty 0.83, lean predicted 0.6 deg):
+ * forward then held 0.79-0.84 m/s against a 0.90 reference while reverse, which
+ * tracked with lag 0.015, reached 0.90. The same clamp held the left turn at
+ * 0.61 m/s. Pressure from a tracking lag alone therefore no longer moves the
+ * anchor; only a saturated duty (>0.95, i.e. the 0.90 preset at a weak pack)
+ * may. */
+#ifndef BALANCE_GOV_ANCHOR_DUTY
+#define BALANCE_GOV_ANCHOR_DUTY 0.95f
+#endif
 static inline void BalanceGovernor_Anchor(const BalanceGovernor *g,float *reference,float position,int direction){
     /* Bound only unreachable forward reference debt. Keep >6cm so the
      * existing low-speed blockage detector still operates against a wall. */
-    if(g->pressure&&direction*(*reference-position)>.10f)*reference=position+direction*.10f;
+    if(g->pressure&&g->duty>BALANCE_GOV_ANCHOR_DUTY&&direction*(*reference-position)>.10f)*reference=position+direction*.10f;
 }
 static inline float BalanceGovernor_Step(BalanceGovernor *g,float old,float target,
     float rate,int wanted,float pitch,float gyro){
@@ -130,7 +149,7 @@ static inline float BalanceGovernor_Step(BalanceGovernor *g,float old,float targ
     }
     if(retreat){target=old-direction*.01f;g->limited=true;}
     bool braking=old*target<0||fabsf(target)<fabsf(old)-.00001f;
-    float cap=braking?fminf(rate,.65f):
+    float cap=braking?fminf(rate,BALANCE_GOV_BRAKE_CAP):
         fminf(rate,requested<=.50001f?.60f:fabsf(old)>.50f?.22f:.50f);
     /* The stiction-breaking crawl above keeps its normal rate: crawling to0.15
      * at0.06m/s^2 would take1.8s and defeat its purpose. */

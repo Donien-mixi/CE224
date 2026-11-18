@@ -34,8 +34,9 @@ int main(void){
  for(int i=0;i<120;i++)tick(1,1,2.0f,0.8f,1.0f);
  printf("diagonal0.8m/s: w_ref=%.2f flags=0x%x\n",t.w_ref,s.flags);
  assert(t.w_ref>=0.90f&&t.w_ref<=1.16f);
- /* 3. Lateral ceiling still binds above it:1.15rad/s*0.8=0.92m/s^2>0.90. */
- assert(t.w_ref<=BALANCE_TURN_LATERAL_ACCEL/0.8f+.001f);
+ /* 3. Lateral ceiling van chan: w_ref*guard <=0.90, voi guard la toc do da
+  *    lenh (RT36) chu khong phai |v| do: guard=max(|v_ref|,|v|-0.10). */
+ assert(t.w_ref*fmaxf(fabsf(s.v_ref),fabsf(0.8f)-0.10f)<=BALANCE_TURN_LATERAL_ACCEL+.01f);
  /* 4. RT23 wheel cap follows the COMMANDED speed plus a10cm tracking allowance
   * and a per-wheel envelope. At preset72 a measured1.12m/s (envelope+0.14) still
   * pins the cap to0.10rad/s. */

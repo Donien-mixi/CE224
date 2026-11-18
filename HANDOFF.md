@@ -1,18 +1,19 @@
 # Bàn giao đồ án TWIP — 18/11/2026
 
-> **Bản hiện hành: STM32 `BAL-20261117-R12-8DIR-RT34-CORNER` + ESP32 `TWIP-WEB-20261117-BAL-R12-8DIR-RT34-CORNER-NET35`.**
-> Ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái **+110 PWM**, cua ở MAX 90 tự hạ tham chiếu về
-> **~0,80 m/s**. Bản nạp + hash: [`Firmware/RT34_CORNER_20261117/`](Firmware/RT34_CORNER_20261117/README.md).
+> **Bản hiện hành: STM32 `BAL-20261118-R12-8DIR-RT36-SYM` + ESP32 `TWIP-WEB-20261118-BAL-R12-8DIR-RT36-SYM-NET36`.**
+> Ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái **+110 PWM**, cua giữ **~0,75 m/s** ở cả hai
+> chiều, chống trôi khi đứng yên, phanh nhả nhanh hơn. Bản nạp + hash:
+> [`Firmware/RT36_SYM_20261118/`](Firmware/RT36_SYM_20261118/README.md).
 >
-> **Thay đổi so với bản bàn giao 17/11:** *không đổi firmware*. Đã xoá hai worktree thử
-> `D:\DA_HTN_speed086` (nhánh `test/speed-086` @ `7ec9f0e`) và `D:\DA_HTN_speed090`
-> (`test/speed-090` @ `6bc90ac`) cùng hai nhánh local đó — bản chốt RT34 đã bao gồm mức 0,90 cao nhất
-> đã thử, cộng thêm 0,80 và bù bánh trái. Cập nhật lại chính tài liệu này.
+> **RT36 (18/11) sửa 4 lỗi từ 4 log RT34:** (1) tiến chỉ 0,79–0,84 vì governor kẹp mốc khi áp lực do
+> lag — giờ chỉ kẹp khi duty > 0,95; (2) cua trái chậm hơn cua phải vì cùng lý do; (3) cua phải-lùi
+> ngập ngừng vì trần ngang tính theo `|v|` đo — giờ tính theo tốc độ lệnh; (4) đứng yên dao động 3–11 cm
+> vì mốc cách 7 cm — giờ mốc tự chảy về vị trí sau 3 s đứng yên. Trần cua hạ 0,95 → 0,90 (≈0,75 m/s) và
+> ramp phanh nhả 0,65 → 0,85 m/s². Chi tiết + số đo: [`Docs/RT36_Sua_4_Loi.md`](Docs/RT36_Sua_4_Loi.md).
 >
-> **Đồng bộ tài liệu 18/11:** mọi banner "bản hiện hành" nay là RT34-CORNER / NET35; `tools/README`
-> ghi 32 test và 35/36 ca MAX 90; `Simulation/README` theo plant RT35; `Bang_Ma_Loi` theo số dòng
-> `robot_fsm.c` hiện tại; `Phat_Trien_Tiep` viết lại (không còn liên kết chết); `Thuat_Toan` đánh dấu
-> rõ phần lịch sử R7/PID và FSM hiện hành; `ESP32_S3_Gateway/README` mô tả NET35.
+> **Thay đổi so với bản bàn giao 17/11:** đã xoá hai worktree thử `D:\DA_HTN_speed086`
+> (nhánh `test/speed-086` @ `7ec9f0e`) và `D:\DA_HTN_speed090` (`test/speed-090` @ `6bc90ac`) cùng hai
+> nhánh local đó; bản chốt RT34 đã bao gồm mức 0,90 cao nhất đã thử.
 
 ## 0. Trạng thái một dòng
 
@@ -115,10 +116,11 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 | ARM / dựng xe | 200 ms đứng yên, 60°, gyro 6 °/s, bánh 0,05 m/s | Có |
 | Startup capture | ngân sách 0,30 m, trần 25°, tốc độ 1,00/1,10/1,20 m/s, timeout 3–4 s | Có |
 | Chống đẩy / nhiễu | REC1: gyro ≥ 150 °/s, hoặc (nghiêng ≥ 8°/12° hay tốc ≥ 0,35 m/s) kéo dài 60 ms khi đang có lệnh; nới 50°/1,20 m/s/+0,8 m/4 s; thoát sau 300 ms yên tĩnh; giữ mốc khi bị đẩy | Có — nhiều log, có cú va ~160 °/s vẫn phục hồi |
-| Governor | áp lực khi duty > 0,90, lean dự đoán > 9°/11°, trễ bám > 0,12/0,30 m/s → kẹp gia tốc 0,06 m/s², chặn nợ vị trí 10 cm, chống deadlock 0,15 m/s | Có |
+| Governor | áp lực khi duty > 0,90, lean dự đoán > 9°/11°, trễ bám > 0,12/0,30 m/s → kẹp gia tốc 0,06 m/s², chống deadlock 0,15 m/s. **RT36: chỉ neo mốc (10 cm) khi duty > 0,95**, phanh nhả 0,85 m/s² | Có (log 18/11 trước sửa) |
 | Giám sát an toàn | interlock: trần `max(envelope; \|v_ref\|+0,12)` với envelope 1,12 khi MAX / 1,00–1,20 khi capture / 1,20 khi REC1, phải vượt liên tục 200 ms; 1,45 m/s cắt tức thì; ở MAX còn cắt nếu `\|v_bánh\| > 1,20`; cắt góc/quãng/I2C/vòng lặp; không tự ARM lại | Có |
-| Bẻ hướng | quay tại chỗ 1,3/2,4 rad/s; chéo 0,90/1,15 rad/s; yaw accel 4,5, decel 8,0; trần ngang 0,9 m/s²; taper lean 12°/4°; trôi tâm 45 cm/sàn 55 %; đóng băng heading ≤ 0,6 s | Có — yaw khớp tham chiếu; cờ 512 còn 19–26 % |
-| Trần tốc độ do đường | đang cua: `v_ref ≤ 0,95 − \|w_ref\|·0,131` → ~0,80 ở 1,15 rad/s; chỉ hạ, không nâng | Có — log 38 + RT34 |
+| Bẻ hướng | quay tại chỗ 1,3/2,4 rad/s; chéo 0,90/1,15 rad/s; yaw accel 4,5, decel 8,0; trần ngang 0,9 m/s² **tính theo `max(\|v_ref\|,\|v\|−0,10)`**; taper lean 12°/4°; trôi tâm 45 cm/sàn 55 %; đóng băng heading ≤ 0,6 s | Có — log 18/11 trước sửa |
+| Trần cua | đang cua: `v_ref ≤ 0,90 − \|w_ref\|·0,131` → **0,749** ở 1,15 rad/s; chỉ hạ, không nâng | Có — log 18/11 (trước sửa 0,80) |
+| Giữ khi đứng yên | sau 3 s đứng yên thật, mốc chảy về vị trí đo 2 cm/s trong phạm vi 15 cm (RT36) | **Chưa kiểm trên xe** |
 | Bù bánh trái | +110 PWM (đo +98 tiến / +160 lùi / +166 quay), dead-band 0,5, kẹp ±2499, đặt **sau** phân bổ R12 | Có — log RT30/RT31 |
 | Log / web | 122 B, 40 cột, 50 Hz; `/ui/r12`; SoftAP; TX 11 dBm; chỉ ghi Flash khi xe dừng | Có — `reset=power_on`, hết brownout |
 | Mô phỏng | dùng chính header firmware; đường bánh fit từ log `(1)(5)` (lệch 1–2 %) | Không áp dụng |
@@ -129,22 +131,23 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 
 | Mục | Giá trị |
 |---|---|
-| `origin/main` | bằng `main` — commit code gần nhất `eb27ff0` (dọn repo 17/11) + commit tài liệu HANDOFF 18/11 đã push |
+| `origin/main` | bằng `main` — commit RT36 mới nhất (xem `git log -1`) |
 | `main` local | bằng `origin/main` (không đi trước, không đi sau) |
 | Cây làm việc | sạch (0 thay đổi) |
 | Nhánh | `main`, `pcb` (PCB đã push ở `origin/pcb`) |
 | Nhánh đã xoá 18/11 | `test/speed-086` @ `7ec9f0e`, `test/speed-090` @ `6bc90ac` — còn trong reflog ~90 ngày |
-| Tệp được theo dõi | 432 |
+| Tệp được theo dõi | 448 |
 | Thư mục build local | `.build/` 156 MB, `Xe_Can_Bang/Debug/` 29 MB, `.metadata/` 7 MB — **đã gitignore**, xoá được nếu cần chỗ |
 
 ### 4.2 Bản nạp và hash
 
 | Bản | Thư mục | Khi nào dùng |
 |---|---|---|
-| **RT34-CORNER / NET35** (hiện hành) | `Firmware/RT34_CORNER_20261117/` | Chạy bình thường; nạp **cả hai board** |
-| RT29-NOCUT / NET30 (dự phòng) | `Firmware/RT29_NOCUT_20261115/` | Quay về nếu RT34 có vấn đề: ba mức 50/72/80, chưa có bù bánh trái và trần cua |
+| **RT36-SYM / NET36** (hiện hành) | `Firmware/RT36_SYM_20261118/` | Chạy bình thường; nạp **cả hai board** |
+| RT34-CORNER / NET35 (trước) | `Firmware/RT34_CORNER_20261117/` | Bản đã có log xe 173 s; dùng để quay lui nếu RT36 có vấn đề |
+| RT29-NOCUT / NET30 (dự phòng) | `Firmware/RT29_NOCUT_20261115/` | Quay về bản cũ nhất: ba mức 50/72/80, chưa có bù bánh trái và trần cua |
 
-Kiểm ngày 18/11: **7/7** tệp binary khớp `SHA256.json`; **13/13** tệp nguồn khớp
+Kiểm ngày 18/11 (RT36): **7/7** tệp binary khớp `SHA256.json`; **13/13** tệp nguồn khớp
 `SOURCE_SHA256.json` → bản `.bin/.hex` được build từ **đúng source hiện tại**.
 `test_build_id_sync` PASS: 9 literal trên 45 tệp.
 
@@ -162,10 +165,16 @@ Kiểm ngày 18/11: **7/7** tệp binary khớp `SHA256.json`; **13/13** tệp n
   --libraries D:\Arduino\libraries --output-dir .build\esp32_out ESP32_S3_Gateway
 ```
 
+> **Bẫy đóng gói:** build headless của CubeIDE cập nhật `.elf` nhưng **không chạy lại** bước
+> `objcopy` — `.bin/.hex` trong `Xe_Can_Bang/Debug/` có thể vẫn là bản cũ. Sau mỗi build phải:
+> `arm-none-eabi-objcopy -O binary Xe_Can_Bang.elf Xe_Can_Bang.bin` và `-O ihex … .hex`
+> (objcopy nằm trong `C:\ST\STM32CubeIDE_2.1.1\…\gnu-tools-for-stm32…\tools\bin`), rồi mới tính hash.
+> Đã xảy ra đúng lúc đóng gói RT36: .bin/.hex còn là bản RT34 trong khi .elf đã mới.
+
 ### 4.4 Kiểm chứng
 
 ```powershell
-Get-ChildItem tools/test_*.cjs | ForEach-Object { node $_.FullName }   # 32/32
+Get-ChildItem tools/test_*.cjs | ForEach-Object { node $_.FullName }   # 36/36
 node tools/test_build_id_sync.cjs
 
 node tools/run_governor_sim.cjs --stress                               # 12 ca
@@ -173,17 +182,17 @@ node tools/run_governor_sim.cjs --stress --edge                        # 12 ca
 node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 ```
 
-- Host test: **32/32 pass** (Node.js 24, GCC msys2). Ngày 18/11 chạy lại 4 test liên quan bản chốt:
-  `test_build_id_sync`, `test_rt32_set`, `test_rt34_corner`, `test_production_dashboard` — **PASS**.
-- Mô phỏng, lần chạy RT35 ngày 17/11: **36/36** ca đủ 20/20 s khi mức ≤ 80; **35/36** ở MAX 90
-  (ca trượt là pin 11,2 V — đúng vùng bị cấm với mức 90). Thư mục kết quả đã dọn khỏi cây làm việc;
-  chạy lại bằng lệnh trên (kết quả ở `Simulation/results/runs/…`, đếm ca từ `summary.csv`).
+- Host test: **36/36 pass** (Node.js 24, GCC msys2), gồm 4 test RT36 (`test_rt36_anchor`,
+  `test_rt36_lateral`, `test_rt36_hold`, `test_rt36_brake`) — mỗi test có old-constant probe phải fail.
+- Mô phỏng, chạy lại sau RT36 ngày 18/11: **36/36** ca đủ 20/20 s khi mức ≤ 80; **35/36** ở MAX 90
+  (ca trượt vẫn là pin 11,2 V như RT35, không phát sinh ca mới). Kết quả ở
+  `Simulation/results/runs/…`, đếm ca từ `summary.csv`.
 
 ### 4.5 Nạp
 
-Nháy đúp `nap_rt34.bat` trong thư mục bản nạp → nhập COM của ESP32. Script nạp STM32 bằng
+Nháy đúp `nap_rt36.bat` trong thư mục bản nạp → nhập COM của ESP32. Script nạp STM32 bằng
 `STM32_Programmer_CLI.exe`, ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
-Kiểm sau khi nạp: banner `RT34-CORNER-NET35`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được.
+Kiểm sau khi nạp: banner `RT36-SYM-NET36`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được.
 
 ## 5. Quy tắc vận hành
 
@@ -201,17 +210,20 @@ Kiểm sau khi nạp: banner `RT34-CORNER-NET35`, ba nút **50 / 80 / MAX 90**, 
 
 ## 6. Việc còn mở (theo thứ tự)
 
-1. **`archive_error=1`** trong mọi log gần đây → vùng log Flash chưa format lại. Cần bấm
+1. **RT36 chưa có log xe.** Cần một buổi đo theo ma trận: đứng yên 60 s; 90 tiến/lùi 8 s; cua
+   trái/phải khi tiến và khi lùi; nhả lệnh từ 0,9. Đạt khi: tiến 0,88–0,90 (pin ≥ 12,0 V), cua hai
+   chiều ~0,75, `w_ref` không nhảy, quãng trôi khi nhả < 0,7 m, `x` khi đứng yên trong ±3 cm.
+2. **`archive_error=1`** trong mọi log gần đây → vùng log Flash chưa format lại. Cần bấm
    “SỬA VÙNG LOG FLASH” **một lần khi motor đã dừng** (xe đứng yên, chỉ ESP32 chạy), rồi kiểm
    `archive_saved > 0` trong log kế tiếp.
-2. **Nguồn 5 V/3V3 tại ESP32**: thêm 1000 µF low-ESR + 100/10 µF, cấp từ nhánh riêng. Brownout đã
+3. **Nguồn 5 V/3V3 tại ESP32**: thêm 1000 µF low-ESR + 100/10 µF, cấp từ nhánh riêng. Brownout đã
    hết nhờ hạ TX 11 dBm nhưng đây vẫn là gốc rễ phần cứng ([RT33](Docs/RT33_On_Dinh_Ket_Noi.md)).
-3. **Nghiêng khi cua trái** còn lớn hơn cua phải (~5° so với ~1,4°) dù tốc độ quay đã cân — phần
+4. **Nghiêng khi cua trái** còn lớn hơn cua phải (~5° so với ~1,4°) dù tốc độ quay đã cân — phần
    cơ khí (motor/hộp giảm tốc trái), không sửa được bằng gain.
-4. **Tốc độ > 0,90 m/s**: cần pack 4S (3S chỉ ~0,96 m/s không tải; 0,90 ở 11,2 V cần duty 0,955,
+5. **Tốc độ > 0,90 m/s**: cần pack 4S (3S chỉ ~0,96 m/s không tải; 0,90 ở 11,2 V cần duty 0,955,
    chiều lùi cần 12,23 V — ngoài dải pin).
-5. **PCB**: chưa có bo thật để kiểm nhiễu/nhiệt/tải dòng.
-6. **Không có watchdog độc lập**: nếu MCU treo, TIM1 giữ duty cuối. Cân nhắc IWDG ở phiên sau
+6. **PCB**: chưa có bo thật để kiểm nhiễu/nhiệt/tải dòng.
+7. **Không có watchdog độc lập**: nếu MCU treo, TIM1 giữ duty cuối. Cân nhắc IWDG ở phiên sau
    (phải đảm bảo không cắt oan trong lúc hiệu chuẩn 5 s).
 
 ## 7. Quy tắc cho phiên sau (bắt buộc)
@@ -221,7 +233,7 @@ Kiểm sau khi nạp: banner `RT34-CORNER-NET35`, ba nút **50 / 80 / MAX 90**, 
   chỉ có quyền cắt/giữ/giảm.
 - **Đổi hành vi thì bump build ID cả hai board** (`balance_profile.h` và `firmware_build.h`) và
   **mọi literal** trong docs/test/script; `test_build_id_sync` phải PASS.
-- Chạy **32 host test**, và với test mới phải có **old-constant probe**: test phải FAIL với hằng số
+- Chạy **36 host test**, và với test mới phải có **old-constant probe**: test phải FAIL với hằng số
   cũ (bằng chứng nó thật sự kiểm tra chính sách mới).
 - Sửa gì ảnh hưởng quỹ đạo/tốc độ thì chạy lại bộ mô phỏng tương ứng; **không** gọi kết quả mô phỏng
   là “đã kiểm trên xe”.
@@ -242,7 +254,8 @@ Kiểm sau khi nạp: banner `RT34-CORNER-NET35`, ba nút **50 / 80 / MAX 90**, 
 | [`Docs/Phan_Cung_Va_Ket_Noi.md`](Docs/Phan_Cung_Va_Ket_Noi.md) | Phần cứng và đấu dây |
 | [`Huong_Dan_Di_Day_Toan_Bo_He_Thong.md`](Huong_Dan_Di_Day_Toan_Bo_He_Thong.md) | Hướng dẫn đi dây toàn bộ hệ |
 | [`Docs/Roadmap_Do_An.md`](Docs/Roadmap_Do_An.md), [`Docs/Phat_Trien_Tiep.md`](Docs/Phat_Trien_Tiep.md) | Phương pháp và hướng tiếp |
-| Báo cáo vòng | [RT22](Docs/RT22_Doi_Xung_Va_Be_Huong.md) · [RT23](Docs/RT23_Nut_That_Va_Loi_Toc_Do.md) · [RT24](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [RT27](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) · [RT28](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [RT29](Docs/RT29_Tu_Ngat_4096.md) · [RT32](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [RT33](Docs/RT33_On_Dinh_Ket_Noi.md) · [RT34](Docs/RT34_Cua_Muot.md) · [RT35](Docs/RT35_Mo_Phong_Khop_Log.md) |
+| [`Docs/RT36_Sua_4_Loi.md`](Docs/RT36_Sua_4_Loi.md) | **Mới:** 4 lỗi từ log 18/11, số đo trước/sau, cách sửa và giới hạn |
+| Báo cáo vòng | [RT22](Docs/RT22_Doi_Xung_Va_Be_Huong.md) · [RT23](Docs/RT23_Nut_That_Va_Loi_Toc_Do.md) · [RT24](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [RT27](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) · [RT28](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [RT29](Docs/RT29_Tu_Ngat_4096.md) · [RT32](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [RT33](Docs/RT33_On_Dinh_Ket_Noi.md) · [RT34](Docs/RT34_Cua_Muot.md) · [RT35](Docs/RT35_Mo_Phong_Khop_Log.md) · [RT36](Docs/RT36_Sua_4_Loi.md) |
 
 ## 9. Lịch sử
 

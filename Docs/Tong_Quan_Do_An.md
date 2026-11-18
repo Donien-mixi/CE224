@@ -7,17 +7,18 @@ bo chuyển tiếp để lắp các module.
 
 | Mảng | Đã làm tới đâu | Việc còn mở |
 |---|---|---|
-| Cân bằng | Nền R12 (14 trạng thái quan sát, phân bổ lực hai bánh) tự cân bằng, đã được người vận hành dựng từ 60°. Giữ hướng, giữ vị trí, phục hồi sau nhiễu trong giới hạn. | Đo lại độ trôi khi pin yếu; hành vi ở mép 0,90 m/s. |
-| Điều khiển web | 8 hướng, ba mức **50 / 80 / 90 cm/s**, nhả để hãm rồi giữ cân bằng tại mốc mới, STOP, giám sát kết nối, tải log. Bốn hướng lái đã cân nhau; cua ở MAX tự hạ tốc độ để không bão hoà bánh. | Chạy thêm log để đối chiếu; hiện chỉ dùng mức 90 khi pin ≥ 12,0 V. |
+| Cân bằng | Nền R12 (14 trạng thái quan sát, phân bổ lực hai bánh) tự cân bằng, đã được người vận hành dựng từ 60°. Giữ hướng, giữ vị trí; RT36 thêm nhả mốc khi đứng yên để hết dao động quanh một mốc xa. | Log xe cho RT36; hành vi ở mép 0,90 m/s. |
+| Điều khiển web | 8 hướng, ba mức **50 / 80 / 90 cm/s**, nhả để hãm rồi giữ cân bằng tại mốc mới, STOP, giám sát kết nối, tải log. Bốn hướng lái đã cân nhau; cua giữ **~0,75 m/s** ở cả hai chiều (RT36). | Chạy thêm log để đối chiếu; hiện chỉ dùng mức 90 khi pin ≥ 12,0 V. |
 | Cơ khí và đấu dây | Khung mica, hai GA25, BMI160, LiPo 3S (12,2 V đầy – 11,2 V cạn), pin kê thêm 10 mm. Motor trái đỏ→AOUT2, trắng→AOUT1. Bánh trái yếu hơn: cần thêm ~110 PWM, đã bù trong firmware. | Cân lại nếu đổi khối lượng; xử lý cơ khí bánh trái nếu muốn hết ngả khi cua trái. |
 | Mô phỏng | Dùng chung header với firmware; đường đặc tính bánh fit lại từ log xe thật (lệch 1–2 %); 36 ca kiểm tra 20 s. | Mô hình chưa có trượt bánh, tụt áp theo tải, tư thế trung tính +1,5°. |
 | PCB | Bản một mặt đồng B.Cu, 160 × 65 mm, đủ năm module, BMI160 cách tâm bo 0,85 mm, 31 dây cầu; ERC/DRC đạt. | Kiểm tra lắp, thông mạch, nguồn, nhiệt, nhiễu khi có bo thật. |
 
 ## Các bản cần phân biệt
 
-- **Bản hiện hành:** STM32 `BAL-20261117-R12-8DIR-RT34-CORNER` + ESP32
-  `TWIP-WEB-20261117-BAL-R12-8DIR-RT34-CORNER-NET35`. Binary và hash trong
-  [`Firmware/RT34_CORNER_20261117/`](../Firmware/RT34_CORNER_20261117/README.md).
+- **Bản hiện hành:** STM32 `BAL-20261118-R12-8DIR-RT36-SYM` + ESP32
+  `TWIP-WEB-20261118-BAL-R12-8DIR-RT36-SYM-NET36`. Binary và hash trong
+  [`Firmware/RT36_SYM_20261118/`](../Firmware/RT36_SYM_20261118/README.md).
+- **Bản trước:** RT34-CORNER / NET35 trong `Firmware/RT34_CORNER_20261117/` (đã có log xe 173 s).
 - **Bản dự phòng:** RT29-NOCUT / NET30 (ba mức 50/72/80) trong `Firmware/RT29_NOCUT_20261115/`.
 - **Lịch sử phát triển** (RT7 → RT21, các bản nạp cũ, log thô, phân tích từng vòng) nằm trong git
   history của repo, không còn giữ trong cây làm việc.
