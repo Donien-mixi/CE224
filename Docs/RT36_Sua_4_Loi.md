@@ -1,5 +1,9 @@
 # RT36 — Sửa 4 lỗi đo được từ 4 log ngày 18/11/2026
 
+> **RT37 (18/11) kế tiếp:** log RT36 `(2)(5)` cho thấy xuất phát/tăng tốc bị ngập ngừng do ngưỡng
+> nghiêng governor 9°/11°; RT37 nâng thành 10°/13°. Xem [`RT37_Xuat_Phat_Muot.md`](RT37_Xuat_Phat_Muot.md).
+> Các sửa của RT36 trong tài liệu này **vẫn giữ nguyên**.
+
 Bốn log người vận hành gửi, cùng một bản **`BAL-20261117-R12-8DIR-RT34-CORNER` / gateway `…-NET35`**,
 `reset=power_on`, `crc_errors=0`, `sequence_gaps=0`, `STM32_resets=0`, `drops=0`, `dt` 4 993–5 013 µs:
 

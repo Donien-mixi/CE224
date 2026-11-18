@@ -1,8 +1,8 @@
-> **Trạng thái:** bản hiện hành **STM32 RT36-SYM + ESP32 NET36** (18/11/2026) — xem
-> [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Số đo mới nhất là log RT34 ngày
-> 18/11; RT36 **chưa có log xe** (xem [RT36](RT36_Sua_4_Loi.md)).
+> **Trạng thái:** bản hiện hành **STM32 RT37-SMOOTH + ESP32 NET37** (18/11/2026) — xem
+> [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Số đo mới nhất là log RT36 ngày
+> 18/11 (154 s, 4 kịch bản); RT37 **chưa có log xe** (xem [RT37](RT37_Xuat_Phat_Muot.md)).
 
-# Chức năng xe hiện hành — RT36-SYM / NET36
+# Chức năng xe hiện hành — RT37-SMOOTH / NET37
 
 Danh sách mô tả **đúng** những gì code đang chạy, kèm số đo từ log xe thật. Đây không phải chứng
 nhận mọi tình huống thực tế đã đạt. Thứ tự ưu tiên giữa các lớp (P0 cắt an toàn → P7 telemetry) và
@@ -20,6 +20,11 @@ sơ đồ pipeline 200 Hz: [HANDOFF mục 2](../HANDOFF.md).
 **0,96 m/s** ở pack 11,7 V, nên 0,90 là mức sát trần — không tăng thêm được trên 3S.
 RT36 bỏ kẹp mốc không cần thiết của governor nên tốc độ tiến phải bám đúng 0,90 (trước sửa chỉ
 0,79–0,84 vì `x_ref` bị giữ cách 10 cm — [RT36](RT36_Sua_4_Loi.md) mục 1.2).
+
+**Xuất phát / tăng tốc (RT37):** gia tốc mồi 0,70 m/s² (0,60 ở mức 50), không đổi; ngưỡng nghiêng
+của governor nâng 9°/11° → **10°/13°** để không cắt gia tốc ở độ ngả 7–12° bình thường của xe. Log
+RT36 cho thấy trước sửa mỗi cú xuất phát mất 2,6–5,5 s mới đạt 90 % mốc; kỳ vọng sau sửa còn
+1,5–2,5 s và không còn đoạn phẳng > 0,3 s ([RT37](RT37_Xuat_Phat_Muot.md)).
 
 ## 2. Bẻ hướng 8 hướng
 

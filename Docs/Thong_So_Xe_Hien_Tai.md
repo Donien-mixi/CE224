@@ -1,4 +1,4 @@
-> **Trạng thái:** bản hiện hành **STM32 RT36-SYM + ESP32 NET36** — xem [chức năng](Tinh_Nang_Xe_Hien_Hanh.md) và [HANDOFF](../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT37-SMOOTH + ESP32 NET37** — xem [chức năng](Tinh_Nang_Xe_Hien_Hanh.md) và [HANDOFF](../HANDOFF.md).
 
 # Thông số xe và mô hình hiện hành
 
@@ -6,7 +6,7 @@
 
 Pin LiPo 3S (190 g theo mô hình) vẫn nằm ở tầng dưới. Ngày 08/11/2026, người vận hành xác nhận đã kê pin cao thêm **10 mm** so với vị trí cũ. Mô hình đã có biến `battery_riser_height = 0.010 m`, đưa tâm pin từ 35,8 lên **45,8 mm so với trục bánh**. Giữ giả định vị trí ngang của pin và bỏ qua khối lượng miếng kê cho đến khi có số đo. 888 g là tổng khối lượng mô hình, chưa cân lại sau thay đổi. Không cộng thêm 10 mm lần nữa.
 
-Bản mã trong workspace là STM32 **RT36-SYM** và ESP32 **NET36** (18/11/2026). Xem [HANDOFF](../HANDOFF.md) để phân biệt bản mã, bản đã thử và kết quả lịch sử. Kết quả thử cũ chỉ được quy cho cấu hình kê pin khi hồ sơ lượt thử xác nhận điều kiện này.
+Bản mã trong workspace là STM32 **RT37-SMOOTH** và ESP32 **NET37** (18/11/2026). Xem [HANDOFF](../HANDOFF.md) để phân biệt bản mã, bản đã thử và kết quả lịch sử. Kết quả thử cũ chỉ được quy cho cấu hình kê pin khi hồ sơ lượt thử xác nhận điều kiện này.
 
 **Thiết kế cơ khí**
 

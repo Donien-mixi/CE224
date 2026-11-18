@@ -1,4 +1,4 @@
-> **Trạng thái:** bản hiện hành **STM32 RT36-SYM + ESP32 NET36** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT37-SMOOTH + ESP32 NET37** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
 >
 > **Đối chiếu roadmap với hiện tại:** GĐ0 (self-test linh kiện), GĐ1 (cân bằng, chống nhiễu) và GĐ2
 > (điều hướng web + vừa chạy vừa cân bằng) **đã xong**; các mục ❌ ở §0.3 nay đã có: lái 8 hướng,

@@ -1,5 +1,8 @@
 # Bản chốt RT36 — sửa 4 lỗi đo từ log 18/11/2026
 
+> **RT37 (18/11) kế tiếp:** nâng ngưỡng nghiêng governor 9°/11° → 10°/13° để hết ngập ngừng khi
+> xuất phát/tăng tốc. Bản đang dùng: [`../RT37_SMOOTH_20261118/`](../RT37_SMOOTH_20261118/README.md).
+
 Nạp **cả hai board** (STM32 và ESP32 đều đổi build ID).
 
 | Board | Build ID |
@@ -13,8 +16,8 @@ Nạp **cả hai board** (STM32 và ESP32 đều đổi build ID).
 |---|---|---|---|
 | 1 | Đứng yên còn dao động quanh vị trí ban đầu | mốc `x_ref` cách xe **7 cm**; PWM +300 giữ liên tục, trượt 3–11 cm (stick-slip) | sau **3 s** đứng yên thật, mốc chảy về vị trí đo **2 cm/s**, phạm vi 15 cm |
 | 2 | Tiến chậm hơn lùi, hiếm khi đạt 90 | governor kẹp mốc ở **+10 cm** khi áp lực do lag 0,108; duty chỉ 0,83 | neo mốc chỉ khi **duty > 0,95** (bão hoà thật) |
-| 3 | Cua trái chậm hơn cua phải | cùng kẹp mốc; cua trái `v` 0,61/0,80 trong khi cua phải 0,68–0,82 | như trên + trần cua **0,90 − |w|·0,131 = 0,749** |
-| 4 | Cua phải-lùi ngập ngừng, nhả lệnh còn trôi | trần ngang tính theo `|v|` đo nên `w_ref` nhảy 1,09–1,15 (512 = 87 %); ramp phanh bị kẹp 0,65 m/s² | trần ngang theo tốc độ **đã lệnh**; cap phanh **0,85 m/s²** |
+| 3 | Cua trái chậm hơn cua phải | cùng kẹp mốc; cua trái `v` 0,61/0,80 trong khi cua phải 0,68–0,82 | như trên + trần cua **0,90 − \|w\|·0,131 = 0,749** |
+| 4 | Cua phải-lùi ngập ngừng, nhả lệnh còn trôi | trần ngang tính theo `\|v\|` đo nên `w_ref` nhảy 1,09–1,15 (512 = 87 %); ramp phanh bị kẹp 0,65 m/s² | trần ngang theo tốc độ **đã lệnh**; cap phanh **0,85 m/s²** |
 
 Không đổi gain/observer/phân bổ lực R12, `CAT_VNL`, khung 122 B, lease, REC1, interlock, trim 110 PWM.
 Chi tiết số đo: [`../../Docs/RT36_Sua_4_Loi.md`](../../Docs/RT36_Sua_4_Loi.md).

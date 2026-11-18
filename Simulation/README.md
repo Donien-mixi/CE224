@@ -1,10 +1,10 @@
 > **Trạng thái đồ án · 18/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Điều khiển web có
-> 8 hướng và log. Workspace đang ở **RT36-SYM / NET36**, đã build, kiểm thử trên máy và push Git.
+> 8 hướng và log. Workspace đang ở **RT37-SMOOTH / NET37**, đã build, kiểm thử trên máy và push Git.
 > Mô hình tính pin kê thêm 10 mm. PCB một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu.
 > Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
 >
 > **Mô phỏng dùng chung header firmware hiện hành**, nên chạy lại là kiểm luôn bản đang nạp. Lần
-> chạy 18/11/2026 (sau RT36, plant fit theo log RT34 — xem [RT35](../Docs/RT35_Mo_Phong_Khop_Log.md)):
+> chạy 18/11/2026 (sau RT37, plant fit theo log RT34 — xem [RT35](../Docs/RT35_Mo_Phong_Khop_Log.md)):
 > **36/36 ca** khi mức ≤ 80 và **35/36** ở MAX 90 (ca trượt là pin 11,2 V), tất cả 20/20 s
 > (`node tools/run_governor_sim.cjs --stress`, thêm `--edge`, và `--stress --launch --launch50`).
 > Thư mục `results/` chỉ là đầu ra, không đưa lên Git.

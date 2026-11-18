@@ -1,4 +1,4 @@
-> **Trạng thái:** bản hiện hành **STM32 RT36-SYM + ESP32 NET36** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT37-SMOOTH + ESP32 NET37** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md).
 
 # Phát triển tiếp sau bản chốt RT36
 

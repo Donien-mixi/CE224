@@ -1,4 +1,4 @@
-> **Trạng thái đồ án · 18/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Điều khiển web có 8 hướng và log. Workspace đang ở **RT36-SYM / NET36**, đã build, kiểm thử trên máy và push Git. Mô hình tính pin kê thêm 10 mm. PCB một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu. Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
+> **Trạng thái đồ án · 18/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Điều khiển web có 8 hướng và log. Workspace đang ở **RT37-SMOOTH / NET37**, đã build, kiểm thử trên máy và push Git. Mô hình tính pin kê thêm 10 mm. PCB một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu. Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
 
 > Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
 
@@ -32,5 +32,5 @@ Sơ đồ đã kiểm tra bằng KiCad CLI: **0 lỗi, 0 cảnh báo ERC** khi b
 ## Trạng thái firmware đi kèm repo
 
 Commit Hardware ban đầu `d6a14af` chưa có firmware mới. Bản đồng bộ hiện tại của repo là STM32
-**RT36-SYM** + ESP32 **NET36** (binary và hash trong `Firmware/RT36_SYM_20261118/`). Sơ đồ vẫn
+**RT37-SMOOTH** + ESP32 **NET37** (binary và hash trong `Firmware/RT36_SYM_20261118/`). Sơ đồ vẫn
 là revision 1.3; việc đồng bộ source không xác nhận firmware đã nạp trên xe.

@@ -10,11 +10,18 @@
  * way) tripped3.7% of the time. The lean rule now guards a genuine loss of
  * headroom at9deg (11 while launching); duty>0.90 and the tracking-lag rule are
  * unchanged and remain the primary physical limits. */
+/* RT37 (log (2)(5), 18/11): the car leans7-12deg in the first2s of every
+ * launch. The old9deg/11deg thresholds therefore tripped pressure for25-44% of
+ * that window and the ramp dropped to the0.06 crawl in bursts - the operator's
+ * "ngap ngung". The lean thresholds move to10deg normal /13deg launch (the stop
+ * guard is25deg, the turn taper8-12deg, so there is still margin). Sim at MAX90
+ * stays11/12 (only the11.2V case), and a0.45ramp experiment made it worse
+ * (9-10/12), so the ramp itself is unchanged. */
 #ifndef BALANCE_GOV_LEAN_DEG
-#define BALANCE_GOV_LEAN_DEG 9.0f
+#define BALANCE_GOV_LEAN_DEG 10.0f
 #endif
 #ifndef BALANCE_GOV_LEAN_LAUNCH_DEG
-#define BALANCE_GOV_LEAN_LAUNCH_DEG 11.0f
+#define BALANCE_GOV_LEAN_LAUNCH_DEG 13.0f
 #endif
 #ifndef BALANCE_GOV_CLEAR_DEG
 #define BALANCE_GOV_CLEAR_DEG 5.0f

@@ -40,7 +40,7 @@ static void init(void){BalanceGovernor_Reset(&gov);BalanceMotion_Clear(&s);Balan
  gov=(BalanceGovernor){.speed=.2f};
  BalanceGovernor_Step(&gov,.2f,.95f,.6f,1,4,15);assert(!gov.pressure);
  gov=(BalanceGovernor){.speed=.6f};
- BalanceGovernor_Step(&gov,.6f,.95f,.3f,1,8,15);assert(gov.pressure); //RT22:9deg predicted entry at speed; RT17 fixes the exit latch
+ BalanceGovernor_Step(&gov,.6f,.95f,.3f,1,9,15);assert(gov.pressure); //RT37:10deg predicted entry at speed; RT17 fixes the exit latch
  gov=(BalanceGovernor){.pressure=true,.speed=.2f};
  for(int i=0;i<19;i++){BalanceGovernor_Step(&gov,.2f,.5f,.6f,1,0,0);assert(gov.pressure);}
  BalanceGovernor_Step(&gov,.2f,.5f,.6f,1,0,0);assert(!gov.pressure); //RT16 all low-speed launches use100ms

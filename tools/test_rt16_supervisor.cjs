@@ -48,7 +48,7 @@ int main(void){
   for(int i=0;i<100;i++)step(sign,sign*6,sign*.05f,0);
   assert(s.v_ref*sign>.10f&&!s.cancel_flags);
  }
- gov=(BalanceGovernor){.speed=.2f};BalanceGovernor_Step(&gov,.2f,.95f,.7f,1,12,0);assert(gov.pressure); //RT22:11deg launch threshold
+ gov=(BalanceGovernor){.speed=.2f};BalanceGovernor_Step(&gov,.2f,.95f,.7f,1,14,0);assert(gov.pressure); //RT37:13deg launch threshold
  puts("PASS RT16: neutral abort completion, no stale resume, brake settle, real runaway, symmetric biased launch.");
 }
 `;

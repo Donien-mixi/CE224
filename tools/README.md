@@ -1,6 +1,6 @@
-> **Trạng thái đồ án · 18/11/2026.** Workspace ở **RT36-SYM / NET36**: **36/36 host test pass**,
+> **Trạng thái đồ án · 18/11/2026.** Workspace ở **RT37-SMOOTH / NET37**: **37/37 host test pass**,
 > mô phỏng native 36/36 ca đủ 20/20 s khi mức ≤ 80 và **35/36** ở MAX 90 (ca trượt là pin 11,2 V).
-> Firmware phát hành ở [`Firmware/RT36_SYM_20261118/`](../Firmware/RT36_SYM_20261118/README.md).
+> Firmware phát hành ở [`Firmware/RT37_SMOOTH_20261118/`](../Firmware/RT37_SMOOTH_20261118/README.md).
 > Xem [trạng thái kỹ thuật](../HANDOFF.md) và [tổng quan](../Docs/Tong_Quan_Do_An.md).
 
 # Công cụ kiểm thử và build
@@ -14,7 +14,7 @@ Get-ChildItem tools/test_*.cjs | ForEach-Object { node $_.FullName }
 Mỗi test tự biên dịch phần C/C++ tương ứng vào `.build/<tên_test>/` rồi chạy. Không test nào nạp
 firmware hay mở cổng COM.
 
-## Test đang dùng (36)
+## Test đang dùng (37)
 
 | Nhóm | Tệp | Kiểm cái gì |
 |---|---|---|
@@ -23,6 +23,7 @@ firmware hay mở cổng COM.
 | Các lần sửa gần nhất | `test_rt23_interlock`, `test_rt24_sym`, `test_rt27_push`, `test_rt28_anchor`, `test_rt29_nocut` | Trần tốc độ có trễ, taper nghiêng, không đẩy theo vận tốc, giữ mốc khi bị đẩy, miễn hạn 4 s cho phanh do nhiễu |
 | Bản chốt RT34 | `test_rt32_set`, `test_rt34_corner` | Ba mức 50/80/90, trần 0,90, bù bánh trái 110 PWM có kẹp; cua hạ tham chiếu (RT36: 0,749), thẳng không đổi — đều có probe phải fail với hằng số cũ |
 | RT36 (18/11) | `test_rt36_anchor`, `test_rt36_lateral`, `test_rt36_hold`, `test_rt36_brake` | Neo mốc chỉ khi duty > 0,95; trần ngang theo tốc độ lệnh (w_ref 1,15, 512=0); mốc chảy về vị trí khi đứng yên; phanh nhả 0,90 → 0 trong 1,3 s — mỗi test có probe hằng số cũ phải fail |
+| RT37 (18/11) | `test_rt37_smooth` | Ngưỡng nghiêng governor 10°/13°: lệch 11,2° khi xuất phát không còn áp lực, 13,5° vẫn ghim; 10,0° khi chạy không ghim, 10,5° ghim; probe 9/11 phải fail |
 | Gateway | `test_production_gateway`, `test_production_dashboard`, `test_production_session`, `test_net1_routes`, `test_net21_archive`, `test_net21_link` | Giao thức UART, trang web, phiên điều khiển, route log/archive |
 | Driver | `test_bmi160_driver`, `test_encoder_runtime`, `test_balance_recovery` | Đọc IMU, đếm xung, REC1 |
 | Dựng lại log cũ | `test_rt8_ab`, `test_rt8_replay`, `test_rt8_tracking` | Phát lại dữ liệu log RT8 |

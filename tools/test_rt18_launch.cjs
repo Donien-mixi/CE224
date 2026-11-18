@@ -35,7 +35,7 @@ int main(void){
   assert(!gov.pressure&&!gov.limited);
   for(int reason=0;reason<3;reason++){
    gov=(BalanceGovernor){.speed=-sign*.102f,.duty=reason==0?.95f:.2f};
-   BalanceGovernor_Step(&gov,sign*(reason==2?.3f:.021f),sign*.5f,.6f,sign,sign*(reason==1?12:1.74f),0);
+   BalanceGovernor_Step(&gov,sign*(reason==2?.3f:.021f),sign*.5f,.6f,sign,sign*(reason==1?14:1.74f),0);
    assert(gov.pressure);
   }
   gov=(BalanceGovernor){.speed=-sign*.25f,.duty=.2f};
