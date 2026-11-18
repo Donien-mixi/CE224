@@ -1,7 +1,7 @@
 # Firmware RT29-NOCUT / NET30 — bản dự phòng (15/11/2026)
 
 **Đây là bản dự phòng, không phải bản hiện hành.** Bản chốt đang dùng là
-[`../RT37_SMOOTH_20261118/`](../RT37_SMOOTH_20261118/README.md) (RT37-SMOOTH / NET37, ba mức 50/80/90).
+[`../RT37_SMOOTH_20261118/`](../RT37_SMOOTH_20261118/README.md) (RT38-CONT / NET38, ba mức 50/80/90).
 Số liệu kiểm thử dưới đây là tại thời điểm phát hành 15/11/2026 (30 test, ba mức 50/72/80).
 
 Cặp firmware này nạp **cả hai board** cùng bản: gateway đối chiếu

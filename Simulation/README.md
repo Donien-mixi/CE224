@@ -1,5 +1,5 @@
 > **Trạng thái đồ án · 18/11/2026.** Nền R12 đã được thử cân bằng và dựng từ 60°. Điều khiển web có
-> 8 hướng và log. Workspace đang ở **RT37-SMOOTH / NET37**, đã build, kiểm thử trên máy và push Git.
+> 8 hướng và log. Workspace đang ở **RT38-CONT / NET38**, đã build, kiểm thử trên máy và push Git.
 > Mô hình tính pin kê thêm 10 mm. PCB một mặt đồng đã qua kiểm tra KiCad với 31 dây cầu.
 > Xem [tổng quan và các việc còn mở](../Docs/Tong_Quan_Do_An.md).
 >

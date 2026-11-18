@@ -30,6 +30,19 @@
 #ifndef BALANCE_MOTION_HOLD_SPAN
 #define BALANCE_MOTION_HOLD_SPAN .15f
 #endif
+/* RT38: a direction change arrives as "neutral" for a few packets (release one
+ * button, press the next). Braking on the first neutral packet turned every
+ * reversal into stop-then-go. Hold the previous command for up to120ms; a new
+ * direction inside the window is a continuous reversal. A real release still
+ * brakes after120ms and a stale command brakes at once. */
+#ifndef BALANCE_MOTION_RELEASE_HOLD_TICKS
+#define BALANCE_MOTION_RELEASE_HOLD_TICKS 24U
+#endif
+/* RT38 probe switch:1 = old behaviour (zero the speed command when the axle
+ * lags the reference by20cm) for the host test. */
+#ifndef BALANCE_MOTION_LEAD_CUT
+#define BALANCE_MOTION_LEAD_CUT 0
+#endif
 /* 200Hz. The observer/encoder remain in the physical frame. An abandoned
  * trajectory must never pull a blocked vehicle back toward its old target. */
 typedef struct {
@@ -48,6 +61,8 @@ typedef struct {
     uint16_t stop_ticks;
     uint16_t post_rec_ticks; /* RT20: bounded post-REC1 softening counter */
     uint16_t settle_ticks;   /* RT36: 3 s of true standstill before anchor bleeds */
+    uint16_t release_ticks;  /* RT38: neutral packets tolerated before a brake */
+    int8_t held_dir;         /* RT38: last commanded direction, kept through a gap */
 } BalanceMotion;
 static inline void BalanceMotion_Clear(BalanceMotion *s){*s=(BalanceMotion){0};}
 static inline void BalanceMotion_BeginBrake(BalanceMotion *s,float position,uint32_t now){
@@ -127,9 +142,22 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
         s->v_ref=fmaxf(s->speed_preset==2?-1.05f:-.8f,fminf(s->speed_preset==2?1.05f:.8f,speed));
 #endif
     }
-    if(s->used&&!s->cancel_flags&&((fresh&&dir==0)||!fresh)&&s->requested!=0){
-        BalanceMotion_BeginBrake(s,position,now);
-    }
+    /* RT38: neutral for a few packets is a button change, not a stop. See the
+     * constants above. A stale command (no packet for350ms) still brakes now.
+     * held_dir is used instead of requested because requested already returns
+     * to0 on the first neutral packet. */
+    bool neutral_now=fresh&&dir==0;
+    bool stale_now=!fresh&&dir!=0;
+    if(s->used&&!s->cancel_flags&&s->held_dir!=0&&(neutral_now||stale_now)){
+        if(stale_now){s->release_ticks=0;s->held_dir=0;BalanceMotion_BeginBrake(s,position,now);}
+        else{
+            if(s->release_ticks<60000U)s->release_ticks++;
+            if(s->release_ticks>=BALANCE_MOTION_RELEASE_HOLD_TICKS){
+                s->held_dir=0;BalanceMotion_BeginBrake(s,position,now);
+            }
+        }
+    }else if(fresh&&dir!=0)s->release_ticks=0;
+    if(dir!=0)s->held_dir=(int8_t)dir;
     // Encoder tracking detects a possible blockage, not wall distance. A wheel
     // spinning against a wall may evade this; violent IMU motion has its own cut.
     float error=s->x_ref-position;
@@ -170,11 +198,29 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
         if(s->stable>=100U)s->ready=true;
     }
     int wanted=allow&&s->ready&&!s->release_required&&fresh?dir:0;
+    /* RT38: during the120ms button-change window keep driving the previous
+     * direction, so a reversal ramps through zero instead of restarting. */
+    if(wanted==0&&allow&&s->ready&&!s->release_required&&neutral_now&&
+       s->release_ticks>0&&s->release_ticks<BALANCE_MOTION_RELEASE_HOLD_TICKS)
+        wanted=s->held_dir;
     if(wanted!=0&&s->braking){s->x_ref=position;s->braking=false;s->hold_anchor=false;s->stop_ticks=0;}
     if(wanted!=0)s->cancel_flags=0;
     bool limited=wanted*(s->x_ref-position)>.20f;
     float speed_limit=s->recovery_limited?fminf(BALANCE_MOTION_SPEED,s->recovery_active?.25f:.50f):BALANCE_MOTION_SPEED;
+#if BALANCE_MOTION_LEAD_CUT
     float target=limited?0:speed_limit*wanted;
+#else
+    float target=speed_limit*wanted;
+    if(limited){
+        /* RT38: a moving axle that lags the reference by20cm used to have its
+         * speed command zeroed and re-ramped, which is the0.9m/s stutter. The
+         * reference is anchored at the axle instead and the command is kept;
+         * a stopped axle (blocked) still loses the command so the wall
+         * detector can cancel as before. */
+        if(fabsf(speed)>=.30f)s->x_ref=position+wanted*.20f;
+        else target=0;
+    }
+#endif
     /* RT34: giới hạn do đường. Bánh ngoài khi cua cần v + |w|*0,131 mà động cơ chỉ
      * tới ~0,95 m/s (pack 11,7 V), nên ở MAX 90 mà cua gắt thì bánh ngoài bão hoà
      * 100%, yaw vọt quá tham chiếu rồi mới hồi (log 38: vọt 37%). Hạ tham chiếu

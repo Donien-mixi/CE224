@@ -111,7 +111,7 @@ assert.equal(O.get('pitch,12.1'), 1); assert.equal(N.get('pitch,12.1'), 1);
 assert(O.get('reverse,0.12') > -0.45, 'legacy reverse should be throttled at 12 cm');
 assert(N.get('reverse,0.12') <= -0.45, 'RT8 reverse must hold speed at 12 cm');
 assert(O.get('reverse,0.17') > -0.45 && N.get('reverse,0.17') <= -0.45, 'RT8 must hold speed at 17 cm');
-assert(N.get('reverse,0.21') > -0.45, 'RT8 still throttles past 20 cm');
+assert(N.get('reverse,0.21') <= -0.45, 'RT38 anchors the reference at20cm but keeps the speed while moving');
 assert(O.get('turn,0.11') < 0.9, 'legacy turn loses rate at 11 cm drift');
 assert(N.get('turn,0.11') >= 1.15, 'RT8 keeps full turn rate at 11 cm drift');
 assert(N.get('turn,0.19') > O.get('turn,0.19'), 'RT8 must be better than legacy at 19 cm');

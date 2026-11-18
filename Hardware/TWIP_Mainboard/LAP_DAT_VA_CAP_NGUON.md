@@ -1,4 +1,4 @@
-> **Trạng thái:** bản hiện hành **STM32 RT37-SMOOTH + ESP32 NET37** (18/11/2026) — xem [HANDOFF](../../HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT38-CONT + ESP32 NET38** (18/11/2026) — xem [HANDOFF](../../HANDOFF.md).
 
 > Bản PCB ngày 06/11/2026 dùng một mặt đồng B.Cu, 31 đoạn dây cầu trong 24 nhóm. Tâm thân BMI160 tại (130,00; 81,65) mm. Xem [SINGLE_LAYER.md](SINGLE_LAYER.md) và [bảng dây cầu](SINGLE_LAYER_WIRES.csv) cho bản lắp hiện hành. Các tọa độ bố trí và số dây của bản trước bên dưới là dữ liệu lịch sử.
 

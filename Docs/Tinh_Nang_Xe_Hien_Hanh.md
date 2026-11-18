@@ -1,8 +1,8 @@
-> **Trạng thái:** bản hiện hành **STM32 RT37-SMOOTH + ESP32 NET37** (18/11/2026) — xem
+> **Trạng thái:** bản hiện hành **STM32 RT38-CONT + ESP32 NET38** (18/11/2026) — xem
 > [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Số đo mới nhất là log RT36 ngày
 > 18/11 (154 s, 4 kịch bản); RT37 **chưa có log xe** (xem [RT37](RT37_Xuat_Phat_Muot.md)).
 
-# Chức năng xe hiện hành — RT37-SMOOTH / NET37
+# Chức năng xe hiện hành — RT38-CONT / NET38
 
 Danh sách mô tả **đúng** những gì code đang chạy, kèm số đo từ log xe thật. Đây không phải chứng
 nhận mọi tình huống thực tế đã đạt. Thứ tự ưu tiên giữa các lớp (P0 cắt an toàn → P7 telemetry) và

@@ -28,6 +28,7 @@ function Export-Version([string]$name, [string]$commit) {
 
 Export-Version 'RT29' 'ceb3fd6'
 Export-Version 'RT34' 'dccb707'
+Export-Version 'RT37' '7e03db3'
 Write-Output ''
-Write-Output 'RT37 (ban hien hanh) dung truc tiep: D:\DA_HTN\Xe_Can_Bang va D:\DA_HTN\ESP32_S3_Gateway'
+Write-Output 'RT38 (ban hien hanh) dung truc tiep: D:\DA_HTN\Xe_Can_Bang va D:\DA_HTN\ESP32_S3_Gateway'
 Write-Output 'Mo STM32CubeIDE / Arduino IDE theo Docs/Nap_Bang_IDE.md'

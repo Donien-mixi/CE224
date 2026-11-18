@@ -18,7 +18,7 @@ function ensureLegacyHeaders(root) {
     }
     fs.writeFileSync(p, t);
   };
-  patch('balance_recovery.h', [['fabsf(gyro)>=150.0f', 'fabsf(gyro)>=60.0f']]);
+  patch('balance_recovery.h', [['#define BALANCE_RECOVERY_GYRO_DPS 150.0f', '#define BALANCE_RECOVERY_GYRO_DPS 60.0f']]);
   patch('balance_motion.h', [
     ['dir*error>.30f', 'dir*error>.18f'],
     ['wanted*(s->x_ref-position)>.20f', 'wanted*(s->x_ref-position)>.10f']

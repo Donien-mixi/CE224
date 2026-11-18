@@ -18,8 +18,10 @@ int main(void){
   assert(s.active&&s.started_ms==1155);
   BalanceRecovery_Clear(&s);prime(&s);
   // RT8: gyro spikes below150dps are suspension bumps (log27), not a disturbance.
-  BalanceRecovery_UpdateMode(&s,true,0,sign*149,0,0,.3f,1195,true);assert(!s.active);
-  BalanceRecovery_UpdateMode(&s,true,0,sign*150,0,0,.3f,1200,true);assert(s.active);
+  for(int i=0;i<12;i++)BalanceRecovery_UpdateMode(&s,true,0,sign*149,0,0,.3f,1195+5*i,true);
+  assert(!s.active);
+  for(int i=0;i<12;i++)BalanceRecovery_UpdateMode(&s,true,0,sign*150,0,0,.3f,1260+5*i,true);
+  assert(s.active);
   BalanceRecovery_Clear(&s);
  }
 

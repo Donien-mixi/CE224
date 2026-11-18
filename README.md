@@ -4,10 +4,10 @@
 làm gateway Wi-Fi có trang điều khiển và ghi log, Scilab mô phỏng lại đúng phần luật điều khiển
 đang nạp trên xe.
 
-**Bản phát hành hiện hành: STM32 `RT37-SMOOTH` + ESP32 `NET37` (18/11/2026)** — ba mức tốc độ
+**Bản phát hành hiện hành: STM32 `RT38-CONT` + ESP32 `NET38` (18/11/2026)** — ba mức tốc độ
 **50 / 80 / 90 cm/s**, bù lệch bánh trái, cua ổn định **~0,75 m/s** ở cả hai chiều, chống trôi khi
-đứng yên, phanh nhanh hơn, **xuất phát mượt không ngập ngừng**. Firmware đóng gói kèm hash ở
-[`Firmware/RT37_SMOOTH_20261118/`](Firmware/RT37_SMOOTH_20261118/).
+đứng yên, phanh nhanh hơn, xuất phát mượt, **đổi hướng liên tục không khựng**. Firmware đóng gói kèm
+hash ở [`Firmware/RT38_CONT_20261118/`](Firmware/RT38_CONT_20261118/).
 Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
 ## 1. Kiến trúc
@@ -24,8 +24,9 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
 | Bản | Board | Build ID | Tệp |
 |---|---|---|---|
-| **RT37-SMOOTH / NET37** (hiện hành) | STM32 | `BAL-20261118-R12-8DIR-RT37-SMOOTH` | `STM32_BAL_R12_RT37_SMOOTH.hex` (+`.bin`, `.elf`) |
-| | ESP32-S3 | `TWIP-WEB-20261118-BAL-R12-8DIR-RT37-SMOOTH-NET37` | `ESP32_RT37_SMOOTH_NET37.app.bin` (+ bootloader, partitions, boot_app0) |
+| **RT38-CONT / NET38** (hiện hành) | STM32 | `BAL-20261118-R12-8DIR-RT38-CONT` | `STM32_BAL_R12_RT38_CONT.hex` (+`.bin`, `.elf`) |
+| | ESP32-S3 | `TWIP-WEB-20261118-BAL-R12-8DIR-RT38-CONT-NET38` | `ESP32_RT38_CONT_NET38.app.bin` (+ bootloader, partitions, boot_app0) |
+| RT37-SMOOTH / NET37 (trước) | cả hai | `BAL-20261118-…-RT37-SMOOTH` / `…-NET37` | trong `Firmware/RT37_SMOOTH_20261118/` |
 | RT36-SYM / NET36 (trước) | cả hai | `BAL-20261118-…-RT36-SYM` / `…-NET36` | trong `Firmware/RT36_SYM_20261118/` (có log 154 s) |
 | RT34-CORNER / NET35 (trước) | cả hai | `BAL-20261117-…-RT34-CORNER` / `…-NET35` | trong `Firmware/RT34_CORNER_20261117/` |
 | RT29-NOCUT / NET30 (dự phòng) | cả hai | `BAL-20261115-R12-8DIR-RT29-NOCUT` / `…-NET30` | trong `Firmware/RT29_NOCUT_20261115/` |
@@ -33,9 +34,9 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 - Hash đầy đủ: `SHA256.json` trong từng thư mục; hash **13 tệp nguồn đã sinh ra binary**:
   `SOURCE_SHA256.json`.
 - Hai board phải nạp cùng bản: gateway đối chiếu build ID với STM32, lệch là khoá điều khiển.
-- Cách nạp: nháy đúp `nap_rt37.bat` (nhập COM ESP32) hoặc lệnh tay trong
-  [`Firmware/RT37_SMOOTH_20261118/README.md`](Firmware/RT37_SMOOTH_20261118/README.md).
-- **Chọn giữa ba bản và hướng dẫn nạp đầy đủ:** [`Firmware/README.md`](Firmware/README.md)
+- Cách nạp: nháy đúp `nap_rt38.bat` (nhập COM ESP32) hoặc lệnh tay trong
+  [`Firmware/RT38_CONT_20261118/README.md`](Firmware/RT38_CONT_20261118/README.md).
+- **Chọn giữa các bản và hướng dẫn nạp đầy đủ:** [`Firmware/README.md`](Firmware/README.md)
   (menu `Firmware/nap_chon_ban.bat`; nạp bằng IDE: [`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md)).
 
 ## 3. Cấu trúc repo
@@ -45,10 +46,10 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 | `Xe_Can_Bang/` | Project STM32CubeIDE. Luật điều khiển và giám sát ở `Core/Inc/balance_*.h`, FSM và vòng 200 Hz ở `Core/Src/robot_fsm.c`. |
 | `ESP32_S3_Gateway/` | Sketch Arduino + trang web (`dashboard_html.h`), giao thức UART, phiên điều khiển, log RAM/Flash. |
 | `Simulation/` | Mô hình Scilab, harness native dùng chung header firmware, bộ 36 ca kiểm tra, cấu hình plant. |
-| `tools/` | 37 host test (`test_*.cjs`), script mô phỏng/build, tải log cứu hộ. `tools/legacy/` giữ test của bản RT8/RT9 đã bỏ. |
-| `Firmware/` | Bốn bản nạp (RT37 hiện hành, RT36/RT34 trước, RT29 dự phòng) + hash + hướng dẫn. |
+| `tools/` | 39 host test (`test_*.cjs`), script mô phỏng/build, tải log cứu hộ. `tools/legacy/` giữ test của bản RT8/RT9 đã bỏ. |
+| `Firmware/` | Năm bản nạp (RT38 hiện hành, RT37/RT36/RT34 trước, RT29 dự phòng) + hash + hướng dẫn. |
 | `Hardware/` | Schematic, PCB KiCad, thư viện footprint, tài liệu lắp ráp. |
-| `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT37 (danh sách ở mục 7). |
+| `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT38 (danh sách ở mục 7). |
 
 ## 4. Chạy nhanh
 
@@ -71,9 +72,9 @@ node tools/run_governor_sim.cjs --stress --launch --launch50
 
 | Hạng mục | Kết quả | Điều kiện |
 |---|---|---|
-| Host test | **37/37 pass** | Node.js 24, GCC (msys2); mỗi test tự biên dịch phần C tương ứng |
-| Mô phỏng native | **36/36 ca đủ 20/20 s** khi chọn mức ≤ 80; **35/36** khi chạy MAX 90 | Ca còn lại là pin 11,2 V — đúng vùng bị cấm với mức 90; chạy lại sau RT37 vẫn vậy |
-| Log xe thật | RT36: 154 s, **0 ngã, 0 tự ngắt**, đã có log 4 kịch bản. RT37 **chưa có log** | Pack 11,7 V; xem `Docs/RT36_Sua_4_Loi.md`, `Docs/RT37_Xuat_Phat_Muot.md` |
+| Host test | **39/39 pass** | Node.js 24, GCC (msys2); mỗi test tự biên dịch phần C tương ứng |
+| Mô phỏng native | **36/36 ca đủ 20/20 s** khi chọn mức ≤ 80; **35/36** khi chạy MAX 90 | Ca còn lại là pin 11,2 V — đúng vùng bị cấm với mức 90; chạy lại sau RT38 vẫn vậy |
+| Log xe thật | RT36: 154 s, **0 ngã, 0 tự ngắt**, đã có log 4 kịch bản. RT37/RT38 **chưa có log** | Pack 11,7 V; xem `Docs/RT36_Sua_4_Loi.md`, `Docs/RT37_Xuat_Phat_Muot.md` |
 | Nguồn ↔ binary | 13/13 tệp khớp `SOURCE_SHA256.json` | Hash tính lại tại máy này, 18/11/2026 |
 
 ## 6. Giới hạn đã biết
@@ -103,7 +104,7 @@ node tools/run_governor_sim.cjs --stress --launch --launch50
   [`RT28`](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [`RT29`](Docs/RT29_Tu_Ngat_4096.md) ·
   [`RT32`](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [`RT33`](Docs/RT33_On_Dinh_Ket_Noi.md) ·
   [`RT34`](Docs/RT34_Cua_Muot.md) · [`RT35`](Docs/RT35_Mo_Phong_Khop_Log.md) ·
-  [`RT36`](Docs/RT36_Sua_4_Loi.md) · [`RT37`](Docs/RT37_Xuat_Phat_Muot.md)
+  [`RT36`](Docs/RT36_Sua_4_Loi.md) · [`RT37`](Docs/RT37_Xuat_Phat_Muot.md) · [`RT38`](Docs/RT38_Chuyen_Huong_Lien_Tuc.md)
 - [`Simulation/README.md`](Simulation/README.md), [`Hardware/README.md`](Hardware/README.md) — hướng dẫn riêng từng phần.
 
 **Lịch sử phát triển** (RT7 → RT21, các bản nạp cũ, log thô và phân tích từng vòng) nằm trong **git

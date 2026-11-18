@@ -1,5 +1,7 @@
 # Bản chốt RT37 — xuất phát mượt, hết ngập ngừng
 
+> **RT38 (18/11) kế tiếp:** sửa khựng khi đổi hướng và ở 90 cm/s. Bản đang dùng: `../RT38_CONT_20261118/`.
+
 Nạp **cả hai board** (STM32 và ESP32 đều đổi build ID).
 
 | Board | Build ID |

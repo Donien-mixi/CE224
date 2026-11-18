@@ -3,7 +3,7 @@
 > dùng để đối chiếu firmware hiện hành; số hiện hành xem
 > [chức năng](Tinh_Nang_Xe_Hien_Hanh.md) và [thông số xe](Thong_So_Xe_Hien_Tai.md).
 
-> **Trạng thái:** bản hiện hành **STM32 RT37-SMOOTH + ESP32 NET37** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Kiến trúc FSM + pipeline 200 Hz + thứ tự ưu tiên P0–P7: [HANDOFF mục 2](../HANDOFF.md#2-kiến-trúc-điều-khiển).
+> **Trạng thái:** bản hiện hành **STM32 RT38-CONT + ESP32 NET38** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Kiến trúc FSM + pipeline 200 Hz + thứ tự ưu tiên P0–P7: [HANDOFF mục 2](../HANDOFF.md#2-kiến-trúc-điều-khiển).
 
 > Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
 

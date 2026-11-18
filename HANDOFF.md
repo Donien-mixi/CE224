@@ -1,9 +1,16 @@
 # Bàn giao đồ án TWIP — 18/11/2026
 
-> **Bản hiện hành: STM32 `BAL-20261118-R12-8DIR-RT37-SMOOTH` + ESP32 `TWIP-WEB-20261118-BAL-R12-8DIR-RT37-SMOOTH-NET37`.**
+> **Bản hiện hành: STM32 `BAL-20261118-R12-8DIR-RT38-CONT` + ESP32 `TWIP-WEB-20261118-BAL-R12-8DIR-RT38-CONT-NET38`.**
 > Ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái **+110 PWM**, cua giữ **~0,75 m/s** ở cả hai
-> chiều, chống trôi khi đứng yên, phanh nhả nhanh hơn, **xuất phát mượt**. Bản nạp + hash:
-> [`Firmware/RT37_SMOOTH_20261118/`](Firmware/RT37_SMOOTH_20261118/README.md).
+> chiều, chống trôi khi đứng yên, phanh nhả nhanh hơn, xuất phát mượt, **đổi hướng liên tục**. Bản nạp
+> + hash: [`Firmware/RT38_CONT_20261118/`](Firmware/RT38_CONT_20261118/README.md).
+>
+> **RT38 (18/11, phản hồi trên RT37):** ở 90 xe trôi/khựng; ở 50–80 đổi hướng đột ngột thì xe phải
+> khựng giữ cân bằng. Log RT36 `(2)(5)` cho thấy ngay sau đảo chiều ±0,8–0,9 m/s có **72 % mẫu bị
+> phanh** và **52 % vào REC1**, tốc độ không về 0,5 trong 1,2 s. Ba sửa: (1) giữ lệnh cũ tối đa
+> **120 ms** khi nút gửi neutral (đổi hướng = đảo chiều liên tục, không phanh); (2) mốc vượt 20 cm thì
+> **neo mốc và giữ tốc độ** khi xe đang chạy thay vì cắt về 0; (3) khi đang giữ lệnh, gyro ≥150 °/s phải
+> duy trì **60 ms** mới vào REC1. Chi tiết: [`Docs/RT38_Chuyen_Huong_Lien_Tuc.md`](Docs/RT38_Chuyen_Huong_Lien_Tuc.md).
 >
 > **RT37 (18/11, log `(2)(5)` của RT36):** xuất phát mất 2,6–5,5 s mới đạt 90 % mốc, governor `limited`
 > 25–44 % 2 s đầu, pitch 7–12° — nguyên nhân là ngưỡng nghiêng governor 9°/11° thấp hơn độ ngả bình
@@ -129,6 +136,8 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 | Trần cua | đang cua: `v_ref ≤ 0,90 − \|w_ref\|·0,131` → **0,749** ở 1,15 rad/s; chỉ hạ, không nâng | Có — log 18/11 (trước sửa 0,80) |
 | Giữ khi đứng yên | sau 3 s đứng yên thật, mốc chảy về vị trí đo 2 cm/s trong phạm vi 15 cm (RT36) | **Chưa kiểm trên xe** |
 | Xuất phát / tăng tốc | ngưỡng nghiêng governor 10°/13° (RT37), không cắt gia tốc ở độ ngả 7–12° bình thường | **Chưa kiểm trên xe** |
+| Đổi hướng liên tục | giữ lệnh cũ tối đa 120 ms khi nút gửi neutral; mốc vượt 20 cm thì neo mốc + giữ tốc độ khi xe đang chạy (RT38) | **Chưa kiểm trên xe** |
+| REC1 khi đang giữ lệnh | gyro ≥150 °/s phải duy trì 60 ms mới vào REC1; không có lệnh vẫn vào ngay (RT38) | **Chưa kiểm trên xe** |
 | Bù bánh trái | +110 PWM (đo +98 tiến / +160 lùi / +166 quay), dead-band 0,5, kẹp ±2499, đặt **sau** phân bổ R12 | Có — log RT30/RT31 |
 | Log / web | 122 B, 40 cột, 50 Hz; `/ui/r12`; SoftAP; TX 11 dBm; chỉ ghi Flash khi xe dừng | Có — `reset=power_on`, hết brownout |
 | Mô phỏng | dùng chính header firmware; đường bánh fit từ log `(1)(5)` (lệch 1–2 %) | Không áp dụng |
@@ -151,12 +160,13 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 
 | Bản | Thư mục | Khi nào dùng |
 |---|---|---|
-| **RT37-SMOOTH / NET37** (hiện hành) | `Firmware/RT37_SMOOTH_20261118/` | Chạy bình thường; nạp **cả hai board** |
-| RT36-SYM / NET36 (trước) | `Firmware/RT36_SYM_20261118/` | Bản đã có log 154 s (4 kịch bản); quay lui nếu RT37 có vấn đề |
+| **RT38-CONT / NET38** (hiện hành) | `Firmware/RT38_CONT_20261118/` | Chạy bình thường; nạp **cả hai board** |
+| RT37-SMOOTH / NET37 (trước) | `Firmware/RT37_SMOOTH_20261118/` | Bản thử ngay trước RT38 |
+| RT36-SYM / NET36 (trước) | `Firmware/RT36_SYM_20261118/` | Bản đã có log 154 s (4 kịch bản) |
 | RT34-CORNER / NET35 (trước) | `Firmware/RT34_CORNER_20261117/` | Bản đã có log xe 173 s |
 | RT29-NOCUT / NET30 (dự phòng) | `Firmware/RT29_NOCUT_20261115/` | Quay về bản cũ nhất: ba mức 50/72/80, chưa có bù bánh trái và trần cua |
 
-Kiểm ngày 18/11 (RT37): **7/7** tệp binary khớp `SHA256.json`; **13/13** tệp nguồn khớp
+Kiểm ngày 18/11 (RT38): **7/7** tệp binary khớp `SHA256.json`; **13/13** tệp nguồn khớp
 `SOURCE_SHA256.json` → bản `.bin/.hex` được build từ **đúng source hiện tại**.
 `test_build_id_sync` PASS: 9 literal trên 50 tệp.
 
@@ -194,17 +204,17 @@ node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 - Host test: **37/37 pass** (Node.js 24, GCC msys2), gồm 5 test RT36/RT37 (`test_rt36_anchor`,
   `test_rt36_lateral`, `test_rt36_hold`, `test_rt36_brake`, `test_rt37_smooth`) — mỗi test có
   old-constant probe phải fail.
-- Mô phỏng, chạy lại sau RT37 ngày 18/11: **36/36** ca đủ 20/20 s khi mức ≤ 80; **35/36** ở MAX 90
+- Mô phỏng, chạy lại sau RT38 ngày 18/11: **36/36** ca đủ 20/20 s khi mức ≤ 80; **35/36** ở MAX 90
   (ca trượt vẫn là pin 11,2 V, không phát sinh ca mới). Kết quả ở
   `Simulation/results/runs/…`, đếm ca từ `summary.csv`.
 
 ### 4.5 Nạp
 
-Nháy đúp `nap_rt37.bat` trong thư mục bản nạp → nhập COM của ESP32. Script nạp STM32 bằng
+Nháy đúp `nap_rt38.bat` trong thư mục bản nạp → nhập COM của ESP32. Script nạp STM32 bằng
 `STM32_Programmer_CLI.exe`, ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
-Kiểm sau khi nạp: banner `RT37-SMOOTH-NET37`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được.
+Kiểm sau khi nạp: banner `RT38-CONT-NET38`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được.
 
-Ba bản (RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
+Bốn bản (RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
 banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — hoặc chạy menu
 `Firmware/nap_chon_ban.bat`. Nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload):
 [`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md).
@@ -225,7 +235,7 @@ banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — ho
 
 ## 6. Việc còn mở (theo thứ tự)
 
-1. **RT37 chưa có log xe.** Cần một buổi đo theo ma trận: đứng yên 60 s; 90 tiến/lùi 8 s; cua
+1. **RT38 chưa có log xe.** Cần một buổi đo theo ma trận: đứng yên 60 s; 90 tiến/lùi 8 s; cua
    trái/phải khi tiến và khi lùi; nhả lệnh từ 0,9. Đạt khi: tiến 0,88–0,90 (pin ≥ 12,0 V), cua hai
    chiều ~0,75, `w_ref` không nhảy, quãng trôi khi nhả < 0,7 m, `x` khi đứng yên trong ±3 cm.
 2. **`archive_error=1`** trong mọi log gần đây → vùng log Flash chưa format lại. Cần bấm
@@ -270,8 +280,9 @@ banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — ho
 | [`Huong_Dan_Di_Day_Toan_Bo_He_Thong.md`](Huong_Dan_Di_Day_Toan_Bo_He_Thong.md) | Hướng dẫn đi dây toàn bộ hệ |
 | [`Docs/Roadmap_Do_An.md`](Docs/Roadmap_Do_An.md), [`Docs/Phat_Trien_Tiep.md`](Docs/Phat_Trien_Tiep.md) | Phương pháp và hướng tiếp |
 | [`Docs/RT36_Sua_4_Loi.md`](Docs/RT36_Sua_4_Loi.md) | 4 lỗi từ log 18/11: số đo trước/sau, cách sửa, giới hạn |
-| [Docs/RT37_Xuat_Phat_Muot.md`](Docs/RT37_Xuat_Phat_Muot.md) | **Mới:** ngập ngừng khi xuất phát/tăng tốc, kiểm tra realtime, 3 phương án đã thử |
-| Báo cáo vòng | [RT22](Docs/RT22_Doi_Xung_Va_Be_Huong.md) · [RT23](Docs/RT23_Nut_That_Va_Loi_Toc_Do.md) · [RT24](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [RT27](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) · [RT28](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [RT29](Docs/RT29_Tu_Ngat_4096.md) · [RT32](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [RT33](Docs/RT33_On_Dinh_Ket_Noi.md) · [RT34](Docs/RT34_Cua_Muot.md) · [RT35](Docs/RT35_Mo_Phong_Khop_Log.md) · [RT36](Docs/RT36_Sua_4_Loi.md) · [RT37](Docs/RT37_Xuat_Phat_Muot.md) |
+| [`Docs/RT37_Xuat_Phat_Muot.md`](Docs/RT37_Xuat_Phat_Muot.md) | Ngập ngừng khi xuất phát/tăng tốc, kiểm tra realtime, 3 phương án đã thử |
+| [`Docs/RT38_Chuyen_Huong_Lien_Tuc.md`](Docs/RT38_Chuyen_Huong_Lien_Tuc.md) | **Mới:** khựng khi đổi hướng và ở 90 cm/s; số đo, 3 sửa, giới hạn |
+| Báo cáo vòng | [RT22](Docs/RT22_Doi_Xung_Va_Be_Huong.md) · [RT23](Docs/RT23_Nut_That_Va_Loi_Toc_Do.md) · [RT24](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [RT27](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) · [RT28](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [RT29](Docs/RT29_Tu_Ngat_4096.md) · [RT32](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [RT33](Docs/RT33_On_Dinh_Ket_Noi.md) · [RT34](Docs/RT34_Cua_Muot.md) · [RT35](Docs/RT35_Mo_Phong_Khop_Log.md) · [RT36](Docs/RT36_Sua_4_Loi.md) · [RT37](Docs/RT37_Xuat_Phat_Muot.md) · [RT38](Docs/RT38_Chuyen_Huong_Lien_Tuc.md) |
 
 ## 9. Lịch sử
 

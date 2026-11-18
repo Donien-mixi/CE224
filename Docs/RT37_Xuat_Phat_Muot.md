@@ -1,5 +1,7 @@
 # RT37 — Xuất phát mượt: nâng ngưỡng nghiêng của governor
 
+> **RT38 (18/11) kế tiếp:** sửa khựng khi đổi hướng và trôi ở 90 cm/s — xem `RT38_Chuyen_Huong_Lien_Tuc.md`. Các sửa RT37 trong tài liệu này vẫn giữ.
+
 Log `twip_balance_R12 (2) (5).txt`, build **`BAL-20261118-R12-8DIR-RT36-SYM`** / gateway `…-NET36`,
 `reset=power_on`, `crc_errors=0`, `sequence_gaps=0`, `STM32_resets=0`, `drops=0`, 7 699 mẫu / 154,0 s.
 Người vận hành báo: **ngập ngừng lúc xuất phát và khi tăng tốc**, không cần xuất phát nhanh, chỉ cần

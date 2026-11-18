@@ -33,7 +33,7 @@ int main(void){
  reset();s.used=true;
  for(int i=0;i<400;i++)step(1,0,3,0,.55f,0);
  assert(s.v_ref>.3f);
- step(0,0,3,0,.55f,0);assert(s.braking);
+ for(int i=0;i<30;i++){step(0,0,3,0,.55f,0);}assert(s.braking);
  float x_at_release=pos;
  for(int i=0;i<40;i++)step(0,0,3,0,.10f,0);
  for(int i=0;i<120;i++)step(0,0,3,0,.04f,0);

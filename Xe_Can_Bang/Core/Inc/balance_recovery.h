@@ -3,6 +3,15 @@
 #include <stdint.h>
 #include <math.h>
 #define BALANCE_RECOVERY_LIVE_COMMANDS 1
+/* RT38: a commanded reversal spikes the gyro; while a fresh maneuver is held
+ * this needs60ms of evidence, with no command it still trips immediately. */
+#ifndef BALANCE_RECOVERY_GYRO_DPS
+#define BALANCE_RECOVERY_GYRO_DPS 150.0f
+#endif
+/* Probe switch:1 restores the immediate trigger for the host test. */
+#ifndef BALANCE_RECOVERY_IMMEDIATE_MANEUVER
+#define BALANCE_RECOVERY_IMMEDIATE_MANEUVER 0
+#endif
 /* Temporary disturbance envelope only. Never changes the R12 force/yaw law.
  * Call at200Hz. Inhibit during startup/first ARM/non-balancing states. */
 typedef struct {
@@ -69,10 +78,23 @@ static inline uint16_t BalanceRecovery_UpdateMode(BalanceRecovery *s,bool allow,
          * control. Log27 showed 60 dps firing four times on rough ground with
          * pitch under5deg; the threshold is now above every observed bump. */
         bool suspect=fabsf(pitch)>=tilt_trigger||fabsf(speed)>=.35f;
-        if(s->primed&&maneuver&&suspect){if(s->quiet<12U)s->quiet++;}
+        /* RT38: a commanded reversal produces a real150-250dps gyro spike at
+         * the axle. Treating that as an impact put the car into REC1 for1.2s
+         * right after every direction change (log (2)(5):52% phase2 in the
+         * second after -0.9 -> +0.9m/s, speed never returned to0.5 within1.2s).
+         * While a fresh maneuver is held, the gyro spike now needs the same
+         *60ms evidence as the lean path; with no command it still trips at
+         * once, so a real push is unchanged. */
+        bool gyro_spike=fabsf(gyro)>=BALANCE_RECOVERY_GYRO_DPS;
+        if(s->primed&&maneuver&&(suspect||gyro_spike)){if(s->quiet<12U)s->quiet++;}
         else s->quiet=0;
-        if(s->primed&&(fabsf(gyro)>=150.0f||
-            (suspect&&(!maneuver||s->quiet>=12U)))){
+#if BALANCE_RECOVERY_IMMEDIATE_MANEUVER
+        bool trigger=s->primed&&(gyro_spike||suspect); /* probe: old behaviour */
+#else
+        bool trigger=s->primed&&(!maneuver?(gyro_spike||suspect):
+                                  ((suspect||gyro_spike)&&s->quiet>=12U));
+#endif
+        if(trigger){
             s->active=true;s->primed=false;s->quiet=0;s->started_ms=now;
             if(s->episodes<65535)s->episodes++;
             s->distance_limit=fminf(1.0f,fmaxf(base_budget,fabsf(position)+.80f));
