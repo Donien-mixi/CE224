@@ -1,67 +1,245 @@
-# Bàn giao đồ án TWIP — trạng thái 17/11/2026
+# Bàn giao đồ án TWIP — 18/11/2026
 
-> **Bản hiện hành: STM32 `RT34-CORNER` + gateway ESP32 `NET35`.** Ba mức tốc độ **50 / 80 / 90 cm/s**,
-> bù lệch bánh trái, trần tốc độ do đường (cua ở MAX 90 tự hạ về ~0,80 m/s), gateway đã sửa lỗi tự
-> khởi động lại. Binary + hash: [`Firmware/RT34_CORNER_20261117/`](Firmware/RT34_CORNER_20261117/README.md).
+> **Bản hiện hành: STM32 `BAL-20261117-R12-8DIR-RT34-CORNER` + ESP32 `TWIP-WEB-20261117-BAL-R12-8DIR-RT34-CORNER-NET35`.**
+> Ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái **+110 PWM**, cua ở MAX 90 tự hạ tham chiếu về
+> **~0,80 m/s**. Bản nạp + hash: [`Firmware/RT34_CORNER_20261117/`](Firmware/RT34_CORNER_20261117/README.md).
+>
+> **Thay đổi so với bản bàn giao 17/11:** *không đổi firmware*. Đã xoá hai worktree thử
+> `D:\DA_HTN_speed086` (nhánh `test/speed-086` @ `7ec9f0e`) và `D:\DA_HTN_speed090`
+> (`test/speed-090` @ `6bc90ac`) cùng hai nhánh local đó — bản chốt RT34 đã bao gồm mức 0,90 cao nhất
+> đã thử, cộng thêm 0,80 và bù bánh trái. Cập nhật lại chính tài liệu này.
 
-## 1. Trạng thái từng mảng
+## 0. Trạng thái một dòng
 
-| Mảng | Hiện trạng | Đã kiểm trên xe? |
+Xe đã chốt phần điều khiển: cân bằng, 3 mức tốc độ, 8 hướng, cua, chống đẩy, tự cắt an toàn.
+**Không có thay đổi firmware nào đang dở.** Việc còn mở đều là phần cứng/cơ khí và một thao tác
+format vùng log Flash (mục 6).
+
+## 1. Đọc nhanh trong 5 phút
+
+1. [`README.md`](README.md) — tổng quan, cách chạy, bảng đã kiểm.
+2. Mục 2 dưới đây — kiến trúc điều khiển: FSM, pipeline 200 Hz, thứ tự ưu tiên.
+3. Mục 3 — chức năng đang chạy kèm số đo, nhãn **đã kiểm trên xe** / chưa.
+4. Mục 6 — việc còn mở; mục 7 — quy tắc bắt buộc khi sửa firmware.
+
+Luật điều khiển chi tiết: [`Docs/Thuat_Toan_Dieu_Khien.md`](Docs/Thuat_Toan_Dieu_Khien.md).
+Thông số cơ–điện–encoder: [`Docs/Thong_So_Xe_Hien_Tai.md`](Docs/Thong_So_Xe_Hien_Tai.md).
+
+## 2. Kiến trúc điều khiển
+
+### 2.1 Ba tầng thời gian
+
+| Tầng | Chạy ở đâu | Làm gì | Hạn chót |
+|---|---|---|---|
+| `main()` super-loop | ngoài ngắt | parse UART, `$CALIB` (dừng TIM4), còi/LED, đẩy telemetry | mềm, không được block |
+| `Robot_ControlLoop_200Hz` | ngắt TIM4, 5 ms | **toàn bộ điều khiển**: đọc cảm biến → quyết định → PWM | cứng 5 ms; vượt 4 ms thì tự cắt (fault 64) |
+| ESP32-S3 | board phụ | web, WebSocket, log FFat | không nằm trong vòng hạn chót |
+
+Nguồn: [`main.c:128`](Xe_Can_Bang/Core/Src/main.c#L128), [`robot_fsm.c:250`](Xe_Can_Bang/Core/Src/robot_fsm.c#L250).
+
+### 2.2 FSM cấp cao — 8 trạng thái, bản chốt dùng 5
+
+| Trạng thái | Vào khi | Ra khi | Việc làm |
+|---|---|---|---|
+| `INIT` = 0 | reset | BMI160 OK → `CALIBRATING`; lỗi I2C → `EMERGENCY` | cấu hình motor/encoder/I2C/UART |
+| `CALIBRATING` | khởi động hoặc `$CALIB` | 500 mẫu gyro xong → `STANDBY` | chờ đứng yên, tính bias |
+| `STANDBY` | hiệu chuẩn xong | ARM hợp lệ → `BALANCING` | chờ dựng xe, motor **dừng** |
+| `BALANCING` | ARM + `ready` | `BalanceStop()` → `FALLEN` | chạy pipeline đầy đủ |
+| `FALLEN` | mọi lỗi cắt máy | chỉ ARM lại / `$CALIB` | motor dừng, giữ lỗi trong `fault` |
+| `EMERGENCY` | IMU chết, non-finite lúc init | `$CALIB` hoặc reset | còi báo động, không tự phục hồi |
+| `RACING` = 4, `BENCH_TEST` = 7 | — | — | **không dùng** trong bản chốt |
+
+`FALLEN` **không tự thoát**. ARM lại đòi: 200 ms đứng yên, `|pitch| ≤ 60°`, gyro ≤ 6 °/s, bánh
+< 0,05 m/s, |a| trong 0,72–1,32 g, nhịp vòng 4–6 ms ([`robot_fsm.c:279`](Xe_Can_Bang/Core/Src/robot_fsm.c#L279)).
+
+### 2.3 Pipeline 200 Hz — đúng thứ tự thực thi
+
+```
+TIM4 5 ms
+ ├─ 1. DWT + loop_count                                  đo nhịp thật
+ ├─ 2. BMI160_Read_All                                  lỗi → fault 32, EMERGENCY
+ ├─ 3. Complementary filter (α = 0,005)                 pitch, gyro_rate
+ ├─ 4. Encoder_Update                                   v_l, v_r, v_avg, x_actual
+ ├─ 5. emergency_stop                                   → BalanceStop(1)
+ ├─ 6. calib/config                                     → fault 128 / 256
+ ├─ 7. isfinite                                         → fault 512
+ ├─ 8. ARM gate 40 tick (200 ms)                        → ready
+ ├─ 9. arm_request hợp lệ                               → BALANCING, reset tích phân
+ ├─ 10. NẾU BALANCING — chuỗi veto, dừng ngay khi lỗi:
+ │      a. heartbeat 10 s                              → 2
+ │      b. va đập gyro > 900 °/s                        → 8192
+ │      c. startup capture quá hạn                      → 2048
+ │      d. REC1: impact / speed-reserve / update        → 4096
+ │      e. governor: observe, rest, anchor, step        → ghìm, không cắt
+ │      f. motion + turn update                         → 512 nếu NaN
+ │      g. motion fault (kẹt, phanh quá 1,25 m/4 s)     → 8 / 4096
+ │      h. |pitch| > 25° (50° khi REC1)                 → 4
+ │      i. |x − x_ref| > 0,30 m (1,0 m khi REC1)        → 8
+ │      j. speed interlock 200 ms / 1,45 m/s            → 16
+ │      k. nhịp vòng ngoài 4–6 ms                       → 64
+ ├─ 11. LÕI R12: input[7] → motion_cat_step8_mode → output[2]   (bất biến)
+ ├─ 12. BalanceTrim_Left(output[0], 110 PWM)            bù cơ khí bánh trái
+ ├─ 13. Motor_SetDuty(pwm_left, pwm_right)
+ ├─ 14. nếu không BALANCING → Motor_Stop()
+ ├─ 15. thời gian thực thi > 4 ms                       → 64
+ └─ 16. mỗi 4 tick: 122 B + CRC → queue → ESP32         (50 Hz)
+```
+
+### 2.4 Thứ tự ưu tiên — chuỗi veto, không phải chuỗi chọn
+
+| Mức | Lớp | Quyền tối đa | Tham số chốt |
+|---|---|---|---|
+| **P0** | Cắt an toàn | cắt cả 2 PWM ngay | 25°/50°, 0,30/1,0 m, 1,45 m/s, 4 ms, 200 ms debounce |
+| **P1** | Startup capture + REC1 | nới trần góc/tốc độ/quãng **có hạn** | 50°, 1,20 m/s, +0,8 m, 4 s |
+| **P2** | Governor | ép gia tốc về 0,06 m/s², hạ trần | duty > 0,90, lean 9°/11° |
+| **P3** | Quỹ đạo 8 hướng | đặt `v_ref` | 0,50 / 0,80 / 0,90 m/s |
+| **P4** | Lái / cua | đặt `w_ref`, `psi_ref` | 1,3–2,4 rad/s, trần bánh 0,80/0,98/1,05 |
+| **P5** | **Lõi R12** | **nguồn PWM duy nhất** | `CAT_K`, `CAT_PARAM`, observer 14 trạng thái |
+| **P6** | Trim cơ khí | cộng offset hằng, kẹp ±2499 | +110 PWM bánh trái |
+| **P7** | Telemetry | chỉ đọc | 122 B / 50 Hz |
+
+Đọc từ trên xuống: P0 thắng tất cả; P2 chỉ ghìm, không nâng; P5 luôn chạy kể cả khi `v_ref = 0`;
+P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đã đo, không phải gain.
+
+## 3. Chức năng đang chạy
+
+| Nhóm | Hành vi + tham số | Đã kiểm trên xe? |
 |---|---|---|
-| Cân bằng R12 | Luật 14 trạng thái, observer, phân bổ lực hai bánh — **đóng băng**, không đổi từ RT8 | Có (nhiều log) |
-| Tốc độ | 50 / 80 / 90 cm/s; 90 chỉ khi pin đo **≥ 12,0 V** | Có — log `(1)(5)`, 173 s, 0 ngã |
-| Bẻ hướng | Quay tại chỗ 1,3/2,4 rad/s; chéo 0,90/1,15 rad/s; **trần tốc độ do đường** khi cua ở MAX | Có — yaw khớp tham chiếu, cờ 512 còn 19–26 % |
-| Chống đẩy / nhiễu | REC1 (50°/1,2 m/s/1 m/4 s), giữ mốc khi bị đẩy (RT28), miễn hạn 4 s cho phanh do nhiễu (RT29) | Có — nhiều log, có cú va ~160 °/s vẫn phục hồi |
-| Giám sát an toàn | Interlock 200 ms + 1,45 m/s, cắt theo góc/tốc độ/quãng/I2C/vòng lặp, không tự ARM lại | Có |
-| Gateway ESP32 | Web `/ui/r12`, log 122 B/40 cột/50 Hz, SoftAP, TX 11 dBm, **không ghi Flash khi xe đang chạy** | Có — `reset=power_on`, hết brownout |
-| Mô phỏng | Dùng chính header firmware; đường đặc tính bánh fit lại từ log `(1)(5)` (lệch 1–2 %) | Không áp dụng |
-| Kiểm thử | **32/32 host test**; mô phỏng 36/36 ca khi mức ≤ 80 | — |
-| PCB | Bo chuyển tiếp 160 × 65 mm, một mặt đồng B.Cu, 31 dây cầu, ERC/DRC đạt | Chưa có bo thật |
+| Cân bằng R12 | 14 trạng thái quan sát, `CAT_K = 9.1508/6.1289/14.3279/1.1605`, `CAT_PARAM[4] = 9,5653 N`, bộ lọc bù alpha 0,005 — **đóng băng từ RT8** | Có (nhiều log) |
+| Tốc độ | 50 / 80 / 90 cm/s; gia tốc 0,60–0,70; giảm tốc 0,90; đảo chiều 1,0 m/s² | Có — log `(1)(5)`: 173 s, pack 11,7 V, 0 ngã, 0 tự ngắt. Khuyến nghị MAX 90 chỉ khi pin ≥ 12,0 V để còn dư địa |
+| ARM / dựng xe | 200 ms đứng yên, 60°, gyro 6 °/s, bánh 0,05 m/s | Có |
+| Startup capture | ngân sách 0,30 m, trần 25°, tốc độ 1,00/1,10/1,20 m/s, timeout 3–4 s | Có |
+| Chống đẩy / nhiễu | REC1: gyro ≥ 150 °/s, hoặc (nghiêng ≥ 8°/12° hay tốc ≥ 0,35 m/s) kéo dài 60 ms khi đang có lệnh; nới 50°/1,20 m/s/+0,8 m/4 s; thoát sau 300 ms yên tĩnh; giữ mốc khi bị đẩy | Có — nhiều log, có cú va ~160 °/s vẫn phục hồi |
+| Governor | áp lực khi duty > 0,90, lean dự đoán > 9°/11°, trễ bám > 0,12/0,30 m/s → kẹp gia tốc 0,06 m/s², chặn nợ vị trí 10 cm, chống deadlock 0,15 m/s | Có |
+| Giám sát an toàn | interlock: trần `max(envelope; \|v_ref\|+0,12)` với envelope 1,12 khi MAX / 1,00–1,20 khi capture / 1,20 khi REC1, phải vượt liên tục 200 ms; 1,45 m/s cắt tức thì; ở MAX còn cắt nếu `\|v_bánh\| > 1,20`; cắt góc/quãng/I2C/vòng lặp; không tự ARM lại | Có |
+| Bẻ hướng | quay tại chỗ 1,3/2,4 rad/s; chéo 0,90/1,15 rad/s; yaw accel 4,5, decel 8,0; trần ngang 0,9 m/s²; taper lean 12°/4°; trôi tâm 45 cm/sàn 55 %; đóng băng heading ≤ 0,6 s | Có — yaw khớp tham chiếu; cờ 512 còn 19–26 % |
+| Trần tốc độ do đường | đang cua: `v_ref ≤ 0,95 − \|w_ref\|·0,131` → ~0,80 ở 1,15 rad/s; chỉ hạ, không nâng | Có — log 38 + RT34 |
+| Bù bánh trái | +110 PWM (đo +98 tiến / +160 lùi / +166 quay), dead-band 0,5, kẹp ±2499, đặt **sau** phân bổ R12 | Có — log RT30/RT31 |
+| Log / web | 122 B, 40 cột, 50 Hz; `/ui/r12`; SoftAP; TX 11 dBm; chỉ ghi Flash khi xe dừng | Có — `reset=power_on`, hết brownout |
+| Mô phỏng | dùng chính header firmware; đường bánh fit từ log `(1)(5)` (lệch 1–2 %) | Không áp dụng |
 
-## 2. Nạp firmware
+## 4. Repo, build, nạp
+
+### 4.1 Trạng thái git
+
+| Mục | Giá trị |
+|---|---|
+| `origin/main` | `eb27ff0` (commit dọn repo 17/11) — bản chính thức đang trên GitHub |
+| `main` local | `eb27ff0` + commit tài liệu HANDOFF 18/11. Nếu thấy `main` đi trước `origin/main` đúng 1 commit thì đó là commit tài liệu này |
+| Cây làm việc | sạch (0 thay đổi) |
+| Nhánh | `main`, `pcb` (PCB đã push ở `origin/pcb`) |
+| Nhánh đã xoá 18/11 | `test/speed-086` @ `7ec9f0e`, `test/speed-090` @ `6bc90ac` — còn trong reflog ~90 ngày |
+| Tệp được theo dõi | 432 |
+| Thư mục build local | `.build/` 156 MB, `Xe_Can_Bang/Debug/` 29 MB, `.metadata/` 7 MB — **đã gitignore**, xoá được nếu cần chỗ |
+
+### 4.2 Bản nạp và hash
 
 | Bản | Thư mục | Khi nào dùng |
 |---|---|---|
-| **RT34-CORNER / NET35** (hiện hành) | `Firmware/RT34_CORNER_20261117/` | Chạy bình thường. Nạp **cả hai board** |
-| RT29-NOCUT / NET30 (dự phòng) | `Firmware/RT29_NOCUT_20261115/` | Quay về bản 0,80 m/s nếu RT34 có vấn đề |
+| **RT34-CORNER / NET35** (hiện hành) | `Firmware/RT34_CORNER_20261117/` | Chạy bình thường; nạp **cả hai board** |
+| RT29-NOCUT / NET30 (dự phòng) | `Firmware/RT29_NOCUT_20261115/` | Quay về nếu RT34 có vấn đề: ba mức 50/72/80, chưa có bù bánh trái và trần cua |
 
-Nháy đúp `nap_rt34.bat` trong thư mục bản nạp → nhập COM của ESP32. Kiểm sau khi nạp: banner
-`RT34-CORNER-NET35`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được.
+Kiểm ngày 18/11: **7/7** tệp binary khớp `SHA256.json`; **13/13** tệp nguồn khớp
+`SOURCE_SHA256.json` → bản `.bin/.hex` được build từ **đúng source hiện tại**.
+`test_build_id_sync` PASS: 9 literal trên 45 tệp.
 
-## 3. Quy tắc vận hành (quan trọng)
+### 4.3 Build
 
-1. **Đo pin trước mỗi phiên**: MAX 90 chỉ khi **≥ 12,0 V**; 11,7–12,0 V dùng 50/80; dưới 11,7 V chỉ 50/80.
-2. **Giảm tốc rồi mới đảo chiều / buông ga** ở tốc độ cao — hai cú ngã từng ghi nhận đều do đảo chiều
+```powershell
+# STM32 (CubeIDE headless; workspace đã link tới D:/DA_HTN/Xe_Can_Bang)
+& "C:\ST\STM32CubeIDE_2.1.1\STM32CubeIDE\headless-build.bat" -data D:\CubeIDE_ws `
+  -application org.eclipse.cdt.managedbuilder.core.headlessbuild `
+  -import D:\DA_HTN\Xe_Can_Bang -build Xe_Can_Bang/Debug
+
+# ESP32-S3 (arduino-cli 1.5.1 đi kèm Arduino IDE, không có trên PATH; sketchbook D:\Arduino có WebSockets 2.7.2)
+& "C:\Users\DONG NHIEN\AppData\Local\Programs\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe" `
+  compile --fqbn "esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=opi" `
+  --libraries D:\Arduino\libraries --output-dir .build\esp32_out ESP32_S3_Gateway
+```
+
+### 4.4 Kiểm chứng
+
+```powershell
+Get-ChildItem tools/test_*.cjs | ForEach-Object { node $_.FullName }   # 32/32
+node tools/test_build_id_sync.cjs
+
+node tools/run_governor_sim.cjs --stress                               # 12 ca
+node tools/run_governor_sim.cjs --stress --edge                        # 12 ca
+node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
+```
+
+- Host test: **32/32 pass** (Node.js 24, GCC msys2). Ngày 18/11 chạy lại 4 test liên quan bản chốt:
+  `test_build_id_sync`, `test_rt32_set`, `test_rt34_corner`, `test_production_dashboard` — **PASS**.
+- Mô phỏng, lần chạy RT35 ngày 17/11: **36/36** ca đủ 20/20 s khi mức ≤ 80; **35/36** ở MAX 90
+  (ca trượt là pin 11,2 V — đúng vùng bị cấm với mức 90). Thư mục kết quả đã dọn khỏi cây làm việc;
+  chạy lại bằng lệnh trên (kết quả ở `Simulation/results/runs/…`, đếm ca từ `summary.csv`).
+
+### 4.5 Nạp
+
+Nháy đúp `nap_rt34.bat` trong thư mục bản nạp → nhập COM của ESP32. Script nạp STM32 bằng
+`STM32_Programmer_CLI.exe`, ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
+Kiểm sau khi nạp: banner `RT34-CORNER-NET35`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được.
+
+## 5. Quy tắc vận hành
+
+1. **Đo pin bằng tay trước mỗi phiên.** MAX 90 chỉ khi **≥ 12,0 V**; 11,7–12,0 V dùng 50/80;
+   dưới 11,7 V chỉ 50/80. (Không có đo áp trên xe — `batt_voltage` luôn 0, không được bịa số.)
+2. **Giảm tốc rồi mới đảo chiều / buông ga** ở tốc độ cao. Hai cú ngã từng ghi nhận đều do đảo chiều
    đột ngột ở 0,85–0,90 m/s (PWM nhảy 100 %, thân quật 18–28°).
 3. Sau mỗi lượt: **STOP → chờ ~2 s → tải log** (gateway chỉ ghi Flash khi đã dừng).
 4. **Đừng bấm “SỬA VÙNG LOG FLASH” khi xe đang cân bằng** — format 9,9 MB làm ESP32 khởi động lại
    một lần (hành vi đã biết, không phải lỗi).
-5. Nếu mất kết nối: STM32 vẫn tự cân bằng, nhưng sau **10 s** không nhận lệnh sẽ dừng motor (bảo vệ
-   mất liên lạc). Đừng cố giữ ga trong lúc mất kết nối.
+5. Mất kết nối Wi-Fi: STM32 vẫn tự cân bằng, nhưng sau **10 s** không nhận lệnh sẽ dừng motor.
+   Đừng cố giữ ga trong lúc mất kết nối.
+6. Một lượt log chỉ dùng được khi mở đầu bằng `BINFO` có đúng build ID; log thiếu build ID hoặc
+   lẫn hai bản thì không so sánh.
 
-## 4. Việc còn mở (theo thứ tự ưu tiên)
+## 6. Việc còn mở (theo thứ tự)
 
-1. **`archive_error=1`** trong mọi log gần đây: vùng log Flash chưa được format lại. Cần bấm
-   “SỬA VÙNG LOG FLASH” một lần khi motor đã dừng (xe đứng yên, chỉ ESP32 chạy) rồi kiểm
-   `archive_saved` > 0 trong log kế tiếp.
+1. **`archive_error=1`** trong mọi log gần đây → vùng log Flash chưa format lại. Cần bấm
+   “SỬA VÙNG LOG FLASH” **một lần khi motor đã dừng** (xe đứng yên, chỉ ESP32 chạy), rồi kiểm
+   `archive_saved > 0` trong log kế tiếp.
 2. **Nguồn 5 V/3V3 tại ESP32**: thêm 1000 µF low-ESR + 100/10 µF, cấp từ nhánh riêng. Brownout đã
-   hết nhờ hạ TX xuống 11 dBm, nhưng đây vẫn là gốc rễ phần cứng (xem [RT33](Docs/RT33_On_Dinh_Ket_Noi.md)).
-3. **Độ nghiêng khi cua trái** còn lớn hơn cua phải (~5° so với ~1,4°) dù tốc độ quay đã cân — phần
-   cơ khí (motor/hộp giảm tốc trái) cần xử lý nếu muốn cân hẳn.
-4. **Tốc độ > 0,90 m/s**: cần pack 4S (3S chỉ tới ~0,96 m/s không tải). Xem [RT34](Docs/RT34_Cua_Muot.md).
+   hết nhờ hạ TX 11 dBm nhưng đây vẫn là gốc rễ phần cứng ([RT33](Docs/RT33_On_Dinh_Ket_Noi.md)).
+3. **Nghiêng khi cua trái** còn lớn hơn cua phải (~5° so với ~1,4°) dù tốc độ quay đã cân — phần
+   cơ khí (motor/hộp giảm tốc trái), không sửa được bằng gain.
+4. **Tốc độ > 0,90 m/s**: cần pack 4S (3S chỉ ~0,96 m/s không tải; 0,90 ở 11,2 V cần duty 0,955,
+   chiều lùi cần 12,23 V — ngoài dải pin).
 5. **PCB**: chưa có bo thật để kiểm nhiễu/nhiệt/tải dòng.
+6. **Không có watchdog độc lập**: nếu MCU treo, TIM1 giữ duty cuối. Cân nhắc IWDG ở phiên sau
+   (phải đảm bảo không cắt oan trong lúc hiệu chuẩn 5 s).
 
-## 5. Cấu trúc repo và tài liệu
+## 7. Quy tắc cho phiên sau (bắt buộc)
 
-| Đường dẫn | Nội dung |
+- **Không sửa bất biến R12**: `CAT_K`, `CAT_PARAM`, observer 14 trạng thái, bộ phân bổ lực,
+  `CAT_VNL`, alpha bù 0,005, khung telemetry 122 B. Mọi tính năng mới phải là **lớp giám sát**,
+  chỉ có quyền cắt/giữ/giảm.
+- **Đổi hành vi thì bump build ID cả hai board** (`balance_profile.h` và `firmware_build.h`) và
+  **mọi literal** trong docs/test/script; `test_build_id_sync` phải PASS.
+- Chạy **32 host test**, và với test mới phải có **old-constant probe**: test phải FAIL với hằng số
+  cũ (bằng chứng nó thật sự kiểm tra chính sách mới).
+- Sửa gì ảnh hưởng quỹ đạo/tốc độ thì chạy lại bộ mô phỏng tương ứng; **không** gọi kết quả mô phỏng
+  là “đã kiểm trên xe”.
+- **Không tự nạp board, không tự push `main`** nếu người dùng chưa yêu cầu. Nhánh thử đặt tên
+  `test/…` và không push.
+- Mọi báo cáo: nêu **build ID, n mẫu, điều kiện, hash**; tách rõ **đã kiểm trên xe / mới mô phỏng /
+  chưa kiểm**; ghi cả việc **không** làm (không nạp, không push).
+
+## 8. Tài liệu
+
+| Tài liệu | Nội dung |
 |---|---|
-| `Xe_Can_Bang/` | Project STM32CubeIDE: luật điều khiển trong `Core/Inc/balance_*.h`, vòng 200 Hz ở `Core/Src/robot_fsm.c` |
-| `ESP32_S3_Gateway/` | Sketch Arduino + web + log |
-| `Simulation/` | Mô hình Scilab + harness native dùng chung header firmware |
-| `tools/` | 32 host test + script mô phỏng/build; `tools/legacy/` giữ test bản RT8/RT9 |
-| `Firmware/` | Hai bản nạp: RT34 (hiện hành) và RT29 (dự phòng), kèm SHA256 |
-| `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT35 (xem [README](README.md#7-tài-liệu)) |
-| `Hardware/` | KiCad: schematic, PCB một mặt đồng, thư viện footprint |
+| [`Docs/Tong_Quan_Do_An.md`](Docs/Tong_Quan_Do_An.md) | Tổng quan đồ án, kiến trúc hệ |
+| [`Docs/Tinh_Nang_Xe_Hien_Hanh.md`](Docs/Tinh_Nang_Xe_Hien_Hanh.md) | Chức năng đang chạy kèm số đo |
+| [`Docs/Thuat_Toan_Dieu_Khien.md`](Docs/Thuat_Toan_Dieu_Khien.md) | Luật điều khiển và các lớp giám sát |
+| [`Docs/Thong_So_Xe_Hien_Tai.md`](Docs/Thong_So_Xe_Hien_Tai.md) | Cơ khí, điện, encoder, đường đặc tính bánh |
+| [`Docs/Bang_Ma_Loi_Tu_Dong_Dung.md`](Docs/Bang_Ma_Loi_Tu_Dong_Dung.md) | Mọi trường hợp firmware tự cắt motor |
+| [`Docs/Phan_Cung_Va_Ket_Noi.md`](Docs/Phan_Cung_Va_Ket_Noi.md) | Phần cứng và đấu dây |
+| [`Huong_Dan_Di_Day_Toan_Bo_He_Thong.md`](Huong_Dan_Di_Day_Toan_Bo_He_Thong.md) | Hướng dẫn đi dây toàn bộ hệ |
+| [`Docs/Roadmap_Do_An.md`](Docs/Roadmap_Do_An.md), [`Docs/Phat_Trien_Tiep.md`](Docs/Phat_Trien_Tiep.md) | Phương pháp và hướng tiếp |
+| Báo cáo vòng | [RT22](Docs/RT22_Doi_Xung_Va_Be_Huong.md) · [RT23](Docs/RT23_Nut_That_Va_Loi_Toc_Do.md) · [RT24](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [RT27](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) · [RT28](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [RT29](Docs/RT29_Tu_Ngat_4096.md) · [RT32](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [RT33](Docs/RT33_On_Dinh_Ket_Noi.md) · [RT34](Docs/RT34_Cua_Muot.md) · [RT35](Docs/RT35_Mo_Phong_Khop_Log.md) |
 
-Lịch sử phát triển đầy đủ (RT7 → RT21, các bản nạp cũ, log và phân tích từng vòng) nằm trong **git
-history** của repo, không còn giữ trong cây làm việc để repo gọn cho báo cáo.
+## 9. Lịch sử
+
+Lịch sử đầy đủ (RT7 → RT21, các bản nạp cũ, log thô, nhánh thử đã xoá) nằm trong **git history**
+của repo, không giữ trong cây làm việc. Commit tip của hai nhánh thử đã xoá: `7ec9f0e`, `6bc90ac`.
