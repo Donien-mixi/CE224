@@ -65,7 +65,7 @@ int main(void){
  assert(BalanceRecovery_DriveMode(&rec,true,15,30,.4f,0)==3);
  assert(BalanceRecovery_DriveMode(&rec,true,5,20,.2f,.5f)==3);
  assert(!BalanceRecovery_DriveMode(&rec,false,0,0,0,0));
- assert(BalanceRecovery_UpdateMode(&rec,true,15,100,.4f,0,.3f,5000,true)==4096);
+ assert(BalanceRecovery_UpdateMode(&rec,true,15,100,.4f,0,.3f,1000+BALANCE_RECOVERY_TIMEOUT_MS,true)==4096);
  for(int sign=-1;sign<=1;sign+=2){
   /* RT39: chỉ vượt TRẦN của interlock (max(0.8,|ref|+0.12)) và phải đủ 100 ms. */
   BalanceRecovery_Clear(&rec);

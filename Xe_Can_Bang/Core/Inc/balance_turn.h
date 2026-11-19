@@ -112,6 +112,37 @@ static inline bool BalanceMotion8_Maneuver(const BalanceMotion *s,const BalanceT
     (s->requested!=0||t->requested!=0||s->braking||t->braking);
 }
 static inline float BalanceTurn_Approach(float old,float target,float step){return old+fmaxf(-step,fminf(step,target-old));}
+/* RT40 — trần cua theo duty con dư (headroom governor).
+ *
+ * Log RT40 (08_re_lui_3_moc_nga, preset90) co ba cu nga. Truoc ca ba, mot banh da
+ * ghim duty1.00 khi dang cua: t=1112.4-1113.1 banh trai -2499 lien tuc voi
+ * v_l-0.88 trong khi banh phai chi -0.45. Khi nha lenh, phanh yaw phai keo banh
+ * phai tu-0.45 len-0.95 trong300ms, truc vot -0.72 -> -0.95, than quat nguoc
+ * -56deg va nga. Nguyen nhan vat ly: lenh cua 0.719+1.15*0.131=0.87m/s banh ngoai
+ * ma banh trai can ~1.11 lan duty cua banh phai (do tren chinh cac log nay), nen
+ * banh ngoai cham 97-100% va khong con du cho phanh yaw.
+ *
+ * Vi vay khi dang cua ma co banh >=96% duty thi ha tham chieu toc do tuyen tinh
+ * (khong ha yaw), den khi duty <=90%. Chi ha khi dang cua; chay thang khong bi
+ * anh huong vi o do khong co chenh banh. */
+#ifndef BALANCE_TURN_HEADROOM_HI
+#define BALANCE_TURN_HEADROOM_HI 0.96f
+#endif
+#ifndef BALANCE_TURN_HEADROOM_LO
+#define BALANCE_TURN_HEADROOM_LO 0.90f
+#endif
+#ifndef BALANCE_TURN_HEADROOM_FLOOR
+#define BALANCE_TURN_HEADROOM_FLOOR 0.72f
+#endif
+/* b >= 0 de dat he so; b < 0 de doc (giong BalanceMotion_corner_budget). */
+static inline float BalanceTurn_headroom(float b){static float scale=1.0f;if(b>=0.0f)scale=b;return scale;}
+static inline float BalanceTurn_headroom_next(float duty,bool turning){
+ float sc=BalanceTurn_headroom(-1.0f);
+ if(!turning)return 1.0f;
+ if(duty>=BALANCE_TURN_HEADROOM_HI){if(sc>BALANCE_TURN_HEADROOM_FLOOR)sc-=0.004f;}
+ else if(duty<=BALANCE_TURN_HEADROOM_LO){if(sc<1.0f)sc+=0.002f;}
+ return sc;
+}
 static inline int BalanceMotion8_Update(BalanceMotion *s,BalanceTurn *t,unsigned permission,uint32_t word,int turn,
  float position,float pitch,float gyro,float speed,float yaw,float yaw_rate,uint32_t now){
  if(permission>3U)return 0;
@@ -276,8 +307,10 @@ static inline int BalanceMotion8_Update(BalanceMotion *s,BalanceTurn *t,unsigned
  }
  t->requested=(int8_t)(fresh?turn:0);
  /* RT34: dat tran toc do do duong cho tick sau (5ms). Chi ha, khong nang. */
+ /* RT40: nhan them he so du duty (BalanceTurn_headroom) de banh khong bi ghim
+  * 100% khi cua; he so nay chi giam khi dang cua (xem chu thich o dinh tep). */
  BalanceMotion_corner_budget(fabsf(t->w_ref)>0.30f
-   ? fmaxf(0.35f,BALANCE_TURN_VNL_BUDGET-fabsf(t->w_ref)*BALANCE_TURN_HALF_TRACK)
+   ? BalanceTurn_headroom(-1.0f)*fmaxf(0.35f,BALANCE_TURN_VNL_BUDGET-fabsf(t->w_ref)*BALANCE_TURN_HALF_TRACK)
    : 0.0f);
  return isfinite(t->psi_ref)&&isfinite(t->w_ref);
 }

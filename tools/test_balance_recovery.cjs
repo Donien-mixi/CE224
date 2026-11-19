@@ -12,10 +12,16 @@ int main(void){
  // physical rotation still triggers recovery, symmetrically in both directions.
  for(int sign=-1;sign<=1;sign+=2){
   prime(&s);
-  for(int i=0;i<11;i++){assert(!BalanceRecovery_UpdateMode(&s,true,sign*13,20,sign*.36f,0,.3f,1000+5*i,true));assert(!s.active);}
+  /* RT40: a commanded brake lean of13-14deg is NOT a disturbance (15deg now). */
+  for(int i=0;i<20;i++){assert(!BalanceRecovery_UpdateMode(&s,true,sign*13,20,sign*.10f,0,.3f,1000+5*i,true));assert(!s.active);}
+  for(int i=0;i<11;i++){assert(!BalanceRecovery_UpdateMode(&s,true,sign*(BALANCE_RECOVERY_TILT_MANEUVER+1),20,sign*.10f,0,.3f,1000+5*i,true));assert(!s.active);}
   BalanceRecovery_UpdateMode(&s,true,0,0,0,0,.3f,1055,true);assert(!s.active&&s.quiet==0);
-  for(int i=0;i<12;i++)BalanceRecovery_UpdateMode(&s,true,sign*13,20,sign*.36f,0,.3f,1100+5*i,true);
+  for(int i=0;i<12;i++)BalanceRecovery_UpdateMode(&s,true,sign*(BALANCE_RECOVERY_TILT_MANEUVER+1),20,sign*.10f,0,.3f,1100+5*i,true);
   assert(s.active&&s.started_ms==1155);
+  /* RT40: the0.35m/s tracking path is unchanged and needs no lean. */
+  BalanceRecovery_Clear(&s);prime(&s);
+  for(int i=0;i<12;i++)BalanceRecovery_UpdateMode(&s,true,0,0,sign*.36f,0,.3f,1200+5*i,true);
+  assert(s.active);
   BalanceRecovery_Clear(&s);prime(&s);
   // RT8: gyro spikes below150dps are suspension bumps (log27), not a disturbance.
   for(int i=0;i<12;i++)BalanceRecovery_UpdateMode(&s,true,0,sign*149,0,0,.3f,1195+5*i,true);
@@ -36,9 +42,10 @@ int main(void){
   assert(BalanceRecovery_Angle(&s,25)==50&&BalanceRecovery_Speed(&s,.8f)==1.2f);
   /* RT27: the travel allowance is the RT21 0.8m (RT26's 0.35m lifted fault8). */
   assert(fabsf(BalanceRecovery_Distance(&s,.3f)-.9f)<1e-5f);
-  // A second impact cannot refresh the four-second timer.
+  // A second impact cannot refresh the recovery deadline.
   assert(!BalanceRecovery_Update(&s,true,sign*10,sign*100,sign*.5f,0,.3f,5999));assert(s.started_ms==2000);
-  assert(BalanceRecovery_Update(&s,true,sign*10,sign*100,sign*.5f,0,.3f,6000)==4096);
+  assert(BalanceRecovery_Update(&s,true,sign*10,sign*100,sign*.5f,0,.3f,2000+BALANCE_RECOVERY_TIMEOUT_MS-1)==0);
+  assert(BalanceRecovery_Update(&s,true,sign*10,sign*100,sign*.5f,0,.3f,2000+BALANCE_RECOVERY_TIMEOUT_MS)==4096);
   // Exit requires 300ms quiet AND return into the original position budget.
   BalanceRecovery_Clear(&s);prime(&s);BalanceRecovery_Update(&s,true,10,100,.5f,0,.3f,2000);
   for(int i=0;i<100;i++){BalanceRecovery_Update(&s,true,0,0,0,.31f,.3f,2100+i*5);}assert(s.active);
@@ -58,8 +65,8 @@ int main(void){
  // Unsigned time arithmetic must survive HAL tick wrap.
  BalanceRecovery_Clear(&s);prime(&s);uint32_t start=0xfffffff0U;
  BalanceRecovery_Update(&s,true,10,100,.5f,0,.3f,start);
- assert(BalanceRecovery_Update(&s,true,10,100,.5f,0,.3f,start+3999U)==0);
- assert(BalanceRecovery_Update(&s,true,10,100,.5f,0,.3f,start+4000U)==4096);
+ assert(BalanceRecovery_Update(&s,true,10,100,.5f,0,.3f,start+BALANCE_RECOVERY_TIMEOUT_MS-1U)==0);
+ assert(BalanceRecovery_Update(&s,true,10,100,.5f,0,.3f,start+BALANCE_RECOVERY_TIMEOUT_MS)==4096);
  puts("PASS bounded recovery: dwell, startup inhibit, symmetric trigger, exact ordinary limits, distance clamp, quiet/distance exit, no timeout refresh, nonfinite and tick wrap.");
 }
 `;

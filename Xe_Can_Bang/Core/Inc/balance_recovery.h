@@ -9,6 +9,19 @@
 #ifndef BALANCE_RECOVERY_GYRO_DPS
 #define BALANCE_RECOVERY_GYRO_DPS 150.0f
 #endif
+/* RT40: tilt triggers. The peak lean measured during a commanded brake is15.1deg
+ * (13 windows of the RT40 logs), so the maneuver threshold is16deg: the stop angle
+ * stays25deg and the REC1 allowance50deg, i.e.9deg of margin before the stop. */
+#ifndef BALANCE_RECOVERY_TILT_MANEUVER
+#define BALANCE_RECOVERY_TILT_MANEUVER 16.0f
+#endif
+#ifndef BALANCE_RECOVERY_TILT_IDLE
+#define BALANCE_RECOVERY_TILT_IDLE 8.0f
+#endif
+/* RT40: episode deadline. A hand-held push outlasts4s; 8s still bounds it. */
+#ifndef BALANCE_RECOVERY_TIMEOUT_MS
+#define BALANCE_RECOVERY_TIMEOUT_MS 8000U
+#endif
 /* Probe switch:1 restores the immediate trigger for the host test. */
 #ifndef BALANCE_RECOVERY_IMMEDIATE_MANEUVER
 #define BALANCE_RECOVERY_IMMEDIATE_MANEUVER 0
@@ -94,11 +107,18 @@ static inline uint16_t BalanceRecovery_UpdateMode(BalanceRecovery *s,bool allow,
         bool stable=fabsf(pitch)<=8.0f&&fabsf(gyro)<25.0f&&fabsf(speed)<.15f;
         if(stable){if(s->stable<100)s->stable++;}else s->stable=0;
         if(s->stable>=100)s->primed=true;
-        /* Log26: commanded reverse reaches8deg at modest gyro/speed error.
-         * This is also a normal balance transient, not by itself an impact.
-         * Only an acknowledged, fresh maneuver gets12deg; idle remains8deg.
-         * Gyro/speed triggers and all recovery/interlock limits are unchanged. */
-        float tilt_trigger=maneuver?12.0f:8.0f;
+        /* RT40: a commanded brake lean is not a loss of control. Logs RT40 (8 files,
+         * 28 REC1 entries) show the tilt trigger firing at12.1-13.5deg with only
+         * 1-23dps during an ordinary commanded reversal from0.72-0.90m/s (03_t=307.4,
+         * 03_t=324.0, 04_t=126.5, 05_t=474.3/480.4/494.1, 06_t=686.6, 07_t=1209.3/
+         * 1284.2/1286.7/1353.7) and then blocking the held command for1.4-2.2s:
+         * 8.4s of "commanded but not executing" in 8 logs. The brake itself rides at
+         * 12-17deg because the reference decelerates faster than the axle can follow,
+         * so the same 12deg that catches a fall also re-arms on every hard stop.
+         * The commanded threshold is now16deg (measured peak15.1deg); the idle8deg, the150dps gyro path,
+         * the0.35m/s tracking path, the25deg stop and the50deg REC1 allowance are
+         * unchanged, so a real loss (which keeps growing past15) is still caught. */
+        float tilt_trigger=maneuver?BALANCE_RECOVERY_TILT_MANEUVER:BALANCE_RECOVERY_TILT_IDLE;
         /* A short commanded transient is not a sustained loss of tracking.
          * quiet is unused while inactive: reuse it for 60ms evidence, so the
          * native simulation state remains ABI-compatible.
@@ -135,9 +155,15 @@ static inline uint16_t BalanceRecovery_UpdateMode(BalanceRecovery *s,bool allow,
      * ends after300ms of quiet, so the vehicle is settled and a second push may
      * re-arm instantly. Log RT25(3) fell because REC1 exited at21.42s and the
      * push arrived0.14s later, before the500ms stable dwell could re-prime it.
-     * The4000ms episode timeout still bounds a recovery that never settles. */
+     * RT40: the episode timeout is8s, not4s. Logs RT40 (02_chong_chiu) show a
+     * hand-held push being cut by fault4096 at exactly4s while the vehicle was
+     * still upright (pitch7.6deg, gyro15dps, |v|0.20m/s): the operator simply
+     * held it longer than the deadline, so the motors stopped under him. The
+     * recovery is still bounded by the50deg angle allowance, the1.0m distance
+     * allowance and the speed interlock; the timer only has to outlast a hand
+     * push, not a runaway. */
     if(s->quiet>=60){s->active=false;s->stable=0;s->quiet=0;s->primed=true;return 0;}
-    return (uint32_t)(now-s->started_ms)>=4000U?4096U:0;
+    return (uint32_t)(now-s->started_ms)>=BALANCE_RECOVERY_TIMEOUT_MS?4096U:0;
 }
 static inline uint16_t BalanceRecovery_Update(BalanceRecovery *s,bool allow,
     float pitch,float gyro,float speed,float position,float base_budget,uint32_t now) {

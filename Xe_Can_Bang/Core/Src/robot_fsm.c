@@ -338,6 +338,14 @@ void Robot_ControlLoop_200Hz(void) {
         /* RT24: the lean taper is measured against the learned neutral posture so
          * a normal pivot's own lean does not throttle the commanded rate. */
         bal_turn.lean_ref=bal_governor.equilibrium_ready?bal_governor.equilibrium:0.0f;
+        /* RT40: while turning, keep at least one wheel off the duty ceiling. Logs
+         * RT40 (08, preset90) fell three times from corners where one wheel sat at
+         * 100% duty: the release yaw brake then had no authority and the axle surged
+         * 0.72->0.95m/s. The scale only acts while a turn is commanded; straight
+         * running is untouched, so the selected preset is still reached. */
+        BalanceTurn_headroom(BalanceTurn_headroom_next(
+            fmaxf(fabsf((float)s_robot.pwm_left),fabsf((float)s_robot.pwm_right))/2499.0f,
+            cmd->drive_turn!=0));
         unsigned drive_mode=BalanceRecovery_DriveMode(&bal_recovery,!bal_startup.active&&!just_armed,
             s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,bal_motion.v_ref);
         if(!BalanceMotion8_Update(&bal_motion,&bal_turn,

@@ -2,7 +2,7 @@
 /* Final R12 STATE4_OBS14 baseline. Legacy PID constants below support
  * diagnostic/library code only; they are not a selectable balance controller.
  * Raw test data must never use the following sensor corrections. */
-#define BALANCE_BUILD "BAL-20261119-R12-8DIR-RT39-CORNER"
+#define BALANCE_BUILD "BAL-20261119-R12-8DIR-RT40-HOLD"
 /* RT29: the disturbance brake (REC1 entry, hold_anchor) has no4s completion
  * deadline. Log RT28 (12)(3): three auto-cuts, all fault4096, at t=11.52/85.50/
  *156.48s, each exactly4s after a REC1 entry, each on an upright vehicle
