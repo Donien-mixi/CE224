@@ -1,8 +1,8 @@
-> **Trạng thái:** bản hiện hành **STM32 RT38-CONT + ESP32 NET38** (18/11/2026) — xem
+> **Trạng thái:** bản hiện hành **STM32 RT39-CORNER + ESP32 NET39** (19/11/2026) — xem
 > [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Số đo mới nhất là log RT36 ngày
 > 18/11 (154 s, 4 kịch bản); RT37 **chưa có log xe** (xem [RT37](RT37_Xuat_Phat_Muot.md)).
 
-# Chức năng xe hiện hành — RT38-CONT / NET38
+# Chức năng xe hiện hành — RT39-CORNER / NET39
 
 Danh sách mô tả **đúng** những gì code đang chạy, kèm số đo từ log xe thật. Đây không phải chứng
 nhận mọi tình huống thực tế đã đạt. Thứ tự ưu tiên giữa các lớp (P0 cắt an toàn → P7 telemetry) và
@@ -32,8 +32,10 @@ RT36 cho thấy trước sửa mỗi cú xuất phát mất 2,6–5,5 s mới đ
 - Chéo: 0,90 / 1,15 rad/s, gia tốc yaw 4,5 rad/s², giảm tốc 8 rad/s², trần ngang 0,90 m/s².
 - **Bốn hướng lái cân nhau** sau khi bù lệch bánh trái: lệch trái/phải còn **1 % (tiến), 2 % (lùi),
   0 % (quay tại chỗ)** — trước khi bù là 13 %.
-- **Trần cua**: khi đang cua, tham chiếu tốc độ tự hạ xuống `0,90 − |w_ref|·0,131` → **0,749 m/s**
-  ở 1,15 rad/s, giống nhau cho tiến/lùi và trái/phải (RT36 yêu cầu 70–75 cm/s). Chạy thẳng vẫn 0,90.
+- **Trần cua**: khi đang cua, tham chiếu tốc độ tự hạ xuống `0,87 − |w_ref|·0,131` → **0,719 m/s**
+  ở 1,15 rad/s, giống nhau cho tiến/lùi và trái/phải (RT39; yêu cầu 70–75 cm/s của người vận hành).
+  Chạy thẳng vẫn 0,90. Hạ từ 0,749 (RT36) vì log RT38 `(39)` đo được bánh ngoài 0,90 m/s = 94–96 % duty,
+  duty ghim 1,00 ở 33 % số mẫu cua lùi-phải.
 - **Trần ngang** tính theo tốc độ **đã lệnh** `max(|v_ref|, |v|−0,10)`, nên `w_ref` không còn nhảy
   1,09–1,15 khi `|v|` dao động (RT36 sửa lỗi cua phải-lùi ngập ngừng).
 - Độ nghiêng khi cua: `|pitch|` p95 ~8°; cua trái ngả nhiều hơn cua phải (phần cơ khí, chưa xử lý).

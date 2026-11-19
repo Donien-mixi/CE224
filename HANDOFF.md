@@ -1,9 +1,21 @@
-# Bàn giao đồ án TWIP — 18/11/2026
+# Bàn giao đồ án TWIP — 19/11/2026
 
-> **Bản hiện hành: STM32 `BAL-20261118-R12-8DIR-RT38-CONT` + ESP32 `TWIP-WEB-20261118-BAL-R12-8DIR-RT38-CONT-NET38`.**
-> Ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái **+110 PWM**, cua giữ **~0,75 m/s** ở cả hai
-> chiều, chống trôi khi đứng yên, phanh nhả nhanh hơn, xuất phát mượt, **đổi hướng liên tục**. Bản nạp
-> + hash: [`Firmware/RT38_CONT_20261118/`](Firmware/RT38_CONT_20261118/README.md).
+> **Bản hiện hành: STM32 `BAL-20261119-R12-8DIR-RT39-CORNER` + ESP32 `TWIP-WEB-20261119-BAL-R12-8DIR-RT39-CORNER-NET39`.**
+> Ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái **+110 PWM**, cua **0,719 m/s (72 cm/s)** ở cả
+> hai chiều, chống trôi khi đứng yên, phanh nhả nhanh hơn, xuất phát mượt, đổi hướng liên tục,
+> **mốc 80 vào cua không còn tự dừng**. Bản nạp + hash:
+> [`Firmware/RT39_CORNER_20261119/`](Firmware/RT39_CORNER_20261119/README.md).
+>
+> **RT39 (19/11, log `twip_balance_R12 (39).txt` của RT38 — 4 198 mẫu / 84 s, preset 80, bốn hướng rẽ):**
+> người vận hành báo xe **khựng khi cua và có lúc dừng rất lâu để cân bằng ở cả bốn hướng**. Log sạch
+> (`crc 0`, `gaps 0`, 0 drops, `age` p50 13 ms, **0 fault** khi `state=3`) nhưng **30,2 % thời gian ở
+> REC1** (12 cước, p50 1,94 s, max 2,76 s) và **18,8 % thời gian có lệnh mà |v| < 0,10 m/s**. Nguyên
+> nhân: guard vượt tốc độ so bánh với **tham chiếu tức thời** (`|v|>0,78 & |sai|>0,04`, và
+> `|v|>0,72 & |sai|>0,12`) — ở mốc 80 xe chạy bình thường 0,78–0,84 m/s, còn cua hạ tham chiếu xuống
+> 0,749, nên **mỗi lần vào cua / nhả lệnh đều bị coi là vượt tốc độ**. Hai sửa: (1) **một** guard duy
+> nhất so với **trần interlock** `max(envelope, |v_ref|+0,12)` và cần **100 ms** bằng chứng; (2) trần
+> cua 0,90 → **0,87** để bánh ngoài còn ~10 % duty (duty từng ghim 1,00 ở 33 % số mẫu cua lùi-phải).
+> Chi tiết: [`Docs/RT39_Cua_80_Khong_Khung.md`](Docs/RT39_Cua_80_Khong_Khung.md).
 >
 > **RT38 (18/11, phản hồi trên RT37):** ở 90 xe trôi/khựng; ở 50–80 đổi hướng đột ngột thì xe phải
 > khựng giữ cân bằng. Log RT36 `(2)(5)` cho thấy ngay sau đảo chiều ±0,8–0,9 m/s có **72 % mẫu bị
@@ -133,7 +145,8 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 | Governor | áp lực khi duty > 0,90, lean dự đoán > **10°/13° (RT37)**, trễ bám > 0,12/0,30 m/s → kẹp gia tốc 0,06 m/s², chống deadlock 0,15 m/s. **RT36: chỉ neo mốc (10 cm) khi duty > 0,95**, phanh nhả 0,85 m/s² | Có (log 18/11 trước sửa) |
 | Giám sát an toàn | interlock: trần `max(envelope; \|v_ref\|+0,12)` với envelope 1,12 khi MAX / 1,00–1,20 khi capture / 1,20 khi REC1, phải vượt liên tục 200 ms; 1,45 m/s cắt tức thì; ở MAX còn cắt nếu `\|v_bánh\| > 1,20`; cắt góc/quãng/I2C/vòng lặp; không tự ARM lại | Có |
 | Bẻ hướng | quay tại chỗ 1,3/2,4 rad/s; chéo 0,90/1,15 rad/s; yaw accel 4,5, decel 8,0; trần ngang 0,9 m/s² **tính theo `max(\|v_ref\|,\|v\|−0,10)`**; taper lean 12°/4°; trôi tâm 45 cm/sàn 55 %; đóng băng heading ≤ 0,6 s | Có — log 18/11 trước sửa |
-| Trần cua | đang cua: `v_ref ≤ 0,90 − \|w_ref\|·0,131` → **0,749** ở 1,15 rad/s; chỉ hạ, không nâng | Có — log 18/11 (trước sửa 0,80) |
+| Trần cua | đang cua: `v_ref ≤ 0,87 − \|w_ref\|·0,131` → **0,719** ở 1,15 rad/s; chỉ hạ, không nâng (RT39) | **Chưa kiểm trên xe** — đo trên log RT38: bánh ngoài 0,90 = 94–96 % duty, ghim 1,00 ở 33 % mẫu cua lùi-phải |
+| Vượt tốc độ (RT39) | REC1 chỉ khi `\|v\| > max(envelope, \|v_ref\|+0,12)` **và** cùng dấu tham chiếu, đủ **100 ms**; trước đó là hai guard so với tham chiếu tức thời (0,78/0,04 và 0,72/0,12) | **Chưa kiểm trên xe** — log RT38 `(39)`: 438 mẫu thật trước 6 cước sai đều **dưới** trần |
 | Giữ khi đứng yên | sau 3 s đứng yên thật, mốc chảy về vị trí đo 2 cm/s trong phạm vi 15 cm (RT36) | **Chưa kiểm trên xe** |
 | Xuất phát / tăng tốc | ngưỡng nghiêng governor 10°/13° (RT37), không cắt gia tốc ở độ ngả 7–12° bình thường | **Chưa kiểm trên xe** |
 | Đổi hướng liên tục | giữ lệnh cũ tối đa 120 ms khi nút gửi neutral; mốc vượt 20 cm thì neo mốc + giữ tốc độ khi xe đang chạy (RT38) | **Chưa kiểm trên xe** |
@@ -160,15 +173,17 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 
 | Bản | Thư mục | Khi nào dùng |
 |---|---|---|
-| **RT38-CONT / NET38** (hiện hành) | `Firmware/RT38_CONT_20261118/` | Chạy bình thường; nạp **cả hai board** |
+| **RT39-CORNER / NET39** (hiện hành) | `Firmware/RT39_CORNER_20261119/` | Chạy bình thường; nạp **cả hai board** |
+| RT38-CONT / NET38 (trước) | `Firmware/RT38_CONT_20261118/` | Bản đã có log `(39)` 84 s (chính là ca khựng ở 80 mà RT39 sửa) |
 | RT37-SMOOTH / NET37 (trước) | `Firmware/RT37_SMOOTH_20261118/` | Bản thử ngay trước RT38 |
 | RT36-SYM / NET36 (trước) | `Firmware/RT36_SYM_20261118/` | Bản đã có log 154 s (4 kịch bản) |
 | RT34-CORNER / NET35 (trước) | `Firmware/RT34_CORNER_20261117/` | Bản đã có log xe 173 s |
 | RT29-NOCUT / NET30 (dự phòng) | `Firmware/RT29_NOCUT_20261115/` | Quay về bản cũ nhất: ba mức 50/72/80, chưa có bù bánh trái và trần cua |
 
-Kiểm ngày 18/11 (RT38): **7/7** tệp binary khớp `SHA256.json`; **13/13** tệp nguồn khớp
-`SOURCE_SHA256.json` → bản `.bin/.hex` được build từ **đúng source hiện tại**.
-`test_build_id_sync` PASS: 9 literal trên 50 tệp.
+Kiểm ngày 19/11 (RT39): **7/7** tệp binary khớp `SHA256.json`; **13/13** tệp nguồn khớp
+`SOURCE_SHA256.json` → bản `.bin/.hex` được build từ **đúng source hiện tại**. Build lại trong
+workspace CubeIDE `D:\CubeIDE_ws` ra `.hex`/`.bin` **trùng hash** bản đóng gói (`fc9d2f10…` / `89ba42e5…`).
+`test_build_id_sync` PASS: 9 literal trên 53 tệp.
 
 ### 4.3 Build
 
@@ -193,7 +208,7 @@ Kiểm ngày 18/11 (RT38): **7/7** tệp binary khớp `SHA256.json`; **13/13** 
 ### 4.4 Kiểm chứng
 
 ```powershell
-Get-ChildItem tools/test_*.cjs | ForEach-Object { node $_.FullName }   # 37/37
+Get-ChildItem tools/test_*.cjs | ForEach-Object { node $_.FullName }   # 40/40
 node tools/test_build_id_sync.cjs
 
 node tools/run_governor_sim.cjs --stress                               # 12 ca
@@ -201,23 +216,25 @@ node tools/run_governor_sim.cjs --stress --edge                        # 12 ca
 node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 ```
 
-- Host test: **37/37 pass** (Node.js 24, GCC msys2), gồm 5 test RT36/RT37 (`test_rt36_anchor`,
-  `test_rt36_lateral`, `test_rt36_hold`, `test_rt36_brake`, `test_rt37_smooth`) — mỗi test có
-  old-constant probe phải fail.
-- Mô phỏng, chạy lại sau RT38 ngày 18/11: **36/36** ca đủ 20/20 s khi mức ≤ 80; **35/36** ở MAX 90
-  (ca trượt vẫn là pin 11,2 V, không phát sinh ca mới). Kết quả ở
+- Host test: **40/40 pass** (Node.js 24, GCC msys2), gồm 7 test RT36–RT39 (`test_rt36_anchor`,
+  `test_rt36_lateral`, `test_rt36_hold`, `test_rt36_brake`, `test_rt37_smooth`, `test_rt38_continuous`,
+  `test_rt38_recovery`, `test_rt39_corner`) — mỗi test có old-constant probe phải fail.
+- Mô phỏng, chạy lại sau RT39 ngày 19/11: **12/12** ca đủ 20/20 s ở MAX 80, **12/12** `--edge`,
+  **12/12** `--launch50` (pitch từng ca **trùng khớp RT38**); ở MAX 90 vẫn **11/12** — ca 7 ngã ở 8,95 s
+  với pitch 62,5°, **giống hệt** RT38 (pin 11,2 V, không phát sinh ca mới). Kết quả ở
   `Simulation/results/runs/…`, đếm ca từ `summary.csv`.
 
 ### 4.5 Nạp
 
-Nháy đúp `nap_rt38.bat` trong thư mục bản nạp → nhập COM của ESP32. Script nạp STM32 bằng
+Nháy đúp `nap_rt39.bat` trong thư mục bản nạp → nhập COM của ESP32. Script nạp STM32 bằng
 `STM32_Programmer_CLI.exe`, ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
-Kiểm sau khi nạp: banner `RT38-CONT-NET38`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được.
+Kiểm sau khi nạp: banner `RT39-CORNER-NET39`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được.
 
-Bốn bản (RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
+Năm bản (RT39 / RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
 banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — hoặc chạy menu
 `Firmware/nap_chon_ban.bat`. Nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload):
-[`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md).
+[`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md) — workspace RT39 là `D:\CubeIDE_ws`, RT38 là
+`D:\CubeIDE_ws_rt38`.
 
 ## 5. Quy tắc vận hành
 
@@ -235,16 +252,21 @@ banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — ho
 
 ## 6. Việc còn mở (theo thứ tự)
 
-1. **RT38 chưa có log xe.** Cần một buổi đo theo ma trận: đứng yên 60 s; 90 tiến/lùi 8 s; cua
-   trái/phải khi tiến và khi lùi; nhả lệnh từ 0,9. Đạt khi: tiến 0,88–0,90 (pin ≥ 12,0 V), cua hai
-   chiều ~0,75, `w_ref` không nhảy, quãng trôi khi nhả < 0,7 m, `x` khi đứng yên trong ±3 cm.
+1. **RT39 chưa có log xe.** Cần một buổi đo: đứng yên 60 s; mốc **80** đủ **bốn hướng** (tiến-trái,
+   tiến-phải, lùi-trái, lùi-phải) mỗi hướng giữ ≥ 2 s rồi nhả; 90 tiến/lùi 8 s. Đạt khi:
+   `control_phase=2` **< 5 %** (RT38: 30,2 %), cước REC1 dài nhất **< 0,5 s** (RT38: 2,76 s),
+   "có lệnh mà |v| < 0,10" **< 5 %** (RT38: 18,8 %), duty p95 khi cua **< 0,95** (RT38: 1,00),
+   |v| p50 khi cua **0,70–0,74** ở cả bốn hướng (RT38: 0,36–0,72).
 2. **`archive_error=1`** trong mọi log gần đây → vùng log Flash chưa format lại. Cần bấm
    “SỬA VÙNG LOG FLASH” **một lần khi motor đã dừng** (xe đứng yên, chỉ ESP32 chạy), rồi kiểm
    `archive_saved > 0` trong log kế tiếp.
 3. **Nguồn 5 V/3V3 tại ESP32**: thêm 1000 µF low-ESR + 100/10 µF, cấp từ nhánh riêng. Brownout đã
    hết nhờ hạ TX 11 dBm nhưng đây vẫn là gốc rễ phần cứng ([RT33](Docs/RT33_On_Dinh_Ket_Noi.md)).
 4. **Nghiêng khi cua trái** còn lớn hơn cua phải (~5° so với ~1,4°) dù tốc độ quay đã cân — phần
-   cơ khí (motor/hộp giảm tốc trái), không sửa được bằng gain.
+   cơ khí (motor/hộp giảm tốc trái), không sửa được bằng gain. Log RT38 `(39)` định lượng thêm: bánh
+   **trái cần ~11 % duty/1 m/s** nhiều hơn bánh phải ở **mọi** hướng (1,135 so với 1,012 ở lùi-phải);
+   trim 110 PWM chỉ bù ~4,4 %, và tăng trim sẽ đẩy bánh trái vào bão hoà — nên RT39 **giảm tải** thay
+   vì tăng trim. Cần kiểm bạc đạn/belt/motor trái.
 5. **Tốc độ > 0,90 m/s**: cần pack 4S (3S chỉ ~0,96 m/s không tải; 0,90 ở 11,2 V cần duty 0,955,
    chiều lùi cần 12,23 V — ngoài dải pin).
 6. **PCB**: chưa có bo thật để kiểm nhiễu/nhiệt/tải dòng.
@@ -258,7 +280,7 @@ banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — ho
   chỉ có quyền cắt/giữ/giảm.
 - **Đổi hành vi thì bump build ID cả hai board** (`balance_profile.h` và `firmware_build.h`) và
   **mọi literal** trong docs/test/script; `test_build_id_sync` phải PASS.
-- Chạy **37 host test**, và với test mới phải có **old-constant probe**: test phải FAIL với hằng số
+- Chạy **40 host test**, và với test mới phải có **old-constant probe**: test phải FAIL với hằng số
   cũ (bằng chứng nó thật sự kiểm tra chính sách mới).
 - Sửa gì ảnh hưởng quỹ đạo/tốc độ thì chạy lại bộ mô phỏng tương ứng; **không** gọi kết quả mô phỏng
   là “đã kiểm trên xe”.
@@ -281,8 +303,9 @@ banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — ho
 | [`Docs/Roadmap_Do_An.md`](Docs/Roadmap_Do_An.md), [`Docs/Phat_Trien_Tiep.md`](Docs/Phat_Trien_Tiep.md) | Phương pháp và hướng tiếp |
 | [`Docs/RT36_Sua_4_Loi.md`](Docs/RT36_Sua_4_Loi.md) | 4 lỗi từ log 18/11: số đo trước/sau, cách sửa, giới hạn |
 | [`Docs/RT37_Xuat_Phat_Muot.md`](Docs/RT37_Xuat_Phat_Muot.md) | Ngập ngừng khi xuất phát/tăng tốc, kiểm tra realtime, 3 phương án đã thử |
-| [`Docs/RT38_Chuyen_Huong_Lien_Tuc.md`](Docs/RT38_Chuyen_Huong_Lien_Tuc.md) | **Mới:** khựng khi đổi hướng và ở 90 cm/s; số đo, 3 sửa, giới hạn |
-| Báo cáo vòng | [RT22](Docs/RT22_Doi_Xung_Va_Be_Huong.md) · [RT23](Docs/RT23_Nut_That_Va_Loi_Toc_Do.md) · [RT24](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [RT27](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) · [RT28](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [RT29](Docs/RT29_Tu_Ngat_4096.md) · [RT32](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [RT33](Docs/RT33_On_Dinh_Ket_Noi.md) · [RT34](Docs/RT34_Cua_Muot.md) · [RT35](Docs/RT35_Mo_Phong_Khop_Log.md) · [RT36](Docs/RT36_Sua_4_Loi.md) · [RT37](Docs/RT37_Xuat_Phat_Muot.md) · [RT38](Docs/RT38_Chuyen_Huong_Lien_Tuc.md) |
+| [`Docs/RT38_Chuyen_Huong_Lien_Tuc.md`](Docs/RT38_Chuyen_Huong_Lien_Tuc.md) | Khựng khi đổi hướng và ở 90 cm/s; số đo, 3 sửa, giới hạn |
+| [`Docs/RT39_Cua_80_Khong_Khung.md`](Docs/RT39_Cua_80_Khong_Khung.md) | **Mới:** 80 cm/s khựng/dừng lâu khi cua ở cả 4 hướng; 12 cước REC1, bất đối xứng bánh trái, 2 sửa |
+| Báo cáo vòng | [RT22](Docs/RT22_Doi_Xung_Va_Be_Huong.md) · [RT23](Docs/RT23_Nut_That_Va_Loi_Toc_Do.md) · [RT24](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [RT27](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) · [RT28](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [RT29](Docs/RT29_Tu_Ngat_4096.md) · [RT32](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [RT33](Docs/RT33_On_Dinh_Ket_Noi.md) · [RT34](Docs/RT34_Cua_Muot.md) · [RT35](Docs/RT35_Mo_Phong_Khop_Log.md) · [RT36](Docs/RT36_Sua_4_Loi.md) · [RT37](Docs/RT37_Xuat_Phat_Muot.md) · [RT38](Docs/RT38_Chuyen_Huong_Lien_Tuc.md) · [RT39](Docs/RT39_Cua_80_Khong_Khung.md) |
 
 ## 9. Lịch sử
 

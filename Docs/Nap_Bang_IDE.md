@@ -1,10 +1,11 @@
 # Nạp firmware bằng IDE (Build + Run / Upload)
 
-Bốn bản firmware đều có **source để mở bằng IDE** và nạp bằng nút quen thuộc:
+Năm bản firmware đều có **source để mở bằng IDE** và nạp bằng nút quen thuộc:
 
 | Bản | Source STM32 (mở bằng STM32CubeIDE) | Sketch ESP32 (mở bằng Arduino IDE) |
 |---|---|---|
-| **RT38-CONT / NET38** (hiện hành) | `D:\DA_HTN\Xe_Can_Bang` | `D:\DA_HTN\ESP32_S3_Gateway\ESP32_S3_Gateway.ino` |
+| **RT39-CORNER / NET39** (hiện hành) | `D:\DA_HTN\Xe_Can_Bang` | `D:\DA_HTN\ESP32_S3_Gateway\ESP32_S3_Gateway.ino` |
+| **RT38-CONT / NET38** | `D:\DA_HTN\.build\ide_src\RT38\Xe_Can_Bang` | `D:\DA_HTN\.build\ide_src\RT38\ESP32_S3_Gateway\ESP32_S3_Gateway.ino` |
 | **RT37-SMOOTH / NET37** | `D:\DA_HTN\.build\ide_src\RT37\Xe_Can_Bang` | `D:\DA_HTN\.build\ide_src\RT37\ESP32_S3_Gateway\ESP32_S3_Gateway.ino` |
 | **RT34-CORNER / NET35** | `D:\DA_HTN\.build\ide_src\RT34\Xe_Can_Bang` | `D:\DA_HTN\.build\ide_src\RT34\ESP32_S3_Gateway\ESP32_S3_Gateway.ino` |
 | **RT29-NOCUT / NET30** | `D:\DA_HTN\.build\ide_src\RT29\Xe_Can_Bang` | `D:\DA_HTN\.build\ide_src\RT29\ESP32_S3_Gateway\ESP32_S3_Gateway.ino` |
@@ -21,26 +22,29 @@ Script in ra build ID của từng bản để kiểm. Không cần internet, kh
 
 > **Vì sao phải là source đúng bản?** STM32CubeIDE/Arduino IDE luôn **build lại từ source** rồi mới nạp.
 > Build RT34 từ snapshot đã được kiểm: `.hex` và `.bin` ra **trùng SHA256** với bản đóng gói
-> (`7ba6e0d1…` / `5c5237e6…`); RT29 trùng (`4cf9b2e9…` / `16effa54…`); RT37 trùng (`23257995…`). Riêng ESP32, bản build lại
+> (`7ba6e0d1…` / `5c5237e6…`); RT29 trùng (`4cf9b2e9…` / `16effa54…`); RT37 trùng (`23257995…`);
+> **RT38 trùng (`d075a0e2…`) và RT39 trùng (`fc9d2f10…` hex / `89ba42e5…` bin)**. Riêng ESP32, bản build lại
 > khác hash vì firmware nhúng dấu thời gian build — **cùng build ID và cùng hành vi**, chỉ khác hash.
 
 ## 1. Nạp STM32 bằng STM32CubeIDE
 
-Áp dụng cho cả bốn bản, chỉ khác workspace.
+Áp dụng cho cả năm bản, chỉ khác workspace.
 
-**Bốn workspace đã được tạo sẵn trên máy này, project `Xe_Can_Bang` đã import và build sẵn** — mở là
+**Năm workspace đã được tạo sẵn trên máy này, project `Xe_Can_Bang` đã import và build sẵn** — mở là
 thấy, không phải Import lại:
 
 | Bản | Workspace mở bằng CubeIDE |
 |---|---|
-| RT38 | `D:\CubeIDE_ws` (workspace đang dùng) |
+| RT39 | `D:\CubeIDE_ws` (workspace đang dùng) |
+| RT38 | `D:\CubeIDE_ws_rt38` |
 | RT37 | `D:\CubeIDE_ws_rt37` |
 | RT34 | `D:\CubeIDE_ws_rt34` |
 | RT29 | `D:\CubeIDE_ws_rt29` |
 
 > Workspace chỉ là **thư mục cấu hình của IDE** (chứa `.metadata`), không chứa source. Source vẫn nằm
-> ở `D:\DA_HTN\.build\ide_src\RT34\Xe_Can_Bang` (hoặc RT29/RT37). Nếu thư mục này bị dọn, chạy
-> `tools\ide_sources.ps1` rồi trong CubeIDE bấm **F5** (Refresh) ở project.
+> ở `D:\DA_HTN\.build\ide_src\RT38\Xe_Can_Bang` (hoặc RT37/RT34/RT29); riêng RT39 dùng trực tiếp
+> `D:\DA_HTN\Xe_Can_Bang`. Nếu thư mục này bị dọn, chạy `tools\ide_sources.ps1` rồi trong CubeIDE bấm
+> **F5** (Refresh) ở project.
 
 1. **Cắm ST-LINK** vào STM32 và máy tính.
 2. Mở STM32CubeIDE → **File → Switch Workspace → Other…** → dán đường dẫn workspace ở bảng trên →
@@ -63,7 +67,7 @@ Nếu nút Run báo không tìm thấy ST-LINK: kiểm driver ST-LINK, thử c�
 
 1. **Cắm cáp USB dữ liệu** vào ESP32 (cổng USB của board S3).
 2. Mở Arduino IDE → **File → Open…** → chọn đúng tệp `.ino` của bản (bảng trên).
-3. **Tools** đặt đúng (giống nhau cho cả ba bản):
+3. **Tools** đặt đúng (giống nhau cho cả năm bản):
 
 | Mục | Giá trị |
 |---|---|
@@ -87,6 +91,7 @@ Mở Wi-Fi `TWIP_RACER_S3` / `12345678` → `http://192.168.4.1/ui/r12`:
 
 | Bản | Banner | Nút tốc độ |
 |---|---|---|
+| RT39 | `RT39-CORNER-NET39` | 50 / 80 / MAX 90 |
 | RT38 | `RT38-CONT-NET38` | 50 / 80 / MAX 90 |
 | RT37 | `RT37-SMOOTH-NET37` | 50 / 80 / MAX 90 |
 | RT34 | `RT34-CORNER-NET35` | 50 / 80 / MAX 90 |
@@ -101,7 +106,8 @@ Dòng `$BINFO` trong log tải về cũng phải chứa đúng build ID.
 
 | Muốn nạp | STM32CubeIDE | Arduino IDE |
 |---|---|---|
-| RT38 | workspace `D:\CubeIDE_ws` → **Build → Run** | mở `D:\DA_HTN\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`, **Upload** |
+| RT39 | workspace `D:\CubeIDE_ws` → **Build → Run** | mở `D:\DA_HTN\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`, **Upload** |
+| RT38 | workspace `D:\CubeIDE_ws_rt38` → **Build → Run** | mở `.build\ide_src\RT38\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`, **Upload** |
 | RT37 | workspace `D:\CubeIDE_ws_rt37` → **Build → Run** | mở `.build\ide_src\RT37\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`, **Upload** |
 | RT34 | workspace `D:\CubeIDE_ws_rt34` → **Build → Run** | mở `.build\ide_src\RT34\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`, **Upload** |
 | RT29 | workspace `D:\CubeIDE_ws_rt29` → **Build → Run** | mở `.build\ide_src\RT29\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`, **Upload** |
@@ -109,6 +115,6 @@ Dòng `$BINFO` trong log tải về cũng phải chứa đúng build ID.
 ## 5. Lưu ý
 
 - Không nạp khi xe đang cân bằng/đang chạy; bánh kê cao.
-- Luôn nạp **cả hai board** cùng bản; đừng trộn RT34 với NET37.
+- Luôn nạp **cả hai board** cùng bản; đừng trộn RT38 với NET39.
 - Mức 90 chỉ dùng khi pin đo **≥ 12,0 V**; RT29 chỉ tới 80 và không có bù bánh trái/trần cua.
 - Cách nạp bằng script (`Firmware\nap_chon_ban.bat`) vẫn dùng được nếu không muốn mở IDE.

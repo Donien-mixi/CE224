@@ -3,7 +3,7 @@
 > dùng để đối chiếu firmware hiện hành; số hiện hành xem
 > [chức năng](Tinh_Nang_Xe_Hien_Hanh.md) và [thông số xe](Thong_So_Xe_Hien_Tai.md).
 
-> **Trạng thái:** bản hiện hành **STM32 RT38-CONT + ESP32 NET38** (18/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Kiến trúc FSM + pipeline 200 Hz + thứ tự ưu tiên P0–P7: [HANDOFF mục 2](../HANDOFF.md#2-kiến-trúc-điều-khiển).
+> **Trạng thái:** bản hiện hành **STM32 RT39-CORNER + ESP32 NET39** (19/11/2026) — xem [tổng quan](Tong_Quan_Do_An.md) và [HANDOFF](../HANDOFF.md). Kiến trúc FSM + pipeline 200 Hz + thứ tự ưu tiên P0–P7: [HANDOFF mục 2](../HANDOFF.md#2-kiến-trúc-điều-khiển).
 
 > Các mô tả theo phiên bản cũ bên dưới là tài liệu đối chiếu. Dùng tổng quan phía trên để xác định cấu hình hiện hành.
 
@@ -520,7 +520,7 @@ Bảng dưới là giá trị của nền PID cũ, **không phải** bản R12 �
 |---|---|---|
 | Bộ tốc độ 50/80/90 | `balance_motion.h`, `balance_profile.h` | preset 1 = 0,80; preset 2 = 0,90; trần thường `BALANCE_STOP_SPEED` = 0,90 |
 | Bù lệch bánh trái | `balance_trim.h` | cộng 110 PWM cho bánh trái theo dấu quay, kẹp ±2499, đặt **sau** bộ phân bổ R12 |
-| Trần cua | `balance_turn.h` + `balance_motion.h` | khi `\|w_ref\| > 0,30`, hạ tham chiếu về `0,90 − \|w_ref\|·0,131` → 0,749 ở 1,15 rad/s (RT36) |
+| Trần cua | `balance_turn.h` + `balance_motion.h` | khi `\|w_ref\| > 0,30`, hạ tham chiếu về `0,87 − \|w_ref\|·0,131` → 0,719 ở 1,15 rad/s (RT39; RT36 dùng 0,90 → 0,749, nhưng đo trên log RT38 cho thấy bánh ngoài 0,90 là 94–96 % duty nên không còn dư cho vòng cân bằng) |
 | Neo mốc theo duty | `balance_governor.h` | chỉ kẹp `x_ref` cách 10 cm khi duty > 0,95 (RT36); hết lỗi tiến chậm/cua trái chậm |
 | Ngưỡng nghiêng 10°/13° | `balance_governor.h` | RT37: không cắt gia tốc ở độ ngả 7–12° bình thường khi xuất phát/tăng tốc; duty/lag/trần góc vẫn giữ |
 | Nhả mốc khi đứng yên | `balance_motion.h` | sau 3 s đứng yên, mốc chảy 2 cm/s về vị trí trong phạm vi 15 cm (RT36) |

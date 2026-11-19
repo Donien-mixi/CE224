@@ -310,13 +310,16 @@ void Robot_ControlLoop_200Hz(void) {
         if(startup_fault){BalanceStop(startup_fault);break;}
         BalanceRecovery_Impact(&bal_recovery,!bal_startup.active&&!just_armed,bal_motion.used,
             s_robot.gyro_rate,norm,s_robot.x_actual-bal_motion.x_ref,bal_startup.budget,HAL_GetTick());
-        BalanceRecovery_SpeedReserve(&bal_recovery,!bal_startup.active&&!just_armed,
+        /* RT39: a single ceiling-based overspeed reserve, evaluated before the
+         * motion trajectory and the interlock so REC1 can raise the ceiling on
+         * the same tick. See balance_recovery.h for the log evidence: the two
+         * old margins (0.04 against the reference, and the lean-gated0.78) sat
+         * inside the normal preset-80 cornering band and produced12 REC1
+         * episodes (30% of the run) in all four turn directions. */
+        BalanceRecovery_OverSpeed(&bal_recovery,!bal_startup.active&&!just_armed,
             s_robot.v_actual,bal_motion.v_ref,s_robot.x_actual-bal_motion.x_ref,
-            bal_startup.budget,bal_max_envelope?1.12f:.80f,HAL_GetTick());
-        if(BalanceGovernor_ReserveNeeded(s_robot.pitch,s_robot.gyro_rate)&&(!bal_max_envelope||fabsf(s_robot.v_actual)>1.05f))BalanceRecovery_Reserve(&bal_recovery,
-            s_robot.state==ROBOT_STATE_BALANCING&&!bal_startup.active&&!just_armed,
-            s_robot.v_actual,bal_motion.v_ref,s_robot.x_actual-bal_motion.x_ref,
-            bal_startup.budget,HAL_GetTick());
+            bal_startup.budget,bal_max_envelope?1.12f:BalanceStartup_SpeedLimit(&bal_startup),
+            HAL_GetTick());
         uint16_t recovery_fault=BalanceRecovery_UpdateMode(&bal_recovery,
             s_robot.state==ROBOT_STATE_BALANCING&&!bal_startup.active&&!just_armed,
             s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual-bal_motion.v_ref,s_robot.x_actual-bal_motion.x_ref,

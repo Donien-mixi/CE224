@@ -67,10 +67,20 @@ int main(void){
  assert(!BalanceRecovery_DriveMode(&rec,false,0,0,0,0));
  assert(BalanceRecovery_UpdateMode(&rec,true,15,100,.4f,0,.3f,5000,true)==4096);
  for(int sign=-1;sign<=1;sign+=2){
-  BalanceRecovery_Clear(&rec);rec.primed=true;
-  BalanceRecovery_SpeedReserve(&rec,true,sign*.76f,sign*.5f,0,.3f,.8f,1000);assert(rec.active);
-  BalanceRecovery_Clear(&rec);rec.primed=true;
-  BalanceRecovery_SpeedReserve(&rec,true,sign*.76f,sign*.72f,0,.3f,.8f,1000);assert(!rec.active);
+  /* RT39: chỉ vượt TRẦN của interlock (max(0.8,|ref|+0.12)) và phải đủ 100 ms. */
+  BalanceRecovery_Clear(&rec);
+  for(int i=0;i<(int)BALANCE_RECOVERY_OVERSPEED_TICKS-1;i++)
+   BalanceRecovery_OverSpeed(&rec,true,sign*.90f,sign*.50f,0,.3f,.8f,1000+5*i);
+  assert(!rec.active);
+  BalanceRecovery_OverSpeed(&rec,true,sign*.90f,sign*.50f,0,.3f,.8f,2000);assert(rec.active);
+  /* Cua 0.78 tren tham chieu 0.749 KHONG phai vuot toc do. */
+  BalanceRecovery_Clear(&rec);
+  for(int i=0;i<60;i++)BalanceRecovery_OverSpeed(&rec,true,sign*.78f,sign*.749f,0,.3f,.8f,3000+5*i);
+  assert(!rec.active);
+  /* Xe dang lui trong khi lenh tien: khong phai runaway. */
+  BalanceRecovery_Clear(&rec);
+  for(int i=0;i<60;i++)BalanceRecovery_OverSpeed(&rec,true,sign*-.20f,sign*.26f,0,.3f,.8f,4000+5*i);
+  assert(!rec.active);
  }
  for(int sign=-1;sign<=1;sign+=2){
   reset();s.ready=true;s.speed_preset=2;

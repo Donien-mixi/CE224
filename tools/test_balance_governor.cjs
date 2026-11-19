@@ -27,7 +27,6 @@ static void init(void){BalanceGovernor_Reset(&gov);BalanceMotion_Clear(&s);Balan
  gov.pressure=true;float anchor=1.0f;BalanceGovernor_Anchor(&gov,&anchor,0,1);assert(fabsf(anchor-.10f)<.0001f);
  init();s.used=true;s.requested=1;s.v_ref=.3f;s.x_ref=.09f;s.last_word=5;s.last_ms=ms;gov.pressure=true;gov.duty=.95f;
  for(int i=0;i<80;i++){ms+=5;seq++;BalanceGovernor_Observe(&gov,2380,2380,0);assert(BalanceMotion8_Update(&s,&t,true,seq*4+1,0,0,0,0,0,0,0,ms));}assert(s.cancel_flags&128U); // reference debt bound must not mask a wall
- assert(!BalanceGovernor_ReserveNeeded(2,-15));assert(BalanceGovernor_ReserveNeeded(8,80));
  BalanceGovernor_Reset(&gov);assert(BalanceGovernor_Step(&gov,0,.95f,.6f,1,0,0)<.0001f); // no launch acceleration step
  // A recovered low-speed launch can resume after100ms, but not sooner.
  gov=(BalanceGovernor){.pressure=true,.speed=.20f};

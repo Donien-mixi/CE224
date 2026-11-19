@@ -1,4 +1,4 @@
-> **Trạng thái:** bản hiện hành **STM32 RT38-CONT + ESP32 NET38** (18/11/2026) — xem [README](README.md) và [HANDOFF](HANDOFF.md).
+> **Trạng thái:** bản hiện hành **STM32 RT39-CORNER + ESP32 NET39** (19/11/2026) — xem [README](README.md) và [HANDOFF](HANDOFF.md).
 
 > CẤU HÌNH ĐẤU DÂY ĐÃ XÁC NHẬN 03/11/2026: **motor trái đỏ(M1) → AOUT2, trắng(M2) → AOUT1**; motor phải đỏ → BOUT1, trắng → BOUT2. Encoder và PA8/PA9 không đảo. Bảng màu trái ngược trong ghi chép lịch sử không dùng để lắp lại xe.
 
@@ -10,8 +10,8 @@ Tài liệu ghi lại cấu hình kết nối của đồ án đang sử dụng,
 
 Firmware nguồn dùng để đối chiếu:
 
-- STM32: `BAL-20261118-R12-8DIR-RT38-CONT`.
-- ESP32: `TWIP-WEB-20261118-BAL-R12-8DIR-RT38-CONT-NET38`.
+- STM32: `BAL-20261119-R12-8DIR-RT39-CORNER`.
+- ESP32: `TWIP-WEB-20261119-BAL-R12-8DIR-RT39-CORNER-NET39`.
 
 Đây là phiên bản source trong repo; không dùng thông tin này để khẳng định hai bo trên xe đã được nạp RT34. Kiểm bằng banner log (`BINFO`) sau khi nạp. Xem thêm [HANDOFF.md](HANDOFF.md).
 

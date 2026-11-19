@@ -59,9 +59,17 @@
  * khi dang cua, ha tham chieu toc do con BUDGET - |w|*HALF_TRACK.
  * RT36 (18/11): BUDGET 0.95 -> 0.90. Nguoi van hanh yeu cau cua o 70-75cm/s va
  * hai chieu bang nhau; log fwd_turn cho thay cua 1.15rad/s dat 0.80 thi banh
- * ngoai 0.95 = sat tran, con 0.90-0.151=0.749 thi con du. */
+ * ngoai 0.95 = sat tran, con 0.90-0.151=0.749 thi con du.
+ * RT39 (19/11): BUDGET 0.90 -> 0.87. Log RT38(39) - 80cm/s, ca bon huong re -
+ * do duoc duty p50 0.91 khi chay thang0.80 va p50 0.94 / p95 1.00 khi cua, voi
+ * 33% so mau cua o huong lui-phai bi ghim duty1.00 tren banh trai (banh trai can
+ * ~11% duty/1m/s so voi banh phai). Banh ngoai 0.90 = 94-96% duty o pack 11.2-
+ * 11.7V, khong con du cho vong can bang, nen than nghieng6-16deg va REC1 cat
+ * cuoc cua. Ha tran xuong0.87 -> cua con 0.87-0.151=0.719m/s (72cm/s, trong
+ * khoang70-75 nguoi van hanh dat) va banh ngoai 0.87 = 88-90% duty, du 10% du
+ * tru. Preset50 khong doi (min(0.50,0.719)); preset90 cua tu0.749 xuong0.719. */
 #ifndef BALANCE_TURN_VNL_BUDGET
-#define BALANCE_TURN_VNL_BUDGET 0.90f
+#define BALANCE_TURN_VNL_BUDGET 0.87f
 #endif
 #ifndef BALANCE_TURN_HALF_TRACK
 #define BALANCE_TURN_HALF_TRACK 0.131f

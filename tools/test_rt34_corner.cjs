@@ -36,13 +36,14 @@ int main(void){
  assert(BalanceMotion_corner_budget(-1.0f)==0.0f);
 
  /* 2. Giu nguyen lenh tien + bat cua trai (1.15rad/s) o0.90:
-  *    RT36: budget 0.90-1.15*0.131=0.749 -> v_ref ha ve ~0.75, khong vot. */
+  *    RT36: budget 0.90-1.15*0.131=0.749 -> v_ref ha ve ~0.75, khong vot.
+  *    RT39: budget 0.87-0.151=0.719 (banh ngoai 0.87, con ~10% duty du tru). */
  float before=s.v_ref;
  for(int i=0;i<200;i++)tick(1,1,s.v_ref);
  float cb=BalanceMotion_corner_budget(-1.0f);
  printf("vao cua: v_ref %.3f -> %.3f (budget=%.3f) w_ref=%.2f\n",before,s.v_ref,cb,t.w_ref);
- assert(fabsf(cb-0.749f)<0.02f);
- assert(s.v_ref<0.78f&&s.v_ref>0.72f);
+ assert(fabsf(cb-0.719f)<0.02f);
+ assert(s.v_ref<0.75f&&s.v_ref>0.69f);
  /* ha phai muot: khong tick nao doi qua 1.5 lan ramp cho phep */
  init();
  for(int i=0;i<600;i++)tick(1,0,s.v_ref);
@@ -55,15 +56,15 @@ int main(void){
  assert(BalanceMotion_corner_budget(-1.0f)==0.0f);
  assert(fabsf(s.v_ref-0.90f)<0.02f);
 
- /* 4. O0.50/0.80: RT36 ha ca preset80 xuong cung budget 0.749, nen cua o
-  *    preset80 va preset90 co cung toc do ~0.75 (yeu cau 70-75 cm/s). */
+ /* 4. O0.50/0.80: RT36 ha ca preset80 xuong cung budget 0.719, nen cua o
+  *    preset80 va preset90 co cung toc do ~0.72 (yeu cau 70-75 cm/s). */
  init();s.speed_preset=1;
  for(int i=0;i<900;i++)tick(1,0,s.v_ref);
  float p80=s.v_ref;
  for(int i=0;i<200;i++)tick(1,1,s.v_ref);
  printf("preset80 khi cua: %.3f -> %.3f\n",p80,s.v_ref);
  assert(fabsf(p80-0.80f)<0.01f);
- assert(s.v_ref>0.72f&&s.v_ref<0.78f);   /* cung budget voi MAX */
+ assert(s.v_ref>0.69f&&s.v_ref<0.75f);   /* cung budget voi MAX */
 
  puts("PASS");
  return 0;

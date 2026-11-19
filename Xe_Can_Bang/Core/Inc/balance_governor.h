@@ -83,9 +83,11 @@ static inline void BalanceGovernor_ObserveRest(BalanceGovernor *g,bool eligible,
   g->equilibrium_ready=true;g->rest_samples=0;g->rest_sum=0;
  }
 }
-static inline bool BalanceGovernor_ReserveNeeded(float pitch,float gyro){
-    return fabsf(pitch)>5.0f||fabsf(gyro)>60.0f;
-}
+/* RT39: `BalanceGovernor_ReserveNeeded` (|pitch|>5 || |gyro|>60) is removed with
+ * the lean-gated reserve it guarded. A lean gate cannot recognise a straight
+ * runaway on a flat body, and it let the reserve fire on every corner where the
+ * body rides at~6deg. The overspeed reserve in balance_recovery.h now uses the
+ * same ceiling as the speed interlock and needs no lean evidence. */
 static inline void BalanceGovernor_Observe(BalanceGovernor *g,int left,int right,float speed){
     g->speed=speed;
     float duty=fmaxf(fabsf((float)left),fabsf((float)right))/2499.0f;

@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <math.h>
+#include "balance_interlock.h"
 #define BALANCE_RECOVERY_LIVE_COMMANDS 1
 /* RT38: a commanded reversal spikes the gyro; while a fresh maneuver is held
  * this needs60ms of evidence, with no command it still trips immediately. */
@@ -17,6 +18,7 @@
 typedef struct {
     uint32_t started_ms;
     uint16_t stable,quiet,episodes;
+    uint16_t overspeed;   /* RT39:100ms evidence for the overspeed reserve */
     bool primed,active;
     float distance_limit;
 } BalanceRecovery;
@@ -40,23 +42,49 @@ static inline void BalanceRecovery_Impact(BalanceRecovery *s,bool allow,bool mov
   s->distance_limit=fminf(1.0f,fmaxf(budget,fabsf(position)+.80f));
  }
 }
-/* RT27: the recovery travel allowance is back to0.8m past the entry offset (the
- * RT21 value). RT26 had cut it to0.35m and that lifted fault8 (relative tracking)
- * on pushes that were still upright and recoverable - log RT26(36) was cut at
- * pitch+13.8deg with |x-x_ref|=0.378m while the vehicle was already braking home.
- * A push can cross the ordinary0.8m/s ceiling before the0.35m/s tracking
- * trigger fires (50cm/s +30cm/s). Reserve early, only for real overspeed
- * relative to the reference, without extending an already active episode. */
-static inline void BalanceRecovery_SpeedReserve(BalanceRecovery *s,bool allow,
- float speed,float reference,float position,float budget,float ordinary_limit,uint32_t now){
- if(!allow||s->active||!s->primed||!isfinite(speed)||!isfinite(reference)||
-    !isfinite(position)||!isfinite(budget)||!isfinite(ordinary_limit))return;
+/* RT39: the overspeed reserve compares the axle with the CEILING the speed
+ * interlock protects, not with the instantaneous velocity reference.
+ *
+ * Log RT38 (39) - preset80, 84s, all four turn directions - has12 REC1 episodes
+ * for25.3s (30% of the run). Six of them were entered inside a COMMANDED
+ * manoeuvre at0.77-0.79m/s against a0.749 corner reference (error0.04) or right
+ * after the reference was released (error0.12): the old0.04/0.12 margins put the
+ * guard below the normal operating band, so every corner entry and every release
+ * read as an uncommanded overspeed. REC1 then braked0.78->0 for1.9-2.8s, in all
+ * four directions, which is exactly the hesitation the driver reported. Above the
+ * real ceiling (max(envelope,|v_ref|+0.12)) the axle appears in only TWO samples
+ * of that whole log, both already inside an active REC1.
+ *
+ * The guard keeps its job - enter the bounded recovery (angle50deg, speed1.20,
+ * +0.8m) BEFORE BalanceStop(16) cuts the motors on an upright vehicle - because
+ * its100ms evidence is shorter than the interlock's200ms trip, and because REC1
+ * raises the interlock ceiling to1.20 on the same tick. It needs no lean gate: a
+ * straight runaway on a flat body is exactly the case the interlock gate missed. */
+#ifndef BALANCE_RECOVERY_OVERSPEED_TICKS
+#define BALANCE_RECOVERY_OVERSPEED_TICKS 20U /* 100ms at200Hz, trip is200ms */
+#endif
+/* Probe hook only: a positive slack restores the pre-RT39 behaviour of guarding
+ * a band BELOW the ceiling, so a host test can prove it catches that regression. */
+#ifndef BALANCE_RECOVERY_OVERSPEED_SLACK
+#define BALANCE_RECOVERY_OVERSPEED_SLACK 0.0f
+#endif
+static inline bool BalanceRecovery_OverSpeed(BalanceRecovery *s,bool allow,float speed,
+ float reference,float position,float budget,float envelope,uint32_t now){
+ if(!isfinite(speed)||!isfinite(reference)||!isfinite(position)||!isfinite(budget)||
+    !isfinite(envelope)){s->overspeed=0U;return false;}
+ if(!allow||s->active){s->overspeed=0U;return false;}
+ float ceiling=BalanceInterlock_Ceiling(envelope,reference)-BALANCE_RECOVERY_OVERSPEED_SLACK;
  float error=speed-reference;
- if(fabsf(speed)>ordinary_limit-.08f&&fabsf(error)>.12f&&speed*error>0){
-  s->active=true;s->primed=false;s->quiet=0;s->started_ms=now;
-  if(s->episodes<65535U)s->episodes++;
-  s->distance_limit=fminf(1.0f,fmaxf(budget,fabsf(position)+.80f));
- }
+ /* Same sign as the reference: an axle coasting the wrong way is a settling
+  * transient the R12 loop corrects, not a runaway. */
+ if(fabsf(speed)>ceiling&&speed*error>0.0f){
+  if(s->overspeed<60000U)s->overspeed++;
+ }else s->overspeed=0U;
+ if(s->overspeed<BALANCE_RECOVERY_OVERSPEED_TICKS)return false;
+ s->overspeed=0U;s->active=true;s->primed=false;s->quiet=0;s->started_ms=now;
+ if(s->episodes<65535U)s->episodes++;
+ s->distance_limit=fminf(1.0f,fmaxf(budget,fabsf(position)+.80f));
+ return true;
 }
 static inline uint16_t BalanceRecovery_UpdateMode(BalanceRecovery *s,bool allow,
     float pitch,float gyro,float speed,float position,float base_budget,uint32_t now,bool maneuver) {
@@ -125,16 +153,9 @@ static inline float BalanceRecovery_Distance(const BalanceRecovery *s,float ordi
     return s->active?fmaxf(ordinary,s->distance_limit):ordinary;
 }
 
-/* Enter the existing bounded recovery before the ordinary speed interlock.
- * Both velocities are measured/reference values; no sensor is rewritten. */
-static inline void BalanceRecovery_Reserve(BalanceRecovery *s,bool allow,float speed,float reference,
- float position,float budget,uint32_t now){
- if(!allow||s->active||!s->primed||!isfinite(speed)||!isfinite(reference)||
-    !isfinite(position)||!isfinite(budget))return;
- float error=speed-reference;
- if(fabsf(reference)>.55f&&fabsf(speed)>.78f&&fabsf(error)>.04f&&speed*error>0){
-  s->active=true;s->primed=false;s->quiet=0;s->started_ms=now;
-  if(s->episodes<65535U)s->episodes++;
-  s->distance_limit=fminf(1.0f,fmaxf(budget,fabsf(position)+.80f));
- }
-}
+/* RT39: the separate `BalanceRecovery_Reserve` (|v_ref|>0.55, |v|>0.78,
+ * |v-v_ref|>0.04, gated on |pitch|>5 or |gyro|>60) is removed. It was the same
+ * guard as above with a smaller margin and a lean gate, and the lean gate could
+ * not stop a straight-line runaway on a flat body. One ceiling-based guard now
+ * covers both, so there is a single place where "is this a disturbance" is
+ * decided. */
