@@ -1,7 +1,13 @@
 # Bàn giao đồ án TWIP — 19/11/2026 (bản RT40)
 
 # (dòng dưới là bản hiện hành RT41)
-> **Bản hiện hành: STM32 `BAL-20261120-R12-8DIR-RT43-MAX` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT43-MAX-NET43`.**
+> **Bản hiện hành: STM32 `BAL-20261120-R12-8DIR-RT44-TURN` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT44-TURN-NET44`.**
+> **RT44 (20/11):** log RT42+RT41 ở MAX 90, cùng lệnh 1,15 rad/s: yaw thực trải **0,90–1,38 rad/s**
+> (lệch 53 %), vượt tới 20 %, dao động tới 0,38 rad/s; hai hướng xấu nhất cần **bánh trái** nhanh nhất
+> (bánh trái cần ~11 % duty nhiều hơn). Sửa: hệ số dư duty nhân vào **cả tham chiếu yaw**, ngưỡng
+> 96→**92 %**, hồi ≤86 %. Chi tiết: [`Firmware/RT44_TURN_20261120/README.md`](Firmware/RT44_TURN_20261120/README.md).
+>
+> **RT43: STM32 `BAL-20261120-R12-8DIR-RT43-MAX` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT43-MAX-NET43`.**
 > **RT43 (20/11, từ log RT42 tại nhà — 148,6 s):** đường lệnh **đã đạt** (`age` p50 13 / p95 **27** /
 > p99 40 / max **54 ms**; 0 lần khe >150 ms khi giữ lệnh; `# RADIO ch=6 rssi=-24 phy=11n ws_joins=1
 > ws_leaves=0` = điện thoại không rớt lần nào) và REC1 chỉ còn **5,6 %**. Nhưng **2 lần ngã, cả hai ở
@@ -279,9 +285,9 @@ node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 
 ### 4.5 Nạp
 
-Nháy đúp `nap_rt43.bat` trong thư mục bản nạp → nhập COM của ESP32 (**bắt buộc** cho RT41/RT42). Script nạp STM32 bằng
+Nháy đúp `nap_rt44.bat` trong thư mục bản nạp → nhập COM của ESP32 (**bắt buộc** cho RT41/RT42). Script nạp STM32 bằng
 `STM32_Programmer_CLI.exe`, ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
-Kiểm sau khi nạp: banner `RT43-MAX-NET43`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
+Kiểm sau khi nạp: banner `RT44-TURN-NET44`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
 Serial ESP32 có `[UART] … @ 921600 bps` và `[NET41] … -> AP chN`, log có `crc_errors=0`.
 
 Chín bản (RT43 / RT42 / RT41 / RT40 / RT39 / RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
