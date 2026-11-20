@@ -129,6 +129,37 @@ static inline float BalanceMotion_corner_budget(float b){
     if(b>=0.0f)budget=b;
     return budget;
 }
+/* RT43 — trần MAX theo duty còn dư (đường thẳng).
+ *
+ * Log RT42 tại nhà (148,6 s, toàn bộ chạy mốc MAX 90): duty p95 0,90 với 0-33 %
+ * mẫu mỗi lượt ở >=0,96, và vượt tham chiếu tới 0,95-0,96 m/s. Hai lần ngã
+ * (t=144,69 lùi thẳng; t=235,93 nhả lệnh tiến) đều có bánh ghim 2499 rồi lệch
+ * trái/phải 0,91 so với 0,71 m/s, thân quật -55deg. Ở pack ~11,5-11,8 V, 0,90 m/s
+ * cần 93-96 % duty nên mất toàn bộ dự trữ cho vòng cân bằng.
+ *
+ * Cùng cơ chế với trần cua RT40 nhưng cho đường thẳng: khi đang chạy MAX mà có
+ * bánh >=96 % duty thì hạ tham chiếu tuyến tính (sàn 0,86 -> 0,774 m/s), hồi lại
+ * khi <=90 %. Với pack tươi (12,2 V, 0,90 chỉ cần 88 % duty) hệ số không bao giờ
+ * giảm nên MAX 90 vẫn đạt đúng mốc. Chỉ tác dụng khi KHÔNG cua (cua có trần riêng
+ * của balance_turn.h) nên cua không chậm thêm.
+ * b >= 0 de dat he so; b < 0 de doc. */
+#ifndef BALANCE_MOTION_MAXHEAD_HI
+#define BALANCE_MOTION_MAXHEAD_HI 0.96f
+#endif
+#ifndef BALANCE_MOTION_MAXHEAD_LO
+#define BALANCE_MOTION_MAXHEAD_LO 0.90f
+#endif
+#ifndef BALANCE_MOTION_MAXHEAD_FLOOR
+#define BALANCE_MOTION_MAXHEAD_FLOOR 0.86f
+#endif
+static inline float BalanceMotion_maxhead(float b){static float scale=1.0f;if(b>=0.0f)scale=b;return scale;}
+static inline float BalanceMotion_maxhead_next(float duty,bool active){
+ float sc=BalanceMotion_maxhead(-1.0f);
+ if(!active)return 1.0f;
+ if(duty>=BALANCE_MOTION_MAXHEAD_HI){if(sc>BALANCE_MOTION_MAXHEAD_FLOOR)sc-=0.004f;}
+ else if(duty<=BALANCE_MOTION_MAXHEAD_LO){if(sc<1.0f)sc+=0.002f;}
+ return sc;
+}
 static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word,
     float position,float pitch,float gyro,float speed,uint32_t now){
     if(!isfinite(position)||!isfinite(pitch)||!isfinite(gyro)||!isfinite(speed))return 0;
@@ -216,6 +247,9 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
     if(wanted!=0)s->cancel_flags=0;
     bool limited=wanted*(s->x_ref-position)>.20f;
     float speed_limit=s->recovery_limited?fminf(BALANCE_MOTION_SPEED,s->recovery_active?.25f:.50f):BALANCE_MOTION_SPEED;
+    /* RT43: at MAX, if a wheel is already at the duty ceiling the pack cannot
+     * deliver 0.90 - aim lower instead of saturating and losing the axle. */
+    if(s->speed_preset==2)speed_limit*=BalanceMotion_maxhead(-1.0f);
 #if BALANCE_MOTION_LEAD_CUT
     float target=limited?0:speed_limit*wanted;
 #else

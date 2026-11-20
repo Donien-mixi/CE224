@@ -346,6 +346,13 @@ void Robot_ControlLoop_200Hz(void) {
         BalanceTurn_headroom(BalanceTurn_headroom_next(
             fmaxf(fabsf((float)s_robot.pwm_left),fabsf((float)s_robot.pwm_right))/2499.0f,
             cmd->drive_turn!=0));
+        /* RT43: the same duty evidence also caps the straight-line MAX target: log
+         * RT42 at home ran the whole session at MAX 90 with duty p95 0.90 and fell
+         * twice while the axle rode0.95-0.96. Only while NOT turning, so the corner
+         * budget keeps its own (RT40) scale. */
+        BalanceMotion_maxhead(BalanceMotion_maxhead_next(
+            fmaxf(fabsf((float)s_robot.pwm_left),fabsf((float)s_robot.pwm_right))/2499.0f,
+            cmd->drive_turn==0&&cmd->drive_speed_preset==2&&fabsf(bal_motion.v_ref)>.80f));
         unsigned drive_mode=BalanceRecovery_DriveMode(&bal_recovery,!bal_startup.active&&!just_armed,
             s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,bal_motion.v_ref);
         if(!BalanceMotion8_Update(&bal_motion,&bal_turn,

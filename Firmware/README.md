@@ -1,6 +1,6 @@
-# Tám bản firmware — chọn bản nào và nạp thế nào
+# Chín bản firmware — chọn bản nào và nạp thế nào
 
-Tám bản nằm sẵn trong tám thư mục con, **mỗi bản có đủ file cho cả STM32 và ESP32-S3**. Chỉ nạp khi
+Chín bản nằm sẵn trong chín thư mục con, **mỗi bản có đủ file cho cả STM32 và ESP32-S3**. Chỉ nạp khi
 hai board cùng một bản: gateway đọc build ID từ STM32 (`$BINFO`), lệch bản là trang web khoá điều
 khiển.
 
@@ -8,21 +8,23 @@ khiển.
 
 | # | Bản | Build ID (STM32 / ESP32) | Tốc độ | Có gì | Khi nào chọn | Đã kiểm trên xe |
 |---|---|---|---|---|---|---|
-| **1** | **RT42-RF / NET42** (hiện hành) | `BAL-20261120-R12-8DIR-RT42-RF` / `TWIP-WEB-20261120-…-RT42-RF-NET42` | 50 / 80 / **90** cm/s | RT41 + **log mang dòng `# RADIO ch= rssi= phy=`**, **đổi kênh AP khi đang đỗ** (`POST /network-channel`), **lease lệnh 350→500 ms**, **poll 200 ms** | Mặc định. Dùng khi chạy ở nơi nhiều Wi-Fi/BT | **Có** — log RT41 50 s + 41/41 host test |
-| **2** | **RT41-LINK / NET41** | `BAL-20261120-R12-8DIR-RT41-LINK` / `TWIP-WEB-20261120-…-RT41-LINK-NET41` | 50 / 80 / **90** cm/s | RT40 + **chỉ đường truyền**: UART **921600** (cả hai board, có `.ioc`), **chọn kênh Wi-Fi** 1/6/11 ít nhiễu | Mặc định. Nhanh hơn RT40 2,6 ms mỗi lệnh, UART bận 53 %→6,7 % | **Chưa** — 41/41 host test + build trùng hash |
-| **3** | **RT40-HOLD / NET40** | `BAL-20261119-R12-8DIR-RT40-HOLD` / `TWIP-WEB-20261119-…-RT40-HOLD-NET40` | 50 / 80 / **90** cm/s | RT39 + **ngưỡng nghiêng khi có lệnh 12°→16°** (hết REC1 vì độ ngả của cú phanh), **hạn REC1 4 s→8 s** (không cắt motor khi bị giữ), **trần cua theo duty** (không để bánh ghim 100 % khi cua) | Mặc định. Sửa lỗi từ 8 log RT39: ngập ngừng khi phanh, cắt motor khi đẩy, ngã khi rẽ ở 90 | **Có** — 8 log RT39 (1 100 s) + 41/41 host test + mô phỏng |
-| **4** | **RT39-CORNER / NET39** | `BAL-20261119-…-RT39-CORNER` / `TWIP-WEB-20261119-…-RT39-CORNER-NET39` | 50 / 80 / **90** cm/s | RT38 + một guard vượt tốc độ theo trần interlock + trần cua 0,87 (cua 72 cm/s) | Bản đã đo 8 log; chính 8 log đó cho thấy 3 lỗi mà RT40 sửa | **Có** — 8 log (1 100 s), 3 lần ngã ở 90 |
-| **5** | **RT38-CONT / NET38** | `BAL-20261118-…-RT38-CONT` / `TWIP-WEB-20261118-…-RT38-CONT-NET38` | 50 / 80 / **90** cm/s | RT37 + đổi hướng liên tục (giữ lệnh 120 ms), neo mốc thay vì cắt tốc độ khi lệch 20 cm, REC1 do gyro cần 60 ms khi có lệnh | Bản đã có log `(39)` 84 s | **Có** — log `(39)`, 84 s, 0 ngã |
-| **6** | **RT37-SMOOTH / NET37** | `BAL-20261118-…-RT37-SMOOTH` / `TWIP-WEB-20261118-…-NET37` | 50 / 80 / **90** cm/s | RT36 + ngưỡng nghiêng governor 10°/13° | Bản thử ngay trước RT38 | **Chưa** |
-| **7** | **RT34-CORNER / NET35** | `BAL-20261117-…-RT34-CORNER` / `TWIP-WEB-20261117-…-NET35` | 50 / 80 / **90** cm/s | Ba mức + bù bánh trái 110 PWM + trần cua 0,80 | Khi RT39/RT38 có hành vi lạ; đây là bản **đã có log 173 s, 0 ngã** | **Có** — log 17/11 |
-| **8** | **RT29-NOCUT / NET30** (dự phòng) | `BAL-20261115-…-RT29-NOCUT` / `TWIP-WEB-20261115-…-NET30` | 50 / **72 / 80** cm/s | Bản cũ, **không** có bù bánh trái, **không** có trần cua, **không** có mức 90 | Khi cần quay về bản đơn giản nhất từng chạy ổn; hoặc để so sánh | **Có** — nhiều lượt trước 15/11 |
+| **1** | **RT43-MAX / NET43** (hiện hành) | `BAL-20261120-R12-8DIR-RT43-MAX` / `TWIP-WEB-20261120-…-RT43-MAX-NET43` | 50 / 80 / **90** cm/s | RT42 + **trần MAX theo duty** (bánh ≥96 % duty thì hạ tham chiếu, sàn 0,774 m/s; pack tươi vẫn đạt 0,90) | Mặc định. Hết ngã ở MAX 90 (log RT42 ngã 2 lần) | **Có** — log RT42 148 s + 42/42 host test |
+| **2** | **RT42-RF / NET42** | `BAL-20261120-R12-8DIR-RT42-RF` / `TWIP-WEB-20261120-…-RT42-RF-NET42` | 50 / 80 / **90** cm/s | RT41 + **log mang dòng `# RADIO ch= rssi= phy=`**, **đổi kênh AP khi đang đỗ** (`POST /network-channel`), **lease lệnh 350→500 ms**, **poll 200 ms** | Mặc định. Dùng khi chạy ở nơi nhiều Wi-Fi/BT | **Có** — log RT41 50 s + 41/41 host test |
+| **3** | **RT41-LINK / NET41** | `BAL-20261120-R12-8DIR-RT41-LINK` / `TWIP-WEB-20261120-…-RT41-LINK-NET41` | 50 / 80 / **90** cm/s | RT40 + **chỉ đường truyền**: UART **921600** (cả hai board, có `.ioc`), **chọn kênh Wi-Fi** 1/6/11 ít nhiễu | Mặc định. Nhanh hơn RT40 2,6 ms mỗi lệnh, UART bận 53 %→6,7 % | **Chưa** — 41/41 host test + build trùng hash |
+| **4** | **RT40-HOLD / NET40** | `BAL-20261119-R12-8DIR-RT40-HOLD` / `TWIP-WEB-20261119-…-RT40-HOLD-NET40` | 50 / 80 / **90** cm/s | RT39 + **ngưỡng nghiêng khi có lệnh 12°→16°** (hết REC1 vì độ ngả của cú phanh), **hạn REC1 4 s→8 s** (không cắt motor khi bị giữ), **trần cua theo duty** (không để bánh ghim 100 % khi cua) | Mặc định. Sửa lỗi từ 8 log RT39: ngập ngừng khi phanh, cắt motor khi đẩy, ngã khi rẽ ở 90 | **Có** — 8 log RT39 (1 100 s) + 41/41 host test + mô phỏng |
+| **5** | **RT39-CORNER / NET39** | `BAL-20261119-…-RT39-CORNER` / `TWIP-WEB-20261119-…-RT39-CORNER-NET39` | 50 / 80 / **90** cm/s | RT38 + một guard vượt tốc độ theo trần interlock + trần cua 0,87 (cua 72 cm/s) | Bản đã đo 8 log; chính 8 log đó cho thấy 3 lỗi mà RT40 sửa | **Có** — 8 log (1 100 s), 3 lần ngã ở 90 |
+| **6** | **RT38-CONT / NET38** | `BAL-20261118-…-RT38-CONT` / `TWIP-WEB-20261118-…-RT38-CONT-NET38` | 50 / 80 / **90** cm/s | RT37 + đổi hướng liên tục (giữ lệnh 120 ms), neo mốc thay vì cắt tốc độ khi lệch 20 cm, REC1 do gyro cần 60 ms khi có lệnh | Bản đã có log `(39)` 84 s | **Có** — log `(39)`, 84 s, 0 ngã |
+| **7** | **RT37-SMOOTH / NET37** | `BAL-20261118-…-RT37-SMOOTH` / `TWIP-WEB-20261118-…-NET37` | 50 / 80 / **90** cm/s | RT36 + ngưỡng nghiêng governor 10°/13° | Bản thử ngay trước RT38 | **Chưa** |
+| **8** | **RT34-CORNER / NET35** | `BAL-20261117-…-RT34-CORNER` / `TWIP-WEB-20261117-…-NET35` | 50 / 80 / **90** cm/s | Ba mức + bù bánh trái 110 PWM + trần cua 0,80 | Khi RT39/RT38 có hành vi lạ; đây là bản **đã có log 173 s, 0 ngã** | **Có** — log 17/11 |
+| **9** | **RT29-NOCUT / NET30** (dự phòng) | `BAL-20261115-…-RT29-NOCUT` / `TWIP-WEB-20261115-…-NET30` | 50 / **72 / 80** cm/s | Bản cũ, **không** có bù bánh trái, **không** có trần cua, **không** có mức 90 | Khi cần quay về bản đơn giản nhất từng chạy ổn; hoặc để so sánh | **Có** — nhiều lượt trước 15/11 |
 
 Bảng chọn theo triệu chứng:
 
 | Hiện tượng | Nên thử |
 |---|---|
 | Xe ngập ngừng khi phanh/đổi hướng, hoặc cắt motor khi bị đẩy | Nạp **RT40** hoặc **RT41** |
-| Chạy ở nơi nhiều Wi-Fi/Bluetooth, lệnh chập chờn | Nạp **RT42**; xem dòng `# RADIO` trong log rồi `POST /network-channel` khi xe đang đỗ |
+| Xe ngã khi để MAX 90 (pack yếu) | Nạp **RT43**: trần MAX tự hạ khi bánh sát 100 % duty |
+| Chạy ở nơi nhiều Wi-Fi/Bluetooth, lệnh chập chờn | Nạp **RT42/R43**; xem dòng `# RADIO` trong log rồi `POST /network-channel` khi xe đang đỗ |
 | Trang điều khiển/telemetry có vẻ chậm, Wi-Fi chập chờn | Nạp **RT41** hoặc **RT42**. **Phải nạp cả hai board** |
 | RT40 vẫn ngã khi rẽ ở 90 | Ghi lại duty bánh trái/phải lúc ngã; nếu một bánh vẫn 1,00 thì là giới hạn cơ khí bánh trái |
 | RT39 khựng khi cua ở 80 | Nạp **RT40** |
@@ -43,7 +45,7 @@ Bảng chọn theo triệu chứng:
 | `ESP32_*.boot_app0.bin` | ESP32 tại `0xe000` |
 | `ESP32_*.app.bin` | ESP32 tại `0x10000` (ứng dụng + web) |
 | `SHA256.json` | Hash 7 tệp trên — kiểm trước khi nạp |
-| `SOURCE_SHA256.json` | Hash các tệp nguồn đã sinh ra bản đó (chỉ RT42 khớp source hiện tại) |
+| `SOURCE_SHA256.json` | Hash các tệp nguồn đã sinh ra bản đó (chỉ RT43 khớp source hiện tại) |
 | `nap_*.bat` | Nạp tự động cả hai board |
 
 ## 3. Chuẩn bị
@@ -55,7 +57,7 @@ Bảng chọn theo triệu chứng:
 5. Kiểm hash (tuỳ chọn nhưng nên làm):
 
 ```powershell
-cd D:\DA_HTN\Firmware\RT42_RF_20261120
+cd D:\DA_HTN\Firmware\RT43_MAX_20261120
 Get-Content SHA256.json | ConvertFrom-Json | ForEach-Object {
   $_.PSObject.Properties | ForEach-Object {
     $f=$_.Name; $h=(Get-FileHash $f -Algorithm SHA256).Hash.ToLower()
@@ -72,6 +74,7 @@ Nháy đúp script trong thư mục bản muốn nạp:
 
 | Bản | Script |
 |---|---|
+| RT43-MAX | `RT43_MAX_20261120\nap_rt43.bat` |
 | RT42-RF | `RT42_RF_20261120\nap_rt42.bat` (**bắt buộc** nạp cả ESP32) |
 | RT41-LINK | `RT41_LINK_20261120\nap_rt41.bat` (**bắt buộc** nạp cả ESP32) |
 | RT40-HOLD | `RT40_HOLD_20261119\nap_rt40.bat` |
@@ -86,7 +89,7 @@ Nếu **bỏ trống COM**, script chỉ nạp STM32.
 
 ### Cách B — menu chọn bản
 
-Nháy đúp `Firmware\nap_chon_ban.bat`, chọn `1`…`8` rồi nhập COM. Menu gọi đúng
+Nháy đúp `Firmware\nap_chon_ban.bat`, chọn `1`…`9` rồi nhập COM. Menu gọi đúng
 script ở cách A.
 
 ### Cách C — nạp tay
@@ -95,19 +98,19 @@ STM32 (thay tên tệp theo bản):
 
 ```powershell
 & "C:\ST\STM32CubeIDE_2.1.1\STM32CubeIDE\plugins\com.st.stm32cube.ide.mcu.externaltools.cubeprogrammer.win32_2.2.400.202601091506\tools\bin\STM32_Programmer_CLI.exe" `
-  -c port=SWD -w "D:\DA_HTN\Firmware\RT42_RF_20261120\STM32_BAL_R12_RT42_RF.hex" -v -rst
+  -c port=SWD -w "D:\DA_HTN\Firmware\RT43_MAX_20261120\STM32_BAL_R12_RT43_MAX.hex" -v -rst
 ```
 
 ESP32 (đổi tên tệp theo bản và COM):
 
 ```powershell
-$rel='D:\DA_HTN\Firmware\RT42_RF_20261120'
+$rel='D:\DA_HTN\Firmware\RT43_MAX_20261120'
 $es='C:\Users\DONG NHIEN\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\5.3.1\esptool.exe'
 & $es --chip esp32s3 --port COM3 --baud 921600 write-flash `
-  0x0 "$rel\ESP32_RT42_RF_NET42.bootloader.bin" `
-  0x8000 "$rel\ESP32_RT42_RF_NET42.partitions.bin" `
-  0xe000 "$rel\ESP32_RT42_RF_NET42.boot_app0.bin" `
-  0x10000 "$rel\ESP32_RT42_RF_NET42.app.bin"
+  0x0 "$rel\ESP32_RT43_MAX_NET43.bootloader.bin" `
+  0x8000 "$rel\ESP32_RT43_MAX_NET43.partitions.bin" `
+  0xe000 "$rel\ESP32_RT43_MAX_NET43.boot_app0.bin" `
+  0x10000 "$rel\ESP32_RT43_MAX_NET43.app.bin"
 ```
 
 > Dùng **esptool v5**: lệnh là `write-flash` (có gạch nối). Bản v3 cũ dùng `write_flash`.
@@ -115,9 +118,9 @@ $es='C:\Users\DONG NHIEN\AppData\Local\Arduino15\packages\esp32\tools\esptool_py
 ### Cách D — nạp bằng IDE (Build + Run / Upload)
 
 Nếu muốn mở **STM32CubeIDE** bấm Build → Run và mở **Arduino IDE** bấm Upload thay vì dùng script,
-xem hướng dẫn riêng: [`../Docs/Nap_Bang_IDE.md`](../Docs/Nap_Bang_IDE.md). Tám bản đều có source sẵn
-để mở (RT42 dùng cây hiện tại; RT41/RT40/RT39/RT38/RT37/RT34/RT29 dùng snapshot trong `.build\ide_src`,
-tạo lại bằng `tools\ide_sources.ps1`).
+xem hướng dẫn riêng: [`../Docs/Nap_Bang_IDE.md`](../Docs/Nap_Bang_IDE.md). Chín bản đều có source sẵn để mở
+(RT43 dùng cây hiện tại; RT42/RT41/RT40/RT39/RT38/RT37/RT34/RT29 dùng snapshot trong `.build\ide_src`, tạo lại
+bằng `tools\ide_sources.ps1`).
 
 ## 5. Kiểm sau khi nạp
 
@@ -127,6 +130,7 @@ tạo lại bằng `tools\ide_sources.ps1`).
 
 | Bản | Banner | Nút tốc độ |
 |---|---|---|
+| RT43 | `RT43-MAX-NET43` | 50 / 80 / MAX 90 |
 | RT42 | `RT42-RF-NET42` | 50 / 80 / MAX 90 |
 | RT41 | `RT41-LINK-NET41` | 50 / 80 / MAX 90 |
 | RT40 | `RT40-HOLD-NET40` | 50 / 80 / MAX 90 |

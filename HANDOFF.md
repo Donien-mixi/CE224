@@ -1,7 +1,17 @@
 # Bàn giao đồ án TWIP — 19/11/2026 (bản RT40)
 
 # (dòng dưới là bản hiện hành RT41)
-> **Bản hiện hành: STM32 `BAL-20261120-R12-8DIR-RT42-RF` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT42-RF-NET42`.**
+> **Bản hiện hành: STM32 `BAL-20261120-R12-8DIR-RT43-MAX` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT43-MAX-NET43`.**
+> **RT43 (20/11, từ log RT42 tại nhà — 148,6 s):** đường lệnh **đã đạt** (`age` p50 13 / p95 **27** /
+> p99 40 / max **54 ms**; 0 lần khe >150 ms khi giữ lệnh; `# RADIO ch=6 rssi=-24 phy=11n ws_joins=1
+> ws_leaves=0` = điện thoại không rớt lần nào) và REC1 chỉ còn **5,6 %**. Nhưng **2 lần ngã, cả hai ở
+> MAX 90**: duty p95 0,90 (tới 33 % mẫu ≥0,96), vượt tham chiếu 0,95–0,96, bánh ghim 2499 rồi lệch
+> trái/phải (0,91 vs 0,71 m/s) → thân quật ±55°. Pack ~11,6 V không đủ cho 0,90 m/s. RT43 thêm
+> **trần MAX theo duty ở đường thẳng** (bánh ≥96 % → hạ tham chiếu, sàn 0,86 = 0,774 m/s; pack tươi
+> ≤90 % duty thì không can thiệp nên vẫn đạt 0,90). Chi tiết:
+> [`Firmware/RT43_MAX_20261120/README.md`](Firmware/RT43_MAX_20261120/README.md).
+>
+> **RT42: STM32 `BAL-20261120-R12-8DIR-RT42-RF` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT42-RF-NET42`.**
 > **RT42 (20/11, chống nhiễu 2.4 GHz):** log RT41 (50,4 s) cho `age` p50 13 / p95 29 / p99 45 ms, `drops=0`,
 > không lần nào >150 ms khi đang có lệnh → đường truyền đã ổn, thiếu là khả năng chịu nhiễu. RT42: (1) mỗi log
 > mang dòng `# RADIO ch= rssi= phy= ws_joins= ws_leaves= ap_joins= ap_leaves= ap_reason=`; (2) `/network-status`
@@ -212,7 +222,8 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 
 | Bản | Thư mục | Khi nào dùng |
 |---|---|---|
-| **RT42-RF / NET42** (hiện hành) | `Firmware/RT42_RF_20261120/` | Chạy ở nơi nhiều sóng; **phải nạp cả hai board** |
+| **RT43-MAX / NET43** (hiện hành) | `Firmware/RT43_MAX_20261120/` | Chạy bình thường; hết ngã ở MAX 90 |
+| RT42-RF / NET42 (trước) | `Firmware/RT42_RF_20261120/` | Chống nhiễu 2.4 GHz, log `# RADIO` |
 | RT41-LINK / NET41 (trước) | `Firmware/RT41_LINK_20261120/` | UART 921600, kênh chọn lúc khởi động |
 | RT40-HOLD / NET40 (trước) | `Firmware/RT40_HOLD_20261119/` | Luật điều khiển y hệt RT41 nhưng UART 115200, kênh AP 6 |
 | RT39-CORNER / NET39 (trước) | `Firmware/RT39_CORNER_20261119/` | Bản đã có 8 log (1 100 s) — nguồn của 3 lỗi RT40 sửa |
@@ -225,7 +236,7 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 Kiểm ngày 20/11 (RT41): **7/7** tệp binary khớp `SHA256.json`; **15/15** tệp nguồn khớp
 `SOURCE_SHA256.json` → bản `.bin/.hex` được build từ **đúng source hiện tại**. Build lại trong
 workspace CubeIDE `D:\CubeIDE_ws` ra `.hex` **trùng hash** bản đóng gói (`4b1efacf…`).
-`test_build_id_sync` PASS: 9 literal trên 54 tệp. Build IDE trong workspace sạch
+`test_build_id_sync` PASS: 9 literal trên 55 tệp. Build IDE trong workspace sạch
 `D:\CubeIDE_ws_verify` (workspace chính đang mở trong CubeIDE) ra hex `d65d152c…` trùng bản đóng gói.
 
 ### 4.3 Build
@@ -268,15 +279,16 @@ node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 
 ### 4.5 Nạp
 
-Nháy đúp `nap_rt42.bat` trong thư mục bản nạp → nhập COM của ESP32 (**bắt buộc** cho RT41/RT42). Script nạp STM32 bằng
+Nháy đúp `nap_rt43.bat` trong thư mục bản nạp → nhập COM của ESP32 (**bắt buộc** cho RT41/RT42). Script nạp STM32 bằng
 `STM32_Programmer_CLI.exe`, ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
-Kiểm sau khi nạp: banner `RT42-RF-NET42`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
+Kiểm sau khi nạp: banner `RT43-MAX-NET43`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
 Serial ESP32 có `[UART] … @ 921600 bps` và `[NET41] … -> AP chN`, log có `crc_errors=0`.
 
-Tám bản (RT42 / RT41 / RT40 / RT39 / RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
+Chín bản (RT43 / RT42 / RT41 / RT40 / RT39 / RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
 banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — hoặc chạy menu
 `Firmware/nap_chon_ban.bat`. Nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload):
-[`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md) — workspace RT42 là `D:\CubeIDE_ws`, RT41 là
+[`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md) — workspace RT43 là `D:\CubeIDE_ws`, RT42 là
+`D:\CubeIDE_ws_rt42`, RT41 là
 `D:\CubeIDE_ws_rt41`, RT40 là `D:\CubeIDE_ws_rt40`, RT39 là `D:\CubeIDE_ws_rt39`, RT38 là `D:\CubeIDE_ws_rt38`.
 
 ## 5. Quy tắc vận hành
