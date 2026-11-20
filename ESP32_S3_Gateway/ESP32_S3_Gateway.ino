@@ -313,6 +313,11 @@ void loop() {
     xSemaphoreGive(captureMutex);
     if(balancing){Serial1.print("$PING*\r\n");lastKeepalive=tick;}
   }
+  /* RT42: the phone's RSSI/PHY mode is the only way to tell interference from
+   * distance. Refresh it at 0.5 Hz; it is reported by /network-status and in the
+   * log header, so every future log carries the radio evidence. */
+  static uint32_t lastRadio=0;
+  if(tick-lastRadio>=2000){lastRadio=tick;gatewayPollClient();}
   /* 1 Hz liveness frame: a phone whose Wi-Fi silently died can no longer keep a
    * half-open command channel that still looks connected to the page. */
   if(tick-lastWsBeat>=1000){

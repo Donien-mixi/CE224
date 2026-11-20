@@ -40,12 +40,12 @@ void setupBalanceRoutes() {
     }
     xSemaphoreTake(captureMutex,portMAX_DELAY);
     bool fresh=balanceSeen && millis()-balanceReceived<500;
-    bool matched=!strncmp(balanceMeta,"$BINFO,BAL-20261120-R12-8DIR-RT41-LINK,",sizeof("$BINFO,BAL-20261120-R12-8DIR-RT41-LINK,")-1);
+    bool matched=!strncmp(balanceMeta,"$BINFO,BAL-20261120-R12-8DIR-RT42-RF,",sizeof("$BINFO,BAL-20261120-R12-8DIR-RT42-RF,")-1);
     bool running=balanceLatest.state==3||balanceLatest.state==7;
     if(action!="calib" && !sessionOK) message="Trang chưa có kênh điều khiển đang hoạt động. Giữ trang này mở và kết nối lại Wi-Fi.";
     else if(action!="calib" && !revisionOK) message="Đã có lệnh DỪNG sau yêu cầu cũ. Chờ thông số mới rồi bấm lại nếu muốn chạy.";
     else if(!fresh) message="Chưa nhận dữ liệu mới từ STM32. Kiểm tra nguồn, UART hoặc chế độ đo linh kiện.";
-    else if(!matched) message="STM32 chưa báo BAL-20261120-R12-8DIR-RT41-LINK. Cần nạp đúng phiên bản STM32.";
+    else if(!matched) message="STM32 chưa báo BAL-20261120-R12-8DIR-RT42-RF. Cần nạp đúng phiên bản STM32.";
     else if(running) message="Motor đang chạy. Bấm DỪNG trước khi đổi bài.";
     else if(balanceDownloading) message="Đang tải log. Chờ tải xong.";
     else if(action=="arm" && (controller!=balanceLatest.controller || balanceMetaController()!=controller)) message="Chế độ đã thay đổi hoặc STM32 chưa xác nhận cấu hình. Chờ thông số mới rồi chọn/bấm lại.";
@@ -123,10 +123,12 @@ void setupBalanceRoutes() {
     uint8_t logController=balanceFrames[0].controller;
     for(size_t i=1;i<count;i++)if(balanceFrames[i].controller!=logController){logController=0;break;}
     String filename=logController?String("twip_balance_R")+String(logController)+".txt":"twip_balance_MIXED.txt";
-    String header="# TWIP_BALANCE_RT4_V1; frame122 sync0x60a5 50Hz; build BAL-20261120-R12-8DIR-RT41-LINK\n# last_live_meta (not necessarily the configuration of every stored row): ";
+    String header="# TWIP_BALANCE_RT4_V1; frame122 sync0x60a5 50Hz; build BAL-20261120-R12-8DIR-RT42-RF\n# last_live_meta (not necessarily the configuration of every stored row): ";
     header+=balanceMeta;
 #ifdef ARDUINO
     header+="\n# GATEWAY_NET1 build="+String(TWIP_WEB_BUILD)+" boot="+String(gatewayBootId)+" reset="+String(gatewayResetText(gatewayResetReason))+" heap_min="+String(ESP.getMinFreeHeap())+" archive_saved="+String((unsigned long)archiveSaved)+" archive_error="+String((unsigned long)archiveError)+"\n";
+    /* RT42: radio evidence travels with the log: AP channel, the charged phone's RSSI and the rate mode it negotiated. This is what separates "interference" from "too far". */
+    header+="# RADIO ch="+String(gatewayApChannel)+" rssi="+String((int)gatewayClientRssi)+" phy="+String(gatewayPhyText(gatewayClientPhy))+" ws_joins="+String((unsigned long)gatewayWsConnected)+" ws_leaves="+String((unsigned long)gatewayWsDisconnected)+" ap_joins="+String((unsigned long)gatewayApConnect)+" ap_leaves="+String((unsigned long)gatewayApDisconnect)+" ap_reason="+String((unsigned long)gatewayApReason)+"\n";
 #endif
 header+="\n# RT19 HOLD80: third preset is80cm/s (was95). Measured floor slope puts PWM2499 at ~0.96m/s, so95 needed97-99%duty and left no balance authority. Post-turn braking now follows the measured yaw for at most0.6s and then freezes the heading anchor; the old rule required 100ms below0.08rad/s with no bound, so a residual rate kept the anchor chasing the body (log(13)(2): +59deg in4.9s on a straight command). After a release the position anchor is captured once more200ms after the brake silence, when the body is genuinely still; log(13)(2) showed a9cm roll-back after the old early capture, which left a permanent offset and a steady +240PWM push. RT18 motion-ready, blockage evidence, governor, R12 gain/observer/allocator, encoder signs and wiring are unchanged.\n";
 header+="\n# RT20 POSTREC: the post-REC1 speed softening is bounded to1.5s. Previously a press made while REC1 was still active consumed the new-gesture evidence, so the vehicle stayed capped at0.50mps for the rest of the run (log L2: 7s at0.50 with preset80 after a190dps bump). A direction/turn change still clears it immediately; otherwise the selected preset returns1.5s after recovery ends. No gain/observer/allocator/encoder change.\n";

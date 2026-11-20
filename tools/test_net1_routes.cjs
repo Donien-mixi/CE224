@@ -18,10 +18,13 @@ const ext=String.raw`
 #define portEXIT_CRITICAL(x) ((void)x)
 int wifiHealthMux;
 bool controlIdentity(long c,long t){return identity&&c==0&&t==123;}
-unsigned gatewayBootId=8,gatewayResetReason=9,gatewayApConnect=1,gatewayApDisconnect=2,gatewayApStop=0,gatewayApReason=4,gatewayWsConnected=1,gatewayWsDisconnected=1,gatewayLoopGapMax=40;uint8_t gatewayApChannel=6;
+unsigned gatewayBootId=8,gatewayResetReason=9,gatewayApConnect=1,gatewayApDisconnect=2,gatewayApStop=0,gatewayApReason=4,gatewayWsConnected=1,gatewayWsDisconnected=1,gatewayLoopGapMax=40;uint8_t gatewayApChannel=6;int8_t gatewayClientRssi=-52;uint8_t gatewayClientPhy=3;const char*gatewayPhyText(uint8_t p){return p==3?"11n":p==1?"11b":"none";}
 const char*gatewayResetText(unsigned){return "brownout";}
+#define GATEWAY_AP_SCAN_MS_PER_CHANNEL 60
+#define WIFI_SECOND_CHAN_NONE 0
+int esp_wifi_set_channel(unsigned char,unsigned char){return 0;}
 struct{unsigned getFreeHeap(){return 100000;}unsigned getMinFreeHeap(){return 90000;}unsigned getFreePsram(){return 1000000;}}ESP;
-struct{unsigned softAPgetStationNum(){return 1;}}WiFi;
+struct{unsigned softAPgetStationNum(){return 1;}int scanNetworks(bool,bool,bool,uint32_t){return 0;}int channel(int){return 1;}}WiFi;
 struct{int active=-1;}jobLogs;
 bool archiveMounted=true;unsigned archiveError=0,archiveSaved=3,archiveCount=1;volatile unsigned char archiveFormatState=0;
 char archiveCurrentName[40]={};

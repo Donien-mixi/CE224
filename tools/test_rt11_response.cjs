@@ -14,6 +14,6 @@ int main(void){
  for(int i=0;i<220;i++){now+=5;yaw+=t.w_ref*.005f;assert(BalanceMotion8_Update(&s,&t,true,4U*(i+151),-1,0,0,0,0,yaw,t.w_ref,now));}
  assert(fabsf(t.w_ref+2.4f)<.0001f);
  // Lost movement refresh still requires release; PING cannot refresh this word.
- uint32_t word=s.last_word;now+=351;assert(BalanceMotion8_Update(&s,&t,true,word,-1,0,0,0,0,yaw,0,now));assert(t.release_required&&t.w_ref==0);
+ uint32_t word=s.last_word;now+=BALANCE_MOTION_STALE_MS+1U;assert(BalanceMotion8_Update(&s,&t,true,word,-1,0,0,0,0,yaw,0,now));assert(t.release_required&&t.w_ref==0);
  puts("PASS RT11: preset2(0.90) target/ramp, reverse zero<=1s, yaw ramp<=0.75s/reversal<=1.1s, movement lease retained.");}
 `;f.writeFileSync('.build/rt11_response/test.c',source);let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror','-IXe_Can_Bang/Core/Inc','.build/rt11_response/test.c','-lm','-o','.build/rt11_response/test.exe'],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);r=cp.spawnSync('.build/rt11_response/test.exe',[],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);process.stdout.write(r.stdout);

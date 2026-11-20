@@ -12,6 +12,15 @@
  * 0.80 o giua can duty0.790@12.2V /0.823@11.7V /0.859@11.2V. */
 #define BALANCE_MOTION_SPEED (s->speed_preset==2? .90f:s->speed_preset? .80f:.50f)
 #endif
+/* RT42: lease cua lenh dieu khien. Truoc day350ms: mot cu nghen song Wi-Fi 300-400ms
+ * (nhieu AP, Bluetooth, camera2.4GHz) lam lenh bi coi la "mat" va xe phanh giua
+ * luc dang chay. Do tren log RT41: khoang cach hai goi lenh p99=50ms nhung da co
+ * mot lan142ms; trong phong dong co the vuot350ms. Nang len500ms chi doi 150ms
+ * phanh khi mat ket noi that, trong khi cac chan an toan khac (goc, quang, interlock,
+ * heartbeat10s) khong doi. */
+#ifndef BALANCE_MOTION_STALE_MS
+#define BALANCE_MOTION_STALE_MS 500U
+#endif
 #ifndef BALANCE_MOTION_ACCEL
 #define BALANCE_MOTION_ACCEL (s->speed_preset?(fabsf(old)>.50f?.40f:.70f):(fabsf(old)>.50f?.30f:.60f))
 #endif
@@ -126,7 +135,7 @@ static inline int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word
     if(word!=s->last_word){s->last_word=word;s->last_ms=now;}
     unsigned code=word&3U;if(code>2U)return 0;
     int dir=code==1?1:code==2?-1:0;
-    bool fresh=(word>>2)>0U&&(uint32_t)(now-s->last_ms)<350U;
+    bool fresh=(word>>2)>0U&&(uint32_t)(now-s->last_ms)<BALANCE_MOTION_STALE_MS;
     if(!fresh&&dir!=0)s->release_required=true;
     /* Inhibit (startup/recovery) only pauses the trajectory: the reference is
      * held on the body and v_ref ramps to zero, so the SAME held press resumes

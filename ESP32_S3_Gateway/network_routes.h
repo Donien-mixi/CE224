@@ -19,15 +19,46 @@ static void setupNetworkRoutes(){
   uint32_t joins,leaves,stops,reason;
   portENTER_CRITICAL(&wifiHealthMux);joins=gatewayApConnect;leaves=gatewayApDisconnect;stops=gatewayApStop;reason=gatewayApReason;portEXIT_CRITICAL(&wifiHealthMux);
   char b[1024];snprintf(b,sizeof(b),
-   "{\"boot_id\":%lu,\"reset_code\":%lu,\"reset_reason\":\"%s\",\"uptime_ms\":%lu,\"heap_free\":%u,\"heap_min\":%u,\"psram_free\":%u,\"ap_clients\":%u,\"ap_joins\":%lu,\"ap_leaves\":%lu,\"ap_stops\":%lu,\"ap_reason\":%lu,\"ws_joins\":%lu,\"ws_leaves\":%lu,\"loop_gap_max_ms\":%lu,\"channel\":%u,\"archive_ready\":%s,\"archive_error\":\"%s\",\"archive_saved\":%lu,\"archives\":%u,\"archive_format\":%u}",
+   "{\"boot_id\":%lu,\"reset_code\":%lu,\"reset_reason\":\"%s\",\"uptime_ms\":%lu,\"heap_free\":%u,\"heap_min\":%u,\"psram_free\":%u,\"ap_clients\":%u,\"ap_joins\":%lu,\"ap_leaves\":%lu,\"ap_stops\":%lu,\"ap_reason\":%lu,\"ws_joins\":%lu,\"ws_leaves\":%lu,\"loop_gap_max_ms\":%lu,\"channel\":%u,\"rssi\":%d,\"phy\":\"%s\",\"archive_ready\":%s,\"archive_error\":\"%s\",\"archive_saved\":%lu,\"archives\":%u,\"archive_format\":%u}",
    (unsigned long)gatewayBootId,(unsigned long)gatewayResetReason,gatewayResetText(gatewayResetReason),(unsigned long)millis(),ESP.getFreeHeap(),ESP.getMinFreeHeap(),ESP.getFreePsram(),WiFi.softAPgetStationNum(),
-   (unsigned long)joins,(unsigned long)leaves,(unsigned long)stops,(unsigned long)reason,(unsigned long)gatewayWsConnected,(unsigned long)gatewayWsDisconnected,(unsigned long)gatewayLoopGapMax,(unsigned)gatewayApChannel,
+   (unsigned long)joins,(unsigned long)leaves,(unsigned long)stops,(unsigned long)reason,(unsigned long)gatewayWsConnected,(unsigned long)gatewayWsDisconnected,(unsigned long)gatewayLoopGapMax,(unsigned)gatewayApChannel,(int)gatewayClientRssi,gatewayPhyText(gatewayClientPhy),
    archiveMounted&&archiveError==0?"true":"false",archiveErrorText(),(unsigned long)archiveSaved,(unsigned)archiveCount,(unsigned)archiveFormatState);
   if(download)server.sendHeader("Content-Disposition",String("attachment; filename=twip_network_boot_")+String(gatewayBootId)+".json");
   server.sendHeader("Cache-Control","no-store");server.send(200,"application/json",b);
  };
  server.on("/network-status",HTTP_GET,[status](){status(false);});
  server.on("/network-log",HTTP_GET,[status](){status(true);});
+ /* RT42: doi kenh AP khi xe dang KHONG can bang.
+  * Ly do: kenh chon luc khoi dong co the sai vai phut sau (hang xom bat AP moi,
+  * hoac ban do den noi khac). Doi kenh lam client mat ket noi ~1-2s nen CHI cho
+  * phep khi motor dang dung (khong co khung balance moi, hoac state khong phai3/7),
+  * va khong trong luc dang tai log. */
+ server.on("/network-channel",HTTP_POST,[](){
+  bool busy;
+  xSemaphoreTake(captureMutex,portMAX_DELAY);
+  busy=balanceDownloading || (balanceSeen && (uint32_t)(millis()-balanceReceived)<=1000 &&
+       (balanceLatest.state==3||balanceLatest.state==7));
+  xSemaphoreGive(captureMutex);
+  if(busy){server.send(409,"application/json","{\"error\":\"balance_or_download_active\"}");return;}
+  int found=WiFi.scanNetworks(false,false,false,GATEWAY_AP_SCAN_MS_PER_CHANNEL);
+  static const uint8_t candidate[3]={1,6,11};
+  int cost[3]={0,0,0};
+  if(found>0){
+   for(int n=0;n<found;n++){
+    int ch=WiFi.channel(n);
+    for(int k=0;k<3;k++){int d=ch-(int)candidate[k];if(d<0)d=-d;if(d==0)cost[k]+=3;else if(d==1)cost[k]+=1;}
+   }
+  }
+  int best=0;for(int k=1;k<3;k++)if(cost[k]<cost[best])best=k;
+  uint8_t before=gatewayApChannel;
+  uint8_t want=(found>0)?candidate[best]:before;
+  bool changed=false;
+  if(want!=before&&esp_wifi_set_channel(want,WIFI_SECOND_CHAN_NONE)==ESP_OK){gatewayApChannel=want;changed=true;}
+  char b[220];snprintf(b,sizeof(b),"{\"before\":%u,\"after\":%u,\"changed\":%s,\"scan\":%d,\"ch1\":%d,\"ch6\":%d,\"ch11\":%d}",
+   (unsigned)before,(unsigned)gatewayApChannel,changed?"true":"false",found,cost[0],cost[1],cost[2]);
+  server.sendHeader("Cache-Control","no-store");server.send(200,"application/json",b);
+ });
+
  server.on("/balance-archives",HTTP_GET,[](){
   if(!archiveMounted||!archiveMutex||!archiveBuffer){server.send(503,"application/json","{\"files\":[]}");return;}
   if(xSemaphoreTake(archiveMutex,0)!=pdTRUE){server.send(503,"application/json","{\"files\":[]}");return;}

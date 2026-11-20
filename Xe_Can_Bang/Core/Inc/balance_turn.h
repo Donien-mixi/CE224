@@ -108,7 +108,7 @@ typedef struct {float psi_ref,w_ref;float lean_ref;int8_t requested;bool used,re
 static inline void BalanceTurn_Clear(BalanceTurn *t){*t=(BalanceTurn){0};}
 static inline bool BalanceMotion8_Maneuver(const BalanceMotion *s,const BalanceTurn *t,uint32_t now){
  return s->ready&&!s->cancel_flags&&!s->release_required&&!t->release_required&&
-    (uint32_t)(now-s->last_ms)<350U&&
+    (uint32_t)(now-s->last_ms)<BALANCE_MOTION_STALE_MS&&
     (s->requested!=0||t->requested!=0||s->braking||t->braking);
 }
 static inline float BalanceTurn_Approach(float old,float target,float step){return old+fmaxf(-step,fminf(step,target-old));}
@@ -174,7 +174,7 @@ static inline int BalanceMotion8_Update(BalanceMotion *s,BalanceTurn *t,unsigned
  }else s->post_rec_ticks=0U;
  if(turn<-1||turn>1||!isfinite(yaw_rate)||!isfinite(yaw)||!isfinite(t->psi_ref)||!isfinite(t->w_ref))return 0;
  uint32_t last=word!=s->last_word?now:s->last_ms;
- bool fresh=(word>>2)>0U&&(uint32_t)(now-last)<350U;
+ bool fresh=(word>>2)>0U&&(uint32_t)(now-last)<BALANCE_MOTION_STALE_MS;
  bool neutral=(word&3U)==0U&&turn==0;
  bool linear_neutral=(word&3U)==0U;
  if(permission==1U&&fresh&&s->ready&&!s->release_required&&!t->release_required&&!s->cancel_flags&&
