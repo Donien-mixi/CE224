@@ -343,11 +343,11 @@ function isRunning(){return row[4]===3||row[4]===7;}
 function fresh(){return data&&data.seen&&data.age_ms<500&&Date.now()-lastFresh<500;}
 function activeController(){return row[27];}
 function armAngleLimit(){var m=data?data.meta.split(','):[],a=Number(m[19]);return (activeController()===12&&a===60)?60:0;}
-function matched(){return data&&data.meta.indexOf('$BINFO,BAL-20261120-R12-8DIR-RT43-MAX,')===0&&activeController()===12&&Number(data.meta.split(',')[17])===12;}
+function matched(){return data&&data.meta.indexOf('$BINFO,BAL-20261120-R12-8DIR-RT44-TURN,')===0&&activeController()===12&&Number(data.meta.split(',')[17])===12;}
 function selectMode(){releaseDrive();mode='balance';updateButtons();}
 function blockers(forMotion){
  if(!fresh())return ['Chưa nhận dữ liệu mới từ STM32. Kiểm tra nguồn STM32 và dây UART; Wi-Fi kết nối chưa đủ.'];
- if(!matched())return ['Chờ thông tin phiên bản STM32 BAL-20261120-R12-8DIR-RT43-MAX. Nạp cả STM32 và ESP32 bản R12 chính thức; chờ cấu hình xác nhận.'];
+ if(!matched())return ['Chờ thông tin phiên bản STM32 BAL-20261120-R12-8DIR-RT44-TURN. Nạp cả STM32 và ESP32 bản R12 chính thức; chờ cấu hình xác nhận.'];
  if(!wsOK)return ['Mất kênh lệnh từ trình duyệt. Kết nối lại Wi-Fi rồi mở lại trang.'];
  if(!data.capacity)return ['ESP32 chưa cấp được bộ nhớ log. Kiểm tra cấu hình OPI PSRAM khi nạp ESP32.'];
  if(!forMotion&&data.samples>=data.capacity)return ['Log đã đầy. Dừng, tải log rồi xóa log cũ trước lần chạy mới.'];

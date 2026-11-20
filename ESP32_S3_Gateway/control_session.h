@@ -109,7 +109,7 @@ static bool controlMessage(uint8_t client,const String &command) {
       bool ok=balanceSeen&&millis()-balanceReceived<300&&balanceLatest.state==3&&
         balanceLatest.controller==12&&balanceLatest.capture!=1&&(balanceLatest.motion_flags&1U)&&
         balanceLatest.drive_epoch==p.epoch&&balanceLatest.fault==0&&
-        !strncmp(balanceMeta,"$BINFO,BAL-20261120-R12-8DIR-RT43-MAX,",sizeof("$BINFO,BAL-20261120-R12-8DIR-RT43-MAX,")-1)&&
+        !strncmp(balanceMeta,"$BINFO,BAL-20261120-R12-8DIR-RT44-TURN,",sizeof("$BINFO,BAL-20261120-R12-8DIR-RT44-TURN,")-1)&&
         balanceCapacity&&millis()-controlPings[client]<600;
       xSemaphoreGive(captureMutex);if(!ok)return false;
     }

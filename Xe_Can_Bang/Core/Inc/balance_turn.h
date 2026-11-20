@@ -126,10 +126,10 @@ static inline float BalanceTurn_Approach(float old,float target,float step){retu
  * (khong ha yaw), den khi duty <=90%. Chi ha khi dang cua; chay thang khong bi
  * anh huong vi o do khong co chenh banh. */
 #ifndef BALANCE_TURN_HEADROOM_HI
-#define BALANCE_TURN_HEADROOM_HI 0.96f
+#define BALANCE_TURN_HEADROOM_HI 0.92f
 #endif
 #ifndef BALANCE_TURN_HEADROOM_LO
-#define BALANCE_TURN_HEADROOM_LO 0.90f
+#define BALANCE_TURN_HEADROOM_LO 0.86f
 #endif
 #ifndef BALANCE_TURN_HEADROOM_FLOOR
 #define BALANCE_TURN_HEADROOM_FLOOR 0.72f
@@ -236,7 +236,16 @@ static inline int BalanceMotion8_Update(BalanceMotion *s,BalanceTurn *t,unsigned
  float lateral_cap=guard>.1f?BALANCE_TURN_LATERAL_ACCEL/guard:max_rate;
 #endif
  max_rate=fminf(max_rate,fminf(wheel_cap,lateral_cap));
- float target=max_rate*wanted;
+ /* RT44: cap the commanded yaw rate by the duty left over, not just the linear
+  * budget. Log RT42/RT41 at MAX90, same1.15rad/s command, measured yaw:
+  * rev-left1.38 (64% of samples >10% over, left wheel87% duty, 14% pegged),
+  * fwd-right1.31 (59% over, 86%, 3% pegged), fwd-left1.16 (7% over), rev-right
+  * 0.90 (17% over). The weak (left) wheel reaches the ceiling before the
+  * limiter, which used96% duty, reacts, so the differential overshoots in the
+  * two combos that need that wheel fastest. The same scale now also multiplies
+  * the rate target, so a saturated corner turns slower instead of snapping.
+  * The limiter trigger moved to92% (recover86%) for the same reason. */
+ float target=max_rate*BalanceTurn_headroom(-1.0f)*wanted;
  float lead=wanted*(t->psi_ref-yaw);
  float tracking=fmaxf(0,fminf(1,(.50f-lead)/.25f));
  float balance=fmaxf(0,fminf(1,(BALANCE_TURN_LEAN_FULL-fabsf(pitch-t->lean_ref))/BALANCE_TURN_LEAN_SPAN));

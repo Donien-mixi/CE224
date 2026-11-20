@@ -1,0 +1,18 @@
+﻿{
+    "Xe_Can_Bang\\Core\\Inc\\balance_motion.h":  "36838c65f1867bc7039781e2966f7bfd9a8fe987074a6faee3be845acd0d9b94",
+    "Xe_Can_Bang\\Core\\Inc\\balance_turn.h":  "49169ed2076443b539c66edbe153f29df90f316cbd3b63fea05e7a858c58d4d0",
+    "Xe_Can_Bang\\Core\\Inc\\balance_governor.h":  "95fe49f99ea816cbe11a3d973ab2673077bf2ef6770916caddc51e9d5bb54009",
+    "Xe_Can_Bang\\Core\\Inc\\balance_profile.h":  "7405a305b70ab7e5e1f06625fe66e03730fbdb66ad7335aa809404ccd071abb9",
+    "Xe_Can_Bang\\Core\\Inc\\balance_interlock.h":  "d5091fed099f89968e0935df6d39029f72a74ad09fd186111163e0b1f2cdff19",
+    "Xe_Can_Bang\\Core\\Inc\\balance_recovery.h":  "c7a2b6673aa2ce2c118b84e607ada465f8a8f9d84f756426f2338389e21d3299",
+    "Xe_Can_Bang\\Core\\Inc\\balance_trim.h":  "041a3c6cf691fd7a30242e6366b6c6222b0ecd4856a75112e9669da776a9742d",
+    "Xe_Can_Bang\\Core\\Src\\robot_fsm.c":  "432b249cb23f965982266ed448b3ea0525c1e64dad03aad28e0ea8cc836b1384",
+    "Xe_Can_Bang\\Core\\Src\\usart.c":  "5b0b51b6373ca9b1c0618f6ecafc13871d6f22a768ee7e7e7f578737dfb248a9",
+    "ESP32_S3_Gateway\\balance_web.h":  "6d545672e51823f3286d73f4f87b3b6bd5037262e5db19c409f61fbc5e795c6c",
+    "ESP32_S3_Gateway\\firmware_build.h":  "44ec65c8da02a56ed77b3f6b24f48af0fcc3f2ab30d49de74914080c54f5cec8",
+    "ESP32_S3_Gateway\\dashboard_html.h":  "077c6aa0e7b7705f9ff7fa01cf272cd042915a3e32ddb99fff9894cf9a9bb278",
+    "ESP32_S3_Gateway\\control_session.h":  "ab7bb8b4dbf01ba6268ace06ebbedfd0aa0a23848e02347865808763d6e7a677",
+    "ESP32_S3_Gateway\\network_routes.h":  "ce57e61406b93242e523c4febcab9be99105dd2457983beb59f1fc23186c7535",
+    "ESP32_S3_Gateway\\network_health.h":  "f845dcd05acb1f970247539a2df1f127d8c88640cf688cb45788afb0252412c9",
+    "ESP32_S3_Gateway\\ESP32_S3_Gateway.ino":  "5781ce002e3809173b7e157211c46b4deea66f3ab737530432a073c16718e775"
+}
