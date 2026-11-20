@@ -96,11 +96,30 @@ bool acceptBalanceFrame() {
 /* Cấu hình Wi-Fi SoftAP */
 const char* AP_SSID = "TWIP_RACER_S3";
 const char* AP_PASS = "12345678";
+/* RT41: kênh AP. Mặc định quét một lần lúc khởi động để chọn kênh ít nhiễu nhất
+ * trong1/6/11; đặt GATEWAY_AP_CHANNEL_SCAN=0 để luôn dùng GATEWAY_AP_CHANNEL. */
+#ifndef GATEWAY_AP_CHANNEL_SCAN
+#define GATEWAY_AP_CHANNEL_SCAN 1
+#endif
+#ifndef GATEWAY_AP_CHANNEL
+#define GATEWAY_AP_CHANNEL 6
+#endif
+#ifndef GATEWAY_AP_SCAN_MS_PER_CHANNEL
+#define GATEWAY_AP_SCAN_MS_PER_CHANNEL 60
+#endif
+static uint8_t gatewayApChannel=GATEWAY_AP_CHANNEL;
 
 /* Cấu hình chân UART giao tiếp với STM32F411CEU6 */
 #define STM32_RX_PIN  18  // Nối với STM32 PB6 (USART1_TX)
 #define STM32_TX_PIN  17  // Nối với STM32 PB7 (USART1_RX)
-#define STM32_BAUD    115200
+/* RT41: 115200 -> 921600, PHẢI đổi cùng lúc với USART1 trên STM32 (usart.c và
+ * Xe_Can_Bang.ioc). Lý do: ở115200 một khung telemetry122B giữ TX DMA10,6ms
+ * trong mỗi20ms (53% thời gian), nên35 byte lệnh phải xếp sau nó và khung BINFO
+ * hay gặp kênh bận; ở921600 khung đó chỉ1,3ms (6,7%) và lệnh0,38ms.
+ * Không đổi luật điều khiển, khung truyền hay vòng200Hz. */
+#ifndef STM32_BAUD
+#define STM32_BAUD    921600
+#endif
 
 /* Khởi tạo Web Server (Port 80) và WebSockets Server (Port 81) */
 /* Bộ đệm nhận dữ liệu từ STM32 */
@@ -180,7 +199,37 @@ void setup() {
    * partition on the healthy path, so both steps are now sub-second. */
   WiFi.mode(WIFI_AP);
   WiFi.setSleep(false);
-  bool apOK=WiFi.softAP(AP_SSID,AP_PASS,6,false,4);
+  uint8_t apChannel=GATEWAY_AP_CHANNEL;
+#if GATEWAY_AP_CHANNEL_SCAN
+  /* RT41: channel6 was hard-coded, so every neighbour AP on6 shares our airtime
+   * and the command stream pays for it in retransmits. Scan once, bounded (the
+   * ESP32 scan has no timeout argument, so this is per-channel instead of
+   * unlimited), and take the quietest of1/6/11. A failed/empty scan keeps6.
+   * Cost: at most13*GATEWAY_AP_SCAN_MS_PER_CHANNEL, measured ~0.3-0.8s, once at
+   * boot before the AP exists - the page retries for20s (NET21), so this cannot
+   * turn into a dead page. */
+  {
+    int found=WiFi.scanNetworks(false,false,false,GATEWAY_AP_SCAN_MS_PER_CHANNEL);
+    static const uint8_t candidate[3]={1,6,11};
+    int cost[3]={0,0,0};
+    if(found>0){
+      for(int n=0;n<found;n++){
+        int ch=WiFi.channel(n);
+        for(int k=0;k<3;k++){
+          int d=ch-(int)candidate[k];if(d<0)d=-d;
+          if(d==0)cost[k]+=3;          /* same channel: full airtime share */
+          else if(d==1)cost[k]+=1;     /* adjacent: still overlaps at HT20 */
+        }
+      }
+      int best=0;for(int k=1;k<3;k++)if(cost[k]<cost[best])best=k;
+      apChannel=candidate[best];
+    }
+    gatewayApChannel=apChannel;
+    Serial.printf("[NET41] scan=%d ch1=%d ch6=%d ch11=%d -> AP ch%u\n",
+                  found,cost[0],cost[1],cost[2],(unsigned)apChannel);
+  }
+#endif
+  bool apOK=WiFi.softAP(AP_SSID,AP_PASS,apChannel,false,4);
   esp_err_t bwOK=esp_wifi_set_bandwidth(WIFI_IF_AP,WIFI_BW_HT20);
   /* NET34: ha cong suat phat tu 17 dBm xuong 11 dBm.
    * Log RT32 (ba file (3)(5)/(4)(5)/(5)(5)) cho thay ESP32 reset do SUT AP NGUON

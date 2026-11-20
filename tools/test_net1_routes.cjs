@@ -18,7 +18,7 @@ const ext=String.raw`
 #define portEXIT_CRITICAL(x) ((void)x)
 int wifiHealthMux;
 bool controlIdentity(long c,long t){return identity&&c==0&&t==123;}
-unsigned gatewayBootId=8,gatewayResetReason=9,gatewayApConnect=1,gatewayApDisconnect=2,gatewayApStop=0,gatewayApReason=4,gatewayWsConnected=1,gatewayWsDisconnected=1,gatewayLoopGapMax=40;
+unsigned gatewayBootId=8,gatewayResetReason=9,gatewayApConnect=1,gatewayApDisconnect=2,gatewayApStop=0,gatewayApReason=4,gatewayWsConnected=1,gatewayWsDisconnected=1,gatewayLoopGapMax=40;uint8_t gatewayApChannel=6;
 const char*gatewayResetText(unsigned){return "brownout";}
 struct{unsigned getFreeHeap(){return 100000;}unsigned getMinFreeHeap(){return 90000;}unsigned getFreePsram(){return 1000000;}}ESP;
 struct{unsigned softAPgetStationNum(){return 1;}}WiFi;

@@ -1,6 +1,18 @@
 # Bàn giao đồ án TWIP — 19/11/2026 (bản RT40)
 
-> **Bản hiện hành: STM32 `BAL-20261119-R12-8DIR-RT40-HOLD` + ESP32 `TWIP-WEB-20261119-BAL-R12-8DIR-RT40-HOLD-NET40`.**
+# (dòng dưới là bản hiện hành RT41)
+> **Bản hiện hành: STM32 `BAL-20261120-R12-8DIR-RT41-LINK` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT41-LINK-NET41`.**
+> **RT41 (20/11, chỉ đường truyền):** UART STM32↔ESP32 **115200 → 921600** (khung telemetry 122 B giữ
+> TX DMA 10,6 ms/mỗi 20 ms = **53 %** trước, còn **1,3 ms = 6,7 %**; lệnh 35 B 3,04 → **0,38 ms**) và
+> **chọn kênh AP ít nhiễu** trong 1/6/11 (quét một lần, ≤ ~0,8 s, log `[NET41] … -> AP chN`,
+> `/network-status` báo `channel`). **Không đổi một dòng nào của luật điều khiển** — `git diff` chỉ có
+> `usart.c`, `.ioc`, tệp ESP32 và build ID; text/data/bss STM32 **giống hệt RT40**. Năm đề xuất còn lại
+> (WS core 0, bỏ HTTP poll, payload nhỏ, lệnh nhị phân) **không làm** vì lý do đo được — xem
+> [`Docs/RT41_Duong_Truyen.md`](Docs/RT41_Duong_Truyen.md) mục 4. Đo đường lệnh trên 6 log RT39
+> (25 481 mẫu): `age` p50 13 ms / p95 28 ms, khoảng cách gói lệnh p95 35 ms, chỉ 0,1–0,2 % vượt 60 ms.
+> **Phải nạp cả hai board** (UART đổi hai đầu). Bản nạp: [`Firmware/RT41_LINK_20261120/`](Firmware/RT41_LINK_20261120/README.md).
+
+> **RT40: STM32 `BAL-20261119-R12-8DIR-RT40-HOLD` + ESP32 `TWIP-WEB-20261119-BAL-R12-8DIR-RT40-HOLD-NET40`.**
 > Ba mức **50 / 80 / 90 cm/s**, bù lệch bánh trái **+110 PWM**, cua **0,72 m/s** (tự hạ thêm khi bánh
 > sát 100 % duty), chống trôi khi đứng yên, đổi hướng liên tục, **không ngập ngừng khi phanh, không cắt
 > motor khi bị giữ**. Bản nạp + hash: [`Firmware/RT40_HOLD_20261119/`](Firmware/RT40_HOLD_20261119/README.md).
@@ -191,7 +203,8 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 
 | Bản | Thư mục | Khi nào dùng |
 |---|---|---|
-| **RT40-HOLD / NET40** (hiện hành) | `Firmware/RT40_HOLD_20261119/` | Chạy bình thường; nạp **cả hai board** |
+| **RT41-LINK / NET41** (hiện hành) | `Firmware/RT41_LINK_20261120/` | Chạy bình thường; **phải nạp cả hai board** (UART 921600 hai đầu) |
+| RT40-HOLD / NET40 (trước) | `Firmware/RT40_HOLD_20261119/` | Luật điều khiển y hệt RT41 nhưng UART 115200, kênh AP 6 |
 | RT39-CORNER / NET39 (trước) | `Firmware/RT39_CORNER_20261119/` | Bản đã có 8 log (1 100 s) — nguồn của 3 lỗi RT40 sửa |
 | RT38-CONT / NET38 (trước) | `Firmware/RT38_CONT_20261118/` | Bản đã có log `(39)` 84 s (chính là ca khựng ở 80 mà RT39 sửa) |
 | RT37-SMOOTH / NET37 (trước) | `Firmware/RT37_SMOOTH_20261118/` | Bản thử ngay trước RT38 |
@@ -199,9 +212,9 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 | RT34-CORNER / NET35 (trước) | `Firmware/RT34_CORNER_20261117/` | Bản đã có log xe 173 s |
 | RT29-NOCUT / NET30 (dự phòng) | `Firmware/RT29_NOCUT_20261115/` | Quay về bản cũ nhất: ba mức 50/72/80, chưa có bù bánh trái và trần cua |
 
-Kiểm ngày 19/11 (RT40): **7/7** tệp binary khớp `SHA256.json`; **13/13** tệp nguồn khớp
+Kiểm ngày 20/11 (RT41): **7/7** tệp binary khớp `SHA256.json`; **15/15** tệp nguồn khớp
 `SOURCE_SHA256.json` → bản `.bin/.hex` được build từ **đúng source hiện tại**. Build lại trong
-workspace CubeIDE `D:\CubeIDE_ws` ra `.hex` **trùng hash** bản đóng gói (`d4a60fdf…`).
+workspace CubeIDE `D:\CubeIDE_ws` ra `.hex` **trùng hash** bản đóng gói (`4b1efacf…`).
 `test_build_id_sync` PASS: 9 literal trên 54 tệp.
 
 ### 4.3 Build
@@ -244,15 +257,16 @@ node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 
 ### 4.5 Nạp
 
-Nháy đúp `nap_rt40.bat` trong thư mục bản nạp → nhập COM của ESP32. Script nạp STM32 bằng
+Nháy đúp `nap_rt41.bat` trong thư mục bản nạp → nhập COM của ESP32 (**bắt buộc** cho RT41). Script nạp STM32 bằng
 `STM32_Programmer_CLI.exe`, ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
-Kiểm sau khi nạp: banner `RT40-HOLD-NET40`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được.
+Kiểm sau khi nạp: banner `RT41-LINK-NET41`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
+Serial ESP32 có `[UART] … @ 921600 bps` và `[NET41] … -> AP chN`, log có `crc_errors=0`.
 
-Sáu bản (RT40 / RT39 / RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
+Bảy bản (RT41 / RT40 / RT39 / RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
 banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — hoặc chạy menu
 `Firmware/nap_chon_ban.bat`. Nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload):
-[`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md) — workspace RT40 là `D:\CubeIDE_ws`, RT39 là
-`D:\CubeIDE_ws_rt39`, RT38 là `D:\CubeIDE_ws_rt38`.
+[`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md) — workspace RT41 là `D:\CubeIDE_ws`, RT40 là
+`D:\CubeIDE_ws_rt40`, RT39 là `D:\CubeIDE_ws_rt39`, RT38 là `D:\CubeIDE_ws_rt38`.
 
 ## 5. Quy tắc vận hành
 
@@ -323,8 +337,9 @@ banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — ho
 | [`Docs/RT37_Xuat_Phat_Muot.md`](Docs/RT37_Xuat_Phat_Muot.md) | Ngập ngừng khi xuất phát/tăng tốc, kiểm tra realtime, 3 phương án đã thử |
 | [`Docs/RT38_Chuyen_Huong_Lien_Tuc.md`](Docs/RT38_Chuyen_Huong_Lien_Tuc.md) | Khựng khi đổi hướng và ở 90 cm/s; số đo, 3 sửa, giới hạn |
 | [`Docs/RT39_Cua_80_Khong_Khung.md`](Docs/RT39_Cua_80_Khong_Khung.md) | 80 cm/s khựng/dừng lâu khi cua ở cả 4 hướng; 12 cước REC1, bất đối xứng bánh trái, 2 sửa |
-| [`Docs/RT40_Het_Ngap_Ngung.md`](Docs/RT40_Het_Ngap_Ngung.md) | **Mới:** 8 log RT39 (1 100 s): 8,4 s ngập ngừng do độ ngả phanh, cắt motor khi bị giữ, 3 lần ngã khi rẽ ở 90 vì bánh ghim duty |
-| Báo cáo vòng | [RT22](Docs/RT22_Doi_Xung_Va_Be_Huong.md) · [RT23](Docs/RT23_Nut_That_Va_Loi_Toc_Do.md) · [RT24](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [RT27](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) · [RT28](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [RT29](Docs/RT29_Tu_Ngat_4096.md) · [RT32](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [RT33](Docs/RT33_On_Dinh_Ket_Noi.md) · [RT34](Docs/RT34_Cua_Muot.md) · [RT35](Docs/RT35_Mo_Phong_Khop_Log.md) · [RT36](Docs/RT36_Sua_4_Loi.md) · [RT37](Docs/RT37_Xuat_Phat_Muot.md) · [RT38](Docs/RT38_Chuyen_Huong_Lien_Tuc.md) · [RT39](Docs/RT39_Cua_80_Khong_Khung.md) · [RT40](Docs/RT40_Het_Ngap_Ngung.md) |
+| [`Docs/RT40_Het_Ngap_Ngung.md`](Docs/RT40_Het_Ngap_Ngung.md) | 8 log RT39 (1 100 s): 8,4 s ngập ngừng do độ ngả phanh, cắt motor khi bị giữ, 3 lần ngã khi rẽ ở 90 vì bánh ghim duty |
+| [`Docs/RT41_Duong_Truyen.md`](Docs/RT41_Duong_Truyen.md) | **Mới:** đo đường lệnh (age p95 28 ms), UART 921600, chọn kênh Wi-Fi, và lý do không làm 5/7 đề xuất |
+| Báo cáo vòng | [RT22](Docs/RT22_Doi_Xung_Va_Be_Huong.md) · [RT23](Docs/RT23_Nut_That_Va_Loi_Toc_Do.md) · [RT24](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [RT27](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) · [RT28](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [RT29](Docs/RT29_Tu_Ngat_4096.md) · [RT32](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [RT33](Docs/RT33_On_Dinh_Ket_Noi.md) · [RT34](Docs/RT34_Cua_Muot.md) · [RT35](Docs/RT35_Mo_Phong_Khop_Log.md) · [RT36](Docs/RT36_Sua_4_Loi.md) · [RT37](Docs/RT37_Xuat_Phat_Muot.md) · [RT38](Docs/RT38_Chuyen_Huong_Lien_Tuc.md) · [RT39](Docs/RT39_Cua_80_Khong_Khung.md) · [RT40](Docs/RT40_Het_Ngap_Ngung.md) · [RT41](Docs/RT41_Duong_Truyen.md) |
 
 ## 9. Lịch sử
 

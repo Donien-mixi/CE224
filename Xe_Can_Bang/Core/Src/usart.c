@@ -41,7 +41,13 @@ void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  /* RT41: 115200 -> 921600 (both ends). At 115200 one122-byte telemetry frame
+   * holds the TX DMA for10.6ms of every20ms (53%), so a command's35 bytes wait
+   * behind it and the BINFO meta frame often finds the channel busy; the ESP32
+   * also needs3.0ms of wire time per command. At921600 the same frame is1.3ms
+   * (6.7%) and a command0.38ms. Control law, frame format and the200Hz loop are
+   * unchanged - this is transport only. Revert both ends to115200 together. */
+  huart1.Init.BaudRate = 921600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
