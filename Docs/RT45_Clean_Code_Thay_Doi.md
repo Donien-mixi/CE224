@@ -142,3 +142,17 @@ just_armed, execution) thay vì 8 biến rời.
 4. `git show c8c299c`, `d42131d`, `70a89a2`, `de3b7c8`, `4b3ec41`, `9895be9` — từng bước một, mỗi commit
    có bằng chứng riêng trong message.
 5. `Docs/Ke_Hoach_Don_Code.md` mục 5 — bảng tiến độ + số đo của từng bước.
+
+## 8. RT46 — xoá nốt code chết (sau RT45)
+
+Sau khi RT45 chạy thử trên xe 600 s (0 fault), đợt dọn tiếp theo chỉ **xoá**, không sửa logic:
+
+| Tệp xoá | Vì sao an toàn |
+|---|---|
+| `Core/Src/pid.c`, `Core/Inc/pid.h` | cascade PID không còn dùng: cả firmware chỉ còn `PID_Init()` và 3 lần `PID_Reset_Integral()` gọi vào state **nội bộ** của pid.c; không cờ nào của nó được đọc ở ngoài. Đã xoá 4 lời gọi + 2 `#include` (robot_fsm.c, esp32_comm.c) |
+| `Core/Inc/balance_assist.h` | không tệp firmware nào include (chỉ `tools/legacy` — test RT8/RT9 vốn không chạy được) |
+| `Core/Inc/wheel_measurement.h` | như trên (chỉ `tools/legacy` + `factory/`) |
+
+Bằng chứng không đổi hành vi: **38/38** host test, **3 bộ mô phỏng 73/73 tệp trùng**, build 0 lỗi 0 cảnh
+báo; STM32 `text` 84 080 → **83 912** (−168 B), `bss` 7 572 → **7 540** (−32 B, đúng phần static của PID);
+bin 84 420 B `29271b0d…`. Build ID bump **RT46-SLIM / NET46** để log không lẫn với RT45.

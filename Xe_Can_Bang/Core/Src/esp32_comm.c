@@ -9,7 +9,6 @@
 
 #include "esp32_comm.h"
 #include "usart.h"
-#include "pid.h"
 #include "hardware_test.h"
 #include "robot_fsm.h"
 #include <math.h>

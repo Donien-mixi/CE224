@@ -1,11 +1,11 @@
-# Nạp firmware bằng IDE (Build + Run / Upload) — bản RT45-CLEAN / NET45
+# Nạp firmware bằng IDE (Build + Run / Upload) — bản RT46-SLIM / NET46
 
 Chỉ còn **một bản** firmware trong repo. Hai đường nạp bằng IDE:
 
 | Board | Mở ở đâu | Nút |
 |---|---|---|
-| **STM32F411** (`BAL-20261121-R12-8DIR-RT45-CLEAN`) | STM32CubeIDE → workspace **`D:\CubeIDE_ws`** | **Build** (búa) → **Run** (tam giác xanh) |
-| **ESP32-S3** (`TWIP-WEB-20261121-BAL-R12-8DIR-RT45-CLEAN-NET45`) | Arduino IDE → **`D:\DA_HTN\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`** | **Upload** (mũi tên →) |
+| **STM32F411** (`BAL-20261121-R12-8DIR-RT46-SLIM`) | STM32CubeIDE → workspace **`D:\CubeIDE_ws`** | **Build** (búa) → **Run** (tam giác xanh) |
+| **ESP32-S3** (`TWIP-WEB-20261121-BAL-R12-8DIR-RT46-SLIM-NET46`) | Arduino IDE → **`D:\DA_HTN\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`** | **Upload** (mũi tên →) |
 
 Source STM32 nằm ở **`D:\DA_HTN\Xe_Can_Bang`** — workspace `D:\CubeIDE_ws` đã import sẵn project
 `Xe_Can_Bang` và build sẵn, nên mở là bấm Build/Run được ngay (project trỏ vào thư mục nguồn, nên luôn
@@ -55,10 +55,10 @@ Mở Wi-Fi `TWIP_RACER_S3` / `12345678` → `http://192.168.4.1/ui/r12`:
 
 | Mục | Giá trị đúng |
 |---|---|
-| Banner | **`RT45-CLEAN-NET45`** |
+| Banner | **`RT46-SLIM-NET46`** |
 | Nút tốc độ | **50 / 80 / MAX 90** |
 | Serial ESP32 | `[UART] … @ 921600 bps` và `[NET41] … -> AP chN` |
-| Log tải về | `$BINFO,BAL-20261121-R12-8DIR-RT45-CLEAN,…`, có `# RADIO ch=… rssi=… phy=…`, `crc_errors=0` |
+| Log tải về | `$BINFO,BAL-20261121-R12-8DIR-RT46-SLIM,…`, có `# RADIO ch=… rssi=… phy=…`, `crc_errors=0` |
 
 Nếu trang báo “Chờ thông tin phiên bản STM32…” hoặc nút BẬT CÂN BẰNG bị khoá: **hai board lệch bản**
 — nạp lại cả hai từ cùng bản này.
@@ -68,5 +68,5 @@ Nếu trang báo “Chờ thông tin phiên bản STM32…” hoặc nút BẬT 
 - Không nạp khi xe đang cân bằng/đang chạy; bánh kê cao.
 - **Luôn nạp cả hai board**: UART 921600 ở cả hai đầu, lệch một board là mất liên lạc.
 - Mức MAX 90 chỉ đạt đúng 0,90 m/s khi pin **≥ 12,0 V**.
-- Cách nạp bằng script (không cần mở IDE): `Firmware\RT45_CLEAN_20261121\nap_rt45.bat` (quay lui: `nap_rt44.bat`).
+- Cách nạp bằng script (không cần mở IDE): `Firmware\RT45_CLEAN_20261121\nap_rt45.bat` (bản trước; quay lui `nap_rt44.bat`).
 - Bản firmware cũ (RT29 → RT43) đã xoá khỏi cây làm việc; vẫn lấy lại được bằng `git history`.

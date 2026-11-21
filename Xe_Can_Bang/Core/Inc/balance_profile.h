@@ -9,7 +9,7 @@
  */
 #include "tuning.h"
 
-#define BALANCE_BUILD "BAL-20261121-R12-8DIR-RT45-CLEAN"
+#define BALANCE_BUILD "BAL-20261121-R12-8DIR-RT46-SLIM"
 
 /* R12 STATE4_OBS14 (đóng băng) + hiệu chuẩn cảm biến. */
 #define BALANCE_CONTROLLER_R12 12U

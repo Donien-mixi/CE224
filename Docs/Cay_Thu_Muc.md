@@ -19,6 +19,7 @@ Trong `Xe_Can_Bang/Core`:
 | `balance_motion.h` + `Core/Src/balance_motion.c`, `balance_turn.h` + `Core/Src/balance_turn.c` | quỹ đạo tốc độ và cua (thân hàm đã tách ra `.c`) | có |
 | `balance_recovery.h`, `balance_governor.h`, `balance_interlock.h`, `balance_trim.h` | lớp giám sát: chống đẩy, giữ lại lực, trần tốc độ, bù bánh trái | có |
 | `cat_control.*` (nếu có), `motor.c`, `encoder.c`, `bmi160.c`, `filter.c` | luật lực R12, động cơ, encoder, IMU, lọc | **không** (đóng băng) |
+| *(đã xoá ở RT46)* `pid.c/.h`, `balance_assist.h`, `wheel_measurement.h` | cascade PID và 2 header không còn dùng — không ảnh hưởng firmware | — |
 | `robot_fsm.c` | vòng 200 Hz + máy trạng thái | có (theo thứ tự pipeline) |
 | `main.c`, `tim.c`, `usart.c`, `i2c.c`, `gpio.c`, `dma.c` | khởi tạo phần cứng (CubeMX sinh) | hạn chế |
 | `system_stm32f4xx.c`, `stm32f4xx_hal_conf.h`, `stm32f4xx_it.c` | CubeMX/HAL sinh ra | **không sửa** |
@@ -37,7 +38,7 @@ Trong `Xe_Can_Bang/Core`:
 
 | Thư mục | Là gì |
 |---|---|
-| `Firmware/RT45_CLEAN_20261121/` | **Bản nạp hiện hành**: hex/bin/elf cho STM32, 4 tệp ESP32, hash, `nap_rt45.bat` (bản trước: `RT44_TURN_20261120/`, dùng quay lui) |
+| `Firmware/RT45_CLEAN_20261121/` | Bản đóng gói gần nhất (quay lui): hex/bin/elf STM32, 4 tệp ESP32, hash, `nap_rt45.bat`; RT44 cũng còn. RT46 nạp bằng IDE từ source |
 | `Docs/` | Báo cáo từng vòng (`RTxx_*.md`), hướng dẫn nạp, luật điều khiển, kế hoạch dọn code |
 | `tools/` | 42 host test (`test_*.cjs`), script build (`build_stm32.ps1`), chạy mô phỏng |
 | `Simulation/` | Mô hình Scilab + harness native dùng chung header firmware (`Simulation/current/`) |

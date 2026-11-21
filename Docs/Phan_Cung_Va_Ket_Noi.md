@@ -138,7 +138,7 @@ Bảng đấu nối chi tiết, không trùng lặp và không xung đột ngo�
 * **Mạng Wi-Fi**: SoftAP `TWIP_RACER_S3` (mật khẩu `12345678`), truy cập `http://192.168.4.1`.
 * **Giao tiếp**: Web Server port 80, WebSockets port 81.
 * **Gói tin UART**:
-  * Nhận (Web → STM32): `$CMD,v_tgt,steer*`, `$PID,kp1,kd1,kp2,ki2*`, `$TRIM,value*`, `$RACE,1/0*`, `$BENCH,1/0*`, `$CALIB*`, `$STOP*`.
+  * Nhận (Web → STM32): `$CMD,v_tgt,steer*`, `$PID,…`, `$TRIM,…`, `$RACE,…` *(ba lệnh này đã bỏ từ bản R12; RT46 xoá luôn module PID)*, `$BENCH,1/0*`, `$CALIB*`, `$STOP*`.
   * Gửi (STM32 → Web): `$TEL,pitch,gyro,v_act,v_tgt,pwm_l,pwm_r,state,batt,v_l,v_r\r\n` (10 trường, chu kỳ 50ms / 20Hz).
 * **Trạng thái FSM (8)**: `INIT`, `CALIBRATING`, `STANDBY`, `BALANCING`, `RACING`, `FALLEN`, `EMERGENCY`, `BENCH_TEST`.
 

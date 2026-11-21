@@ -12,6 +12,10 @@ firmware hiện hành, nên các test này **không còn chạy được** và k
 | `test_hardware_boot.cjs` | Dựng mock cho `manual_job`, `test_stage`, `TestSample()` — khối đo tốc độ bằng tay đã gỡ. | `test_rt29_nocut.cjs`, `test_rt23_interlock.cjs` (đường cắt motor) |
 | `test_load_speed.cjs` | Cần `Core/Inc/load_speed_test.h` — không còn trong firmware. | `tools/run_load_speed_sim.cjs` |
 
+Ghi chú: hai header `balance_assist.h` và `wheel_measurement.h` mà `test_drive8_controller.cjs` /
+`test_hardware_boot.cjs` từng include **đã xoá khỏi firmware ở RT46** (không được include ở đâu trong firmware).
+Các test này vốn đã "không chạy được" và cần khôi phục firmware RT8/RT9 từ git, nên trạng thái không đổi.
+
 Ghi chú: `tools/test_net1_routes.cjs` **có** đọc `legacy/test_drive8_gateway.cjs` để lấy khung
 mock C (fake filesystem) — chỉ tái dùng phần mock, không dùng assertion nào ở đây.
 

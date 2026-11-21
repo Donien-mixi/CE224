@@ -13,7 +13,6 @@
 #include "esp32_comm.h"
 #include "filter.h"
 #include "motor.h"
-#include "pid.h"
 #include "tim.h"
 #include <math.h>
 #include <stdio.h>
@@ -88,7 +87,6 @@ void Robot_Init(void) {
   Motor_Init();
   Motor_Stop();
   Encoder_Init();
-  PID_Init();
   Filter_SelectController(bal_controller);
 
   /* Preserve the existing startup motor exercise: PWM 1600, 600 ms per wheel.
@@ -193,7 +191,6 @@ void Robot_RecalibrateIMU(void) {
   bal_config_ok=BMI160_GetConfig(cfg)&&cfg[1]==0xd1&&cfg[2]==0x28&&cfg[3]==8&&cfg[4]==0x28&&cfg[5]==0;
   s_robot.fault=(bal_config_ok?0:256)|(BMI160_CalibrationOK()?0:128);
   Filter_Init(Filter_CalibratedRawPitch(imu.ax, imu.az));
-  PID_Reset_Integral();
   Encoder_Reset();
 
   bal_imu_failed=false;
@@ -228,7 +225,7 @@ static void BalanceStop(uint16_t reason) {
     s_robot.fault|=reason; s_robot.state=ROBOT_STATE_FALLEN;pulse_wheel=0;
     Motor_Stop();s_robot.pwm_left=s_robot.pwm_right=0;
     s_robot.v_control=s_robot.theta_control=s_robot.pwm_base=0;
-    PID_Reset_Integral();cat_reset(bal_catalog,0);bal_still=0;
+    cat_reset(bal_catalog,0);bal_still=0;
 }
 void Robot_BalanceService(void) {
 
@@ -332,7 +329,7 @@ static void robot_handle_arm(void) {
     if(t->cmd->arm_request) {
         t->cmd->arm_request=0;
         if(s_robot.ready && t->cmd->arm_profile==bal_controller && s_robot.state!=ROBOT_STATE_BALANCING && s_robot.state!=ROBOT_STATE_BENCH_TEST) {
-            PID_Reset_Integral();Encoder_Reset();s_robot.x_actual=s_robot.x_target=0;
+            Encoder_Reset();s_robot.x_actual=s_robot.x_target=0;
             cat_reset(bal_catalog,s_robot.pitch*DEG_TO_RAD);
             bal_armed_ms=HAL_GetTick();
             bal_max_envelope=false;BalanceInterlock_Clear(&bal_interlock);

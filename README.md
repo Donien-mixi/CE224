@@ -4,12 +4,13 @@
 làm gateway Wi-Fi có trang điều khiển và ghi log, Scilab mô phỏng lại đúng phần luật điều khiển
 đang nạp trên xe.
 
-**Bản phát hành hiện hành: STM32 `RT45-CLEAN` + ESP32 `NET45` (21/11/2026)** — **bản dọn code, không
-đổi hành vi điều khiển** so với RT44: ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái, cua
+**Bản phát hành hiện hành: STM32 `RT46-SLIM` + ESP32 `NET46` (21/11/2026)** — **xoá code chết, không
+đổi hành vi điều khiển** so với RT45 (PID cascade + 2 header không dùng): ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái, cua
 **0,72 m/s** ở cả hai chiều, chống trôi khi đứng yên, xuất phát mượt, đổi hướng liên tục, không ngập
 ngừng khi phanh, không cắt motor khi bị giữ, **UART 921600, tự chọn/đổi kênh Wi-Fi, log mang theo chất
 lượng sóng, trần MAX 90 theo duty**.
-Firmware đóng gói kèm hash ở ``Firmware/RT45_CLEAN_20261121/``; bản RT44 (20/11) giữ lại để quay lui.
+RT46 nạp bằng IDE từ source (chưa đóng gói); bản đóng gói gần nhất là ``Firmware/RT45_CLEAN_20261121/``
+(dùng để quay lui), trước nữa là RT44.
 Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
 ## 1. Kiến trúc
@@ -26,15 +27,16 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
 | Bản | Board | Build ID | Tệp |
 |---|---|---|---|
-| **RT45-CLEAN / NET45** (bản hiện hành) | STM32 | `BAL-20261121-R12-8DIR-RT45-CLEAN` | `STM32_BAL_R12_RT45_CLEAN.hex` (+`.bin`, `.elf`) |
-| | ESP32-S3 | `TWIP-WEB-20261121-BAL-R12-8DIR-RT45-CLEAN-NET45` | `ESP32_RT45_CLEAN_NET45.app.bin` (+ bootloader, partitions, boot_app0) |
+| **RT46-SLIM / NET46** (bản hiện hành) | STM32 | `BAL-20261121-R12-8DIR-RT46-SLIM` | nạp bằng IDE (Clean → Build → Run) |
+| | ESP32-S3 | `TWIP-WEB-20261121-BAL-R12-8DIR-RT46-SLIM-NET46` | nạp bằng Arduino IDE (Upload) |
+| RT45-CLEAN / NET45 (quay lui) | STM32 + ESP32 | `BAL-20261121-R12-8DIR-RT45-CLEAN` / `…-NET45` | `Firmware/RT45_CLEAN_20261121/` |
 | RT44-TURN / NET44 (bản trước) | STM32 + ESP32 | `BAL-20261120-R12-8DIR-RT44-TURN` / `…-NET44` | `Firmware/RT44_TURN_20261120/` — quay lui |
 
 - Hash đầy đủ: `SHA256.json` trong từng thư mục; hash **20 tệp nguồn đã sinh ra binary**:
   `SOURCE_SHA256.json` (RT45).
 - Hai board phải nạp cùng bản: gateway đối chiếu build ID với STM32, lệch là khoá điều khiển.
-- Cách nạp: nháy đúp `Firmware\RT45_CLEAN_20261121\nap_rt45.bat` (nhập COM ESP32) hoặc lệnh tay
-  ``Firmware/RT45_CLEAN_20261121/README.md``. Quay lui: `nap_rt44.bat`.
+- Cách nạp: STM32CubeIDE (**Clean** → **Build** → **Run**) và Arduino IDE (**Upload**) — xem
+  [`Firmware/README.md`](Firmware/README.md); quay lui bằng `nap_rt45.bat` / `nap_rt44.bat`.
 - **Chọn giữa các bản và hướng dẫn nạp đầy đủ:** [`Firmware/README.md`](Firmware/README.md)
   (nạp bằng IDE: [`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md)).
 
@@ -46,7 +48,7 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 | `ESP32_S3_Gateway/` | Sketch Arduino + trang web (`dashboard_html.h`), giao thức UART, phiên điều khiển, log RAM/Flash. |
 | `Simulation/` | Mô hình Scilab, harness native dùng chung header firmware, bộ 36 ca kiểm tra, cấu hình plant. |
 | `tools/` | 42 host test (`test_*.cjs`), script mô phỏng/build, tải log cứu hộ. `tools/legacy/` giữ test của bản RT8/RT9 đã bỏ. |
-| `Firmware/` | RT45 (hiện hành: hex/bin/elf + 4 tệp ESP32 + hash + `nap_rt45.bat`) và RT44 (quay lui); bản cũ hơn nằm trong git history. |
+| `Firmware/` | RT45 và RT44 (đóng gói, dùng quay lui); RT46 nạp bằng IDE từ source. Bản cũ hơn nằm trong git history. |
 | `Hardware/` | Schematic, PCB KiCad, thư viện footprint, tài liệu lắp ráp. |
 | `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT42 (danh sách ở mục 7). |
 

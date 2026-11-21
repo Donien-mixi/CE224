@@ -11,6 +11,8 @@
 
 > Bản bàn giao hiện hành: xem [Phát triển tiếp](Phat_Trien_Tiep.md) và [Thông số xe](Thong_So_Xe_Hien_Tai.md). Một số ví dụ/giá trị trong tài liệu nền tảng này thuộc phiên bản trước; mã nguồn quyết định hành vi firmware hiện tại.
 
+<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
 # ROADMAP THỰC THI ĐỒ ÁN — XE CÂN BẰNG HAI BÁNH (TWIP ROBOT)
 
 > **Phạm vi tài liệu:** Roadmap **phần mềm, phương pháp & quản trị** để đưa xe hoạt động tốt qua **2 giai đoạn lớn**:
@@ -25,13 +27,17 @@
 
 ---
 
-## 0. BỐI CẢNH XUẤT PHÁT (ĐÃ XÁC NHẬN)
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 0. BỐI CẢNH XUẤT PHÁT (ĐÃ XÁC NHẬN)
 
 Đồ án hiện đang ở trạng thái: **phần mềm cơ sở đã thiết lập xong + xe đã lắp ghép xong.**
 Đây là **điểm xuất phát** của cả hai giai đoạn — **không phải nội dung phải làm lại**.
 Toàn bộ roadmap dưới đây là phần **còn thiếu** để xe *hoạt động tốt*, không phải phần *khung sườn*.
 
-### 0.1. Tài sản phần mềm đã có
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 0.1. Tài sản phần mềm đã có
 
 | Nhóm          | Module                            | File                                                              | Trạng thái | Ghi chú                                                    |
 | :------------- | :-------------------------------- | :---------------------------------------------------------------- | :----------: | :---------------------------------------------------------- |
@@ -48,7 +54,9 @@ Toàn bộ roadmap dưới đây là phần **còn thiếu** để xe *hoạt đ
 | Giao diện     | Web HUD cơ bản                  | `ESP32_S3_Gateway/index_html.h`                                 |      ✅      | Slider, TIẾN/LÙI, DỪNG, E-STOP, telemetry, tune PID/Trim |
 | Dữ liệu      | Data logger + xuất TXT           | `ESP32_S3_Gateway/index_html.h`                                 |      ✅      | Gom 20Hz, xuất`.txt` kèm header PID                     |
 
-### 0.2. Điều kiện đầu vào đã thỏa
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 0.2. Điều kiện đầu vào đã thỏa
 
 - [X] Firmware nạp chạy, `Motor_SelfTest()` quay nhẹ 2 bánh.
 - [X] BMI160 xác thực `CHIP_ID = 0xD1`, đọc ổn định.
@@ -56,7 +64,9 @@ Toàn bộ roadmap dưới đây là phần **còn thiếu** để xe *hoạt đ
 - [X] Web HUD hiển thị telemetry thời gian thực; logger xuất được file.
 - [X] Xe đã lắp khung 2 tầng, siết chặt, IMU dán đệm xốp chống rung.
 
-### 0.3. Điều còn thiếu — chính là toàn bộ nội dung roadmap
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 0.3. Điều còn thiếu — chính là toàn bộ nội dung roadmap
 
 - ❌ Xác thực chiều trục IMU **trên xe thật** và chốt dấu Pitch/Gyro.
 - ❌ Chốt **bộ số PID thực nghiệm** (hiện là số mặc định, chưa tune).
@@ -65,7 +75,9 @@ Toàn bộ roadmap dưới đây là phần **còn thiếu** để xe *hoạt đ
 - ❌ **Chạy thẳng / Yaw lock**, chế độ đua, bù lái thích ứng thực nghiệm.
 - ❌ Lưu Flash thông số, chống kẹt bánh.
 
-### 0.4. GIAI ĐOẠN 0 — SELF-TEST PHỐI HỢP LINH KIỆN
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 0.4. GIAI ĐOẠN 0 — SELF-TEST PHỐI HỢP LINH KIỆN
 
 > **Mục tiêu GĐ0:** xác nhận **từng linh kiện và sự phối hợp giữa chúng hoạt động đúng** —
 > **KHÔNG cần xe cân bằng thật**. Chỉ sau khi tick đủ checklist này mới bắt đầu GĐ1.
@@ -86,7 +98,9 @@ Toàn bộ roadmap dưới đây là phần **còn thiếu** để xe *hoạt đ
 
 ---
 
-## 1. TỔNG QUAN HAI GIAI ĐOẠN
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 1. TỔNG QUAN HAI GIAI ĐOẠN
 
 |                          | **GIAI ĐOẠN 1**                                          | **GIAI ĐOẠN 2**                              |
 | :----------------------- | :--------------------------------------------------------------- | :--------------------------------------------------- |
@@ -107,9 +121,13 @@ Toàn bộ roadmap dưới đây là phần **còn thiếu** để xe *hoạt đ
 
 ---
 
-## 2. GIAI ĐOẠN 1 — TỰ ĐỘNG CÂN BẰNG
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 2. GIAI ĐOẠN 1 — TỰ ĐỘNG CÂN BẰNG
 
-### 2.1. Mục tiêu & phạm vi
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 2.1. Mục tiêu & phạm vi
 
 Dựng xe đứng trên 2 bánh, **tự giữ thăng bằng**, và **tự hồi khi bị tác động** (đẩy/nghiêng) mà không ngã.
 Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v_target = 0` chỉ để **chống trôi tại chỗ**.
@@ -121,7 +139,9 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 | Vòng ngoài PI**giữ vị trí** (`v_target = 0`) | Điều hướng web, chart/CSV nâng cao        |
 | An toàn ngã > 45°, Failsafe UART                       | Lưu Flash, chống kẹt bánh                  |
 
-### 2.2. Kiến trúc điều khiển GĐ1
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 2.2. Kiến trúc điều khiển GĐ1
 
 ```
   Encoder x_actual ──┐   ┌──────── VÒNG 1: GIỮ VỊ TRÍ (P) ─────────────┐
@@ -145,7 +165,9 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 > GĐ1: `steer = 0` ⇒ hai bánh nhận **cùng** một giá trị PWM (`PWM_base`).
 > Xe chỉ *giữ thăng bằng tại chỗ*, không cố ý di chuyển.
 
-### 2.3. Quy trình thực thi (đúng trình tự, không nhảy bước)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 2.3. Quy trình thực thi (đúng trình tự, không nhảy bước)
 
 |   Bước   | Việc làm                                                                                                                                                                                                                             | Điều kiện qua bước                          |
 | :---------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- |
@@ -157,7 +179,9 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 | **5** | **Bật vòng Vận tốc (PI) và Vị trí (P)**: tăng `Kp2` (`1.0 → 2.5`) và `Ki2` (`0.05 → 0.20`), sau đó tăng `Kp_pos` (`0.5 → 2.0`) để xe tự học góc bù và đứng bất động tuyệt đối | Đẩy nhẹ, xe tự quay về vị trí cũ (không trôi) |
 | **6** | **An toàn & Failsafe**: ngã > 45° cắt PWM + còi; dựng lại tự về BALANCING; rút UART 1.0s ga/lái về 0                                                                                                                 | Không rung giật, không EMERGENCY              |
 
-### 2.4. Thông số GĐ1 & khoảng tune
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 2.4. Thông số GĐ1 & khoảng tune
 
 | Tham số                  | Định nghĩa                       | Giá trị hiện tại |   Khoảng tune   | File                |
 | :------------------------ | :---------------------------------- | :------------------: | :---------------: | :------------------ |
@@ -173,9 +197,13 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 | Ngưỡng kích hoạt      | Pitch để vào cân bằng          |   **15.0°**   |      xem 4.1      | `robot_fsm.c:180` |
 | Ngưỡng ngã             | Pitch cắt động cơ               |   **45.0°**   |    cố định    | `robot_fsm.c:165` |
 
-### 2.5. GATE 1 — Tiêu chí nghiệm thu GĐ1
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 2.5. GATE 1 — Tiêu chí nghiệm thu GĐ1
 
-| # | Hạng mục                    | Tiêu chuẩn đạt                                         | Phương pháp          |
+| <!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# | Hạng mục                    | Tiêu chuẩn đạt                                         | Phương pháp          |
 | :-: | :---------------------------- | :--------------------------------------------------------- | :---------------------- |
 | 1 | Tự đứng thăng bằng tĩnh | Đứng yên**> 60 s**, trôi**< 10 cm**              | Sàn phẳng + telemetry |
 | 2 | Chống nhiễu                 | Đẩy 3 lần liên tiếp,**ts < 0.8 s**, không ngã | Tay đẩy nhẹ đầu xe |
@@ -184,7 +212,9 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 | 5 | Failsafe mất sóng           | Sau**1.0 s** ga/lái về 0, xe vẫn tự đứng       | Ngắt Wi-Fi/UART        |
 | 6 | Không lỗi tự phát         | Không`EMERGENCY`, không rung giật kéo dài           | Badge trạng thái web  |
 
-### 2.6. Việc phần mềm cần bổ sung cho GĐ1
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 2.6. Việc phần mềm cần bổ sung cho GĐ1
 
 - [ ] **WP1.7 — Cân nhắc ngưỡng kích hoạt**: code và tài liệu hiện đang thống nhất `< 15°` (`robot_fsm.c:180`).
   Đề xuất cân nhắc siết về **`< 8–10°`** (dễ kích hoạt nhưng chưa ngã ngang) rồi đồng bộ code + tài liệu.
@@ -194,7 +224,9 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 - [ ] **WP1.11 — An toàn phần cứng** (xem §9.3): watchdog độc lập `IWDG`, đọc điện áp pin thật qua ADC, cắt khi pin yếu, xử lý brown-out.
   *(Lưu ý: `.ioc` hiện **chưa cấu hình ADC**; `batt_voltage` trong `robot_fsm.c` đang hard-code `12.0f` → số "Pin" trên web là giả. Cần thêm cầu phân áp + ADC.)*
 
-### 2.7. Rủi ro GĐ1 & cách xử lý
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 2.7. Rủi ro GĐ1 & cách xử lý
 
 | Rủi ro                       | Biểu hiện                | Cách xử lý                                          |
 | :---------------------------- | :------------------------- | :----------------------------------------------------- |
@@ -206,14 +238,20 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 
 ---
 
-## 3. GIAI ĐOẠN 2 — ĐIỀU HƯỚNG WEB + VỪA CHẠY VỪA CÂN BẰNG
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 3. GIAI ĐOẠN 2 — ĐIỀU HƯỚNG WEB + VỪA CHẠY VỪA CÂN BẰNG
 
-### 3.1. Mục tiêu & phạm vi
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 3.1. Mục tiêu & phạm vi
 
 Điều khiển xe từ **Web HUD** để **tiến / lùi / bẻ lái**, trong khi xe **vẫn giữ thăng bằng động**.
 Đây là **nâng cấp của GĐ1** — kế thừa nguyên vẹn vòng trong PD, lọc bù, deadband, θ_trim, an toàn, FSM.
 
-### 3.2. Kiến trúc điều khiển GĐ2
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 3.2. Kiến trúc điều khiển GĐ2
 
 ```
   Web HUD ──ws──► ESP32-S3 ──UART1──► STM32
@@ -244,7 +282,9 @@ Trong GĐ1, xe **chưa cần chạy**: vòng vận tốc hoạt động với `v
 **Khác biệt cốt lõi so với GĐ1:** `v_target ≠ 0`, hai bánh nhận **PWM khác nhau**, và vòng vận tốc
 phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `tanθ ≈ a_x / g`.
 
-### 3.3. Giao thức lệnh (STM32 đã implement)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 3.3. Giao thức lệnh (STM32 đã implement)
 
 | Gói lệnh                |    Chiều    | Ý nghĩa                     | Xử lý              |         Web gửi?         |
 | :------------------------ | :----------: | :---------------------------- | :------------------- | :------------------------: |
@@ -257,7 +297,9 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 | `$STOP*`                | Web → STM32 | Dừng khẩn cấp              | `esp32_comm.c:99`  |             ✅             |
 | `$TEL,...\r\n`          | STM32 → Web | Telemetry 20Hz (10 trường)  | `esp32_comm.c:186` |         ✅ (nhận)         |
 
-### 3.4. Quy trình thực thi
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 3.4. Quy trình thực thi
 
 |   Bước   | Việc làm                                                                                                                                                                                                                | Điều kiện qua bước                        |
 | :---------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :--------------------------------------------- |
@@ -268,7 +310,9 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 | **5** | **Nâng cấp Web HUD**: nút RACE/CALIB, joystick lái, chart realtime, preset Smooth/Race                                                                                                                          | Điều khiển & quan sát đầy đủ           |
 | **6** | **Lưu Flash + chống kẹt bánh**: thêm parse `$SAVE*` (hiện STM32 **chưa** xử lý) để ghi `Kp1,Kd1,Kp2,Ki2,θ_trim` vào Sector 7; nếu `PWM > 80%` quá 500 ms mà `v ≈ 0` ⇒ `EMERGENCY` | Tham số bền vững; bảo vệ motor            |
 
-### 3.5. Thông số GĐ2 & khoảng tune
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 3.5. Thông số GĐ2 & khoảng tune
 
 | Tham số                   | Định nghĩa                         |    Giá trị hiện tại    |    Khoảng tune    | File                 |
 | :------------------------- | :------------------------------------ | :------------------------: | :----------------: | :------------------- |
@@ -281,9 +325,13 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 
 > `Kp1`, `Kd1`, `Deadband`, `θ_trim` **kế thừa GĐ1** — chỉ chỉnh lại nếu việc chạy làm đổi điểm cân bằng.
 
-### 3.6. GATE 2 — Tiêu chí nghiệm thu GĐ2
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 3.6. GATE 2 — Tiêu chí nghiệm thu GĐ2
 
-| # | Hạng mục                 | Tiêu chuẩn đạt                                            | Phương pháp                       |
+| <!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# | Hạng mục                 | Tiêu chuẩn đạt                                            | Phương pháp                       |
 | :-: | :------------------------- | :------------------------------------------------------------ | :----------------------------------- |
 | 1 | Điều hướng cơ bản    | Tiến/lùi mượt theo`v_target` 0 → 1.50 m/s (max slider) | Slider + giữ TIẾN/LÙI             |
 | 2 | Vừa chạy vừa cân bằng | Chạy 10 m liên tục không ngã                             | Quan sát + telemetry                |
@@ -293,7 +341,9 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 | 6 | An toàn                   | Ngã > 45° cắt PWM < 5 ms; mất sóng 1 s về 0             | Test có chủ đích                 |
 | 7 | Số liệu                  | Xuất được file telemetry, đồ thị đáp ứng hợp lệ   | Web logger                           |
 
-### 3.7. Việc phần mềm cần bổ sung cho GĐ2
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 3.7. Việc phần mềm cần bổ sung cho GĐ2
 
 - [ ] **WP2.1 — Nút lái trên web**: hiện `$CMD` luôn gửi `steer = 0` (`index_html.h:362`); thêm joystick/nút gửi `steer`.
 - [ ] **WP2.2 — Nút RACE**: gửi `$RACE,1*` / `$RACE,0*` (STM32 đã sẵn sàng; nút `$BENCH` và `$CALIB` đã có sẵn trên web).
@@ -304,7 +354,9 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 
 > **Đã xong:** xuất file telemetry `.txt` (task 4.6 cũ). Có thể nâng lên CSV nếu muốn tiện phân tích.
 
-### 3.8. Rủi ro GĐ2 & cách xử lý
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 3.8. Rủi ro GĐ2 & cách xử lý
 
 | Rủi ro                      | Biểu hiện            | Cách xử lý                                 |
 | :--------------------------- | :--------------------- | :-------------------------------------------- |
@@ -317,9 +369,13 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 
 ---
 
-## 4. ĐỒNG BỘ TÀI LIỆU & CODE (CẦN THỐNG NHẤT TRƯỚC KHI NGHIỆM THU)
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 4. ĐỒNG BỘ TÀI LIỆU & CODE (CẦN THỐNG NHẤT TRƯỚC KHI NGHIỆM THU)
 
-|  #  | Hạng mục                          | Code hiện tại                                           | Tài liệu/kế hoạch                       | Đề xuất                                        |
+|  <!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+#  | Hạng mục                          | Code hiện tại                                           | Tài liệu/kế hoạch                       | Đề xuất                                        |
 | :-: | :---------------------------------- | :-------------------------------------------------------- | :------------------------------------------ | :------------------------------------------------ |
 | 4.1 | Ngưỡng tự kích hoạt cân bằng | `< 15.0°` (`robot_fsm.c:180`)                        | `< 15.0°` (`Thuat_Toan_Dieu_Khien.md`) | Đã khớp; cân nhắc siết về**`< 8–10°`** |
 | 4.2 | Kẹp anti-windup`Ki2`             | `±10.0°` (`pid.h:27`)                               | `±10°` (`Thuat_Toan_Dieu_Khien.md`)   | Đã khớp                                        |
@@ -328,9 +384,13 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 
 ---
 
-## 5. THỨ TỰ ƯU TIÊN & DANH SÁCH WORK PACKAGE
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 5. THỨ TỰ ƯU TIÊN & DANH SÁCH WORK PACKAGE
 
-### 5.1. Thứ tự ưu tiên tổng thể
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 5.1. Thứ tự ưu tiên tổng thể
 
 ```
  [GĐ0] WP0.0 Self-test phối hợp linh kiện (§0.4)   ══════════════════► GATE 0
@@ -346,7 +406,9 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
       ─► WP2.7 Kiểm bền & Gain scheduling                                 ══► GATE 2
 ```
 
-### 5.2. Bảng work package (có điều kiện vào / ra)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 5.2. Bảng work package (có điều kiện vào / ra)
 
 | WP     | Tên                                                                                                                                                     | GĐ | Điều kiện vào (Entry)                | File chạm tới                         | Điều kiện ra (Exit/DoD)                         |
 | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :--: | :--------------------------------------- | :-------------------------------------- | :------------------------------------------------- |
@@ -375,15 +437,21 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 
 ---
 
-## 6. BẢNG THEO DÕI & CHỐT THÔNG SỐ (ĐIỀN SAU KHI TUNE)
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 6. BẢNG THEO DÕI & CHỐT THÔNG SỐ (ĐIỀN SAU KHI TUNE)
 
-### Bảng A — Giai đoạn 1
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# Bảng A — Giai đoạn 1
 
 |     Kp1     |     Kd1     |     Kp2     |     Ki2     |    Kp_pos   |   Deadband   |   θ_trim   | Ngày | Người tune |
 | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :---: | :----------- |
 | _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ | _(trống)_ |      |              |
 
-### Bảng B — Giai đoạn 2
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# Bảng B — Giai đoạn 2
 
 |     Kp2     |     Ki2     |      β      |    K_yaw    | MAX_TILT (thường/đua) | Ngày | Người tune |
 | :----------: | :----------: | :----------: | :----------: | :----------------------: | :---: | :----------- |
@@ -391,12 +459,16 @@ phải **chủ động nghiêng xe** để tạo gia tốc — theo cơ chế `t
 
 ---
 
-## 7. HẠ TẦNG PHỤC VỤ TUNING PID
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 7. HẠ TẦNG PHỤC VỤ TUNING PID
 
 > Đây là các hạng mục **bắt buộc/tùy chọn** để việc tune PID *đo được, lặp lại được và an toàn* —
 > thứ quyết định xe có thực hiện đúng chức năng hay không. Tham chiếu tốt nghiệp ở mục 7.1 và 7.2.
 
-### 7.1. Mô hình hóa & mô phỏng vòng kín (WP0 — khuyến nghị mạnh)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 7.1. Mô hình hóa & mô phỏng vòng kín (WP0 — khuyến nghị mạnh)
 
 Tài liệu học thuật (MBSE inverted pendulum, V-REP benchmark, sim2real) đều cho thấy **mô phỏng trước khi
 chạy phần cứng** giúp pre-tune gain và giảm số lần xe ngã/hỏng.
@@ -408,7 +480,9 @@ chạy phần cứng** giúp pre-tune gain và giảm số lần xe ngã/hỏng.
 * **Đầu ra**: bộ `(Kp1, Kd1, Kp2, Ki2)` gợi ý + đồ thị đáp ứng → dùng làm **điểm khởi đầu** khi tune xe thật (thay vì bắt đầu từ 0).
 * **Công cụ**: Python (`numpy`/`scipy`/`control`) hoặc MATLAB/Simulink. Không cần real-time.
 
-### 7.2. Kỷ luật đo lường & thời gian thực (WP1.10)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 7.2. Kỷ luật đo lường & thời gian thực (WP1.10)
 
 Nghiên cứu "Digital Control of an Inverted Pendulum" (MDPI) chỉ rõ **dead-time/latency của điều khiển số
 làm giảm vùng ổn định** — nên phải đo được, không chỉ suy đoán.
@@ -424,7 +498,9 @@ làm giảm vùng ổn định** — nên phải đo được, không chỉ suy 
     *Ước lượng băng thông*: gói ~65 byte × 20Hz ≈ 1.3 kB/s; UART 115200 ≈ 11.5 kB/s → 100Hz ≈ 6.5 kB/s vẫn khả thi.
 * **Giới hạn cần nhớ**: telemetry 20Hz hiện tại (Nyquist 10Hz) **không đủ** để thấy rung cao tần >10Hz.
 
-### 7.3. Tách băng thông 2 vòng (cascade bandwidth separation)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 7.3. Tách băng thông 2 vòng (cascade bandwidth separation)
 
 Nguyên lý cascade: **vòng ngoài phải chậm hơn vòng trong ~5–10 lần** để hai vòng không "đánh nhau".
 
@@ -433,7 +509,9 @@ Nguyên lý cascade: **vòng ngoài phải chậm hơn vòng trong ~5–10 lần
   (chạy PID vận tốc mỗi 4–10 chu kỳ 200Hz) thay vì mỗi chu kỳ.
 * Khi tune `Kp2/Ki2` ở GĐ2, nếu thấy xe lắc chậm 0.5–1.5Hz (say rượu) → giảm `Kp2` và/hoặc tăng decimation.
 
-### 7.4. Version hóa & baseline (bắt buộc để tune lặp lại được)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 7.4. Version hóa & baseline (bắt buộc để tune lặp lại được)
 
 * Mỗi lần tune phải **chốt được bộ số + phiên bản firmware** để tái lập:
   * Ghi thêm vào header file log: `firmware_version`, `git_commit` (hiện chỉ có PID/Trim).
@@ -442,35 +520,49 @@ Nguyên lý cascade: **vòng ngoài phải chậm hơn vòng trong ~5–10 lần
 
 ---
 
-## 8. GIAO THỨC TEST & NGHIỆM THU KỸ THUẬT
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 8. GIAO THỨC TEST & NGHIỆM THU KỸ THUẬT
 
 > Mọi kết luận về chất lượng điều khiển phải dựa trên **số liệu log**, không cảm quan.
 
-### 8.1. Test vòng góc (inner) — có đai/tether nếu cần
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 8.1. Test vòng góc (inner) — có đai/tether nếu cần
 
 * Đặt `Kp2 = Ki2 = 0`; tắt deadband; giữ xe an toàn.
 * **Test đáp ứng bước góc**: nghiêng xe **10° rồi thả** → mục tiêu **hồi phục < 1s**, ít vọt lố.
 * Ghi log 100Hz (WP1.10) → tính `Mp, ts`.
 
-### 8.2. Test vòng vận tốc (outer)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 8.2. Test vòng vận tốc (outer)
 
 * Đặt `v_target = 0` → xe đứng yên; sau đó **bước `v_target = 0.5 m/s`** → đo thời gian bám và độ vọt lố.
 * Đo sai số tĩnh `ess` ở `v_target = 0.3 / 0.6 / 1.0 m/s`.
 
-### 8.3. Test chống nhiễu
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 8.3. Test chống nhiễu
 
 * Đẩy thân xe 3 lần liên tiếp → mục tiêu `ts < 0.8s`, không ngã (GATE 1).
 
-### 8.4. Test độ bền (robustness) — WP2.7
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 8.4. Test độ bền (robustness) — WP2.7
 
 * Chạy lại bộ số trên **≥ 3 mặt sàn khác nhau** (gạch, gỗ, thảm), **mức pin khác nhau**, **tải khác**.
 * Nếu lệch nhiều khi nghiêng > ±5° → xem xét **gain scheduling** (bảng gain theo dải góc).
 
-### 8.5. Test an toàn (liên kết §9)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 8.5. Test an toàn (liên kết §9)
 
 * Ngã > 45°; mất sóng > 1s; pin yếu; watchdog; kẹt bánh — mỗi cái một kịch bản có chủ đích.
 
-### 8.6. Chỉ số chất lượng điều khiển dùng để chấm
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 8.6. Chỉ số chất lượng điều khiển dùng để chấm
 
 | Chỉ số       | Ý nghĩa                                    | Ngưỡng mục tiêu   |
 | :------------- | :------------------------------------------- | :-------------------- |
@@ -481,19 +573,27 @@ Nguyên lý cascade: **vòng ngoài phải chậm hơn vòng trong ~5–10 lần
 
 ---
 
-## 9. AN TOÀN & ĐỘ BỀN HỆ THỐNG (MỞ RỘNG)
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 9. AN TOÀN & ĐỘ BỀN HỆ THỐNG (MỞ RỘNG)
 
-### 9.1. An toàn phần mềm (đã có)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 9.1. An toàn phần mềm (đã có)
 
 * Cắt PWM khi ngã > 45°; tự kích hoạt lại khi dựng thẳng.
 * Failsafe mất UART 1.0s → ga/lái về 0.
 * `EMERGENCY` khi mất I2C BMI160.
 
-### 9.2. Bảo vệ vận hành (bổ sung)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 9.2. Bảo vệ vận hành (bổ sung)
 
 * Giới hạn dòng/nhiệt động cơ; cảnh báo khi PWM cao kéo dài mà không chuyển động (stall – WP2.6).
 
-### 9.3. An toàn phần cứng (WP1.11 — bổ sung)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 9.3. An toàn phần cứng (WP1.11 — bổ sung)
 
 | Hạng mục                                 | Rủi ro nếu thiếu                    | Việc làm                                                 |
 | :----------------------------------------- | :------------------------------------- | :--------------------------------------------------------- |
@@ -507,9 +607,13 @@ Nguyên lý cascade: **vòng ngoài phải chậm hơn vòng trong ~5–10 lần
 
 ---
 
-## 10. QUẢN TRỊ DỰ ÁN: TRUY VẾT, FMEA & LỊCH TRÌNH
+#<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 10. QUẢN TRỊ DỰ ÁN: TRUY VẾT, FMEA & LỊCH TRÌNH
 
-### 10.1. Ma trận truy vết yêu cầu (RTM nhẹ)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 10.1. Ma trận truy vết yêu cầu (RTM nhẹ)
 
 | Yêu cầu                       | Tiêu chí (GATE) | WP thực hiện | Cách kiểm chứng |
 | :------------------------------ | :---------------- | :------------- | :----------------- |
@@ -521,7 +625,9 @@ Nguyên lý cascade: **vòng ngoài phải chậm hơn vòng trong ~5–10 lần
 | Bẻ lái không lật            | GATE 2#3          | WP2.1, WP2.3   | Sa bàn zíc-zắc  |
 | Tốc độ đua                  | GATE 2#4          | WP2.4          | Xung Encoder       |
 
-### 10.2. FMEA rút gọn
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 10.2. FMEA rút gọn
 
 | Chức năng        | Kiểu lỗi        | Ảnh hưởng        | Phát hiện             | Xử lý                   |
 | :----------------- | :---------------- | :------------------ | :---------------------- | :------------------------ |
@@ -531,7 +637,9 @@ Nguyên lý cascade: **vòng ngoài phải chậm hơn vòng trong ~5–10 lần
 | Nguồn             | Sụt áp đỉnh   | ESP32 reset         | Log mất gói           | Tụ 1000µF, tách nguồn |
 | Kết nối          | Mất Wi-Fi        | Mất điều khiển  | Badge "mất tín hiệu" | Failsafe 1s               |
 
-### 10.3. Lịch trình & phụ thuộc (ước lượng — điều chỉnh theo thực tế)
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 10.3. Lịch trình & phụ thuộc (ước lượng — điều chỉnh theo thực tế)
 
 | WP                                   | Ước lượng (buổi) | Phụ thuộc | Ghi chú                                 |
 | :----------------------------------- | :-------------------: | :---------- | :--------------------------------------- |
@@ -551,7 +659,9 @@ Nguyên lý cascade: **vòng ngoài phải chậm hơn vòng trong ~5–10 lần
 > **Đường găng (critical path)**: WP1.0 → WP1.1 → WP1.2 → WP1.5 → **GATE 1** → WP2.0 → WP2.3 → WP2.4 → **GATE 2**.
 > Hai WP dài/lặp nhất là **tune vòng góc** và **tune vòng vận tốc bám tốc độ**.
 
-### 10.4. Vòng lặp bắt buộc
+##<!-- Tài liệu LỊCH SỬ (kế hoạch thời RT8): các tệp pid.c/pid.h đã bị xoá ở RT46;
+luật hiện hành là R12 và thông số nằm ở tuning.h. Đọc mục 4.1/4.2 dưới đây như tư liệu, không phải cấu hình. -->
+# 10.4. Vòng lặp bắt buộc
 
 Việc tune là **lặp**, không tuyến tính. Phải **re-validate** sau:
 
