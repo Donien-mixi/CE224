@@ -3,20 +3,13 @@
 #include <stdint.h>
 #include <math.h>
 #include "balance_profile.h"
-/* RT23 speed interlock. Supervisory only: never changes the frozen R12 force /
- * observer / allocator law and never edits a measurement.
+/* Giám sát tốc độ. Chỉ lớp giám sát: không đổi luật lực R12, observer, phân bổ
+ * hay số đo.
  *
- * Why this is not a one-sample trip any more. In every RT22 log that fell, the
- * axle crossed the ordinary0.80m/s ceiling exactly while the R12 loop was
- * catching a lean or braking a released turn - the wheels are supposed to race
- * there. BalanceStop(16) then zeroed both PWM and the body fell:
- *   log RT23-8DIR preset72a t=38.94s: turn released, axle0.74->0.795m/s,
- *     fault16 at pitch2.0deg, PWM0/0, then pitch0->90deg in0.2s;
- *   log RT23-8DIR preset72b t=33.70s: same, pitch1.8deg ->105deg in0.24s;
- *   straight-run screenshot: fault16 with PWM0/0 at pitch-13.6deg.
- * A real runaway is still caught: the ceiling now follows the command
- * (max(envelope, |v_ref|+0.12) because preset72 legitimately rides0.72-0.79),
- * 200ms of continuous overspeed stops, and anything above1.45m/s stops at once. */
+ * Vì sao không cắt theo một mẫu: trục vượt trần 0,80 m/s đúng lúc vòng R12 đang
+ * bắt nghiêng hoặc đang phanh cua — bánh phải quay nhanh ở đó. Cắt cả hai PWM
+ * lúc ấy chính là làm xe ngã. Vì vậy trần đi theo lệnh (max(envelope,
+ * |v_ref|+0,12)), cần 200 ms vượt liên tục mới cắt, và trên 1,45 m/s cắt ngay. */
 typedef struct {
     uint16_t ticks;
 } BalanceInterlock;

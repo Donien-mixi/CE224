@@ -69,7 +69,7 @@ static Robot_Data_t s_robot = {.state = ROBOT_STATE_INIT,
 static bool bal_config_ok;
 static volatile bool bal_imu_failed;
 static bool bal_max_envelope;
-/* RT23: consecutive200Hz ticks above the speed interlock ceiling. */
+/* Số nhịp 200 Hz liên tiếp vượt trần giám sát tốc độ. */
 static BalanceInterlock bal_interlock;
 static uint16_t TestCRC(const uint8_t *data, unsigned length) {
     uint16_t crc = 0xffff;
@@ -220,8 +220,8 @@ static void BalanceStop(uint16_t reason) {
     BalanceInterlock_Clear(&bal_interlock);
     BalanceStartup_Stop(&bal_startup);
     BalanceRecovery_Clear(&bal_recovery);
-    /* RT22: a STOP/re-ARM keeps the learned neutral posture (clamped +-2deg). It
-     * only centres the headroom predictor; it is not a control setpoint. */
+    /* STOP/re-ARM giữ tư thế trung tính đã học (kẹp ±2°); nó chỉ dùng cho bộ dự
+ * đoán headroom, không phải điểm đặt điều khiển. */
     BalanceGovernor_ResetKeepEquilibrium(&bal_governor);BalanceMotion_Clear(&bal_motion);BalanceTurn_Clear(&bal_turn);s_robot.motion_ready=0;
     ESP32_Command_t *motion_command=ESP32_Comm_GetCommand();
     motion_command->drive_epoch=motion_command->drive_word=motion_command->drive_rx_ms=0;motion_command->drive_speed_preset=0;motion_command->drive_turn=0;
@@ -303,7 +303,7 @@ void Robot_ControlLoop_200Hz(void) {
             bal_max_envelope=false;BalanceInterlock_Clear(&bal_interlock);
             BalanceStartup_Begin(&bal_startup,bal_controller,s_robot.pitch,bal_armed_ms);
             BalanceRecovery_Clear(&bal_recovery);
-            /* RT22: keep the learned neutral across ARM; it is re-measured at rest. */
+            /* Giữ tư thế trung tính qua ARM; sẽ đo lại khi xe đứng yên. */
             BalanceGovernor_ResetKeepEquilibrium(&bal_governor);BalanceMotion_Clear(&bal_motion);BalanceTurn_Clear(&bal_turn);s_robot.motion_ready=0;
             cmd->drive_word=cmd->drive_rx_ms=0;cmd->drive_epoch=cmd->arm_drive_epoch;cmd->drive_speed_preset=0;cmd->drive_turn=0;
             s_robot.v_actual=s_robot.v_left=s_robot.v_right=0;
@@ -319,12 +319,8 @@ void Robot_ControlLoop_200Hz(void) {
         if(startup_fault){BalanceStop(startup_fault);break;}
         BalanceRecovery_Impact(&bal_recovery,!bal_startup.active&&!just_armed,bal_motion.used,
             s_robot.gyro_rate,norm,s_robot.x_actual-bal_motion.x_ref,bal_startup.budget,HAL_GetTick());
-        /* RT39: a single ceiling-based overspeed reserve, evaluated before the
-         * motion trajectory and the interlock so REC1 can raise the ceiling on
-         * the same tick. See balance_recovery.h for the log evidence: the two
-         * old margins (0.04 against the reference, and the lean-gated0.78) sat
-         * inside the normal preset-80 cornering band and produced12 REC1
-         * episodes (30% of the run) in all four turn directions. */
+        /* Một trần duy nhất cho "dự phòng vượt tốc", tính TRƯỚC quỹ đạo và interlock để
+ * REC1 kịp nâng trần ngay trong cùng nhịp. */
         BalanceRecovery_OverSpeed(&bal_recovery,!bal_startup.active&&!just_armed,
             s_robot.v_actual,bal_motion.v_ref,s_robot.x_actual-bal_motion.x_ref,
             bal_startup.budget,bal_max_envelope?1.12f:BalanceStartup_SpeedLimit(&bal_startup),
@@ -344,21 +340,16 @@ void Robot_ControlLoop_200Hz(void) {
             norm>.72f&&norm<1.32f,
             s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,(s_robot.v_right-s_robot.v_left)/CAT_PARAM[0]);
         int8_t previous_turn=bal_turn.requested;
-        /* RT24: the lean taper is measured against the learned neutral posture so
-         * a normal pivot's own lean does not throttle the commanded rate. */
+        /* Taper nghiêng tính trên độ nghiêng vượt tư thế trung tính, nên cú quay bình
+ * thường không tự bóp tốc độ quay. */
         bal_turn.lean_ref=bal_governor.equilibrium_ready?bal_governor.equilibrium:0.0f;
-        /* RT40: while turning, keep at least one wheel off the duty ceiling. Logs
-         * RT40 (08, preset90) fell three times from corners where one wheel sat at
-         * 100% duty: the release yaw brake then had no authority and the axle surged
-         * 0.72->0.95m/s. The scale only acts while a turn is commanded; straight
-         * running is untouched, so the selected preset is still reached. */
+        /* Đang cua: giữ ít nhất một bánh khỏi trần duty. Trần cua chỉ tác dụng khi có
+ * lệnh quay; chạy thẳng không đổi nên vẫn đạt mốc đã chọn. */
         BalanceTurn_headroom(BalanceTurn_headroom_next(
             fmaxf(fabsf((float)s_robot.pwm_left),fabsf((float)s_robot.pwm_right))/2499.0f,
             cmd->drive_turn!=0));
-        /* RT43: the same duty evidence also caps the straight-line MAX target: log
-         * RT42 at home ran the whole session at MAX 90 with duty p95 0.90 and fell
-         * twice while the axle rode0.95-0.96. Only while NOT turning, so the corner
-         * budget keeps its own (RT40) scale. */
+        /* Cùng bằng chứng duty đó cũng hạ trần MAX ở đường thẳng, nhưng chỉ khi KHÔNG
+ * cua, để trần cua giữ thang riêng. */
         BalanceMotion_maxhead(BalanceMotion_maxhead_next(
             fmaxf(fabsf((float)s_robot.pwm_left),fabsf((float)s_robot.pwm_right))/2499.0f,
             cmd->drive_turn==0&&cmd->drive_speed_preset==2&&fabsf(bal_motion.v_ref)>.80f));
@@ -377,18 +368,9 @@ void Robot_ControlLoop_200Hz(void) {
         if(motion_fault){BalanceStop(motion_fault);break;}
         if(fabsf(s_robot.pitch)>BalanceRecovery_Angle(&bal_recovery,bal_startup.angle_limit)){BalanceStop(4);break;}
         if(fabsf(s_robot.x_actual-bal_motion.x_ref)>BalanceRecovery_Distance(&bal_recovery,bal_startup.budget)){BalanceStop(8);break;}
-        /* RT23: an axle sample above the ceiling is a balance transient, not a
-         * stop condition. The wheels race exactly when the R12 loop is catching
-         * a lean, so cutting the motors there guarantees the fall it was meant
-         * to prevent. Evidence: log RT23-8DIR preset72, both falls (t=34.0 and
-         *39.1s) tripped fault16 one tick after the turn was released: the yaw
-         * brake surged the axle0.74->0.86m/s, BalanceStop(16) zeroed both PWM at
-         *pitch1.8deg, and the body then fell0->105deg in0.24s. The straight-run
-         * screenshot shows the same text at pitch-13.6deg with PWM0/0.
-         * The ceiling now also follows the command (|v_ref|+0.12 because preset
-         *72 rides0.72-0.79 with only0.08 of room to0.80), the trip needs200ms of
-         * continuous overspeed, and the absolute runaway bound1.45m/s is
-         * unchanged in effect: only a genuinely out-of-control axle stops now. */
+        /* Mẫu vượt trần là quán tính khi vòng R12 đang bắt nghiêng, không phải lệnh
+ * dừng: cắt motor lúc đó chính là làm xe ngã. Trần đi theo lệnh (|v_ref|+0,12),
+ * cần 200 ms vượt liên tục, và mốc 1,45 m/s vẫn cắt ngay. */
         float speed_ceiling=bal_max_envelope?1.12f:BalanceRecovery_Speed(&bal_recovery,BalanceStartup_SpeedLimit(&bal_startup));
         if(BalanceInterlock_Step(&bal_interlock,s_robot.v_actual,s_robot.v_left,s_robot.v_right,
             speed_ceiling,bal_motion.v_ref,bal_max_envelope)){BalanceStop(16);break;}
@@ -413,8 +395,8 @@ void Robot_ControlLoop_200Hz(void) {
             s_robot.pwm_base=0;
             s_robot.v_control=bal_catalog[1];s_robot.theta_control=bal_catalog[2]*RAD_TO_DEG;
         } else {
-            /* RT32: bù lệch cơ khí bánh trái — xem balance_trim.h. Đặt sau bộ phân
-             * bổ R12, không sửa gain/quan sát/phân bổ, kẹp ±MOTOR_MAX_PWM. */
+            /* Bù lệch cơ khí bánh trái — xem balance_trim.h. Đặt SAU bộ phân bổ R12,
+ * kẹp ±MOTOR_MAX_PWM. */
             float pwm_l=BalanceTrim_Left(output[0],BALANCE_TRIM_LEFT_PWM,(float)MOTOR_MAX_PWM);
             s_robot.pwm_left=(int16_t)pwm_l;s_robot.pwm_right=(int16_t)output[1];
             s_robot.pwm_base=.5f*(pwm_l+output[1]);

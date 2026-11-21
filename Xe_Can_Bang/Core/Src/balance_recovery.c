@@ -5,6 +5,9 @@
  * Toàn bộ ngưỡng nằm ở balance_recovery.h để chỉnh một chỗ.
  */
 #include "balance_recovery.h"
+/* ---- Cửa probe cho host test (mặc định tắt, xem tuning.h) ---- */
+/* 1 = vào REC1 ngay khi có lệnh (luật cũ, chưa cần 60 ms bằng chứng). */
+#define TWIP_PROBE_IMMEDIATE_MANEUVER BALANCE_RECOVERY_IMMEDIATE_MANEUVER
 
 /* Vào REC1 hay không, xét theo 4 đường:
  *   - nghiêng quá ngưỡng (có lệnh: 16°, không lệnh: 8°)
@@ -35,7 +38,7 @@ uint16_t BalanceRecovery_UpdateMode(BalanceRecovery *s, bool allow,
         if (s->primed && maneuver && (suspect || gyro_spike)) { if (s->quiet < 12U) s->quiet++; }
         else s->quiet = 0;
 
-#if BALANCE_RECOVERY_IMMEDIATE_MANEUVER
+#if TWIP_PROBE_IMMEDIATE_MANEUVER
         bool trigger = s->primed && (gyro_spike || suspect);           /* probe test cũ */
 #else
         bool trigger = s->primed && (!maneuver ? (gyro_spike || suspect)

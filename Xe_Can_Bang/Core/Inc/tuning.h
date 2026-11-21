@@ -108,7 +108,7 @@
 #endif
 
 /* ---- 3. Lấy lại sau va đập — REC1 (balance_recovery) ---- */
-#define BALANCE_RECOVERY_LIVE_COMMANDS 1  // 1 = REC1 dùng lệnh trực tiếp (giữ nguyên)
+#define BALANCE_RECOVERY_LIVE_COMMANDS 1  // cờ đánh dấu cho test/mô phỏng (firmware luôn dùng lệnh trực tiếp)
 #ifndef BALANCE_RECOVERY_GYRO_DPS
 #define BALANCE_RECOVERY_GYRO_DPS 150.0f  // ngưỡng gyro để coi là bị đập (°/s)
 #endif
@@ -128,11 +128,11 @@
 #define BALANCE_RECOVERY_OVERSPEED_SLACK 0.0f  // test: hạ ngưỡng vượt tốc xuống dưới trần (m/s)
 #endif
 #ifndef BALANCE_RECOVERY_IMMEDIATE_MANEUVER
-#define BALANCE_RECOVERY_IMMEDIATE_MANEUVER 0  // test: 1 = vào REC1 ngay khi có lệnh (luật trước RT38)
+#define BALANCE_RECOVERY_IMMEDIATE_MANEUVER 0  // test: 1 = vào REC1 ngay khi có lệnh (luật cũ, chưa cần 60 ms bằng chứng)
 #endif
 
 /* ---- 4. Governor — trần tốc độ/lực (balance_governor) ---- */
-#define BALANCE_GOVERNOR_EQUILIBRIUM 1  // 1 = bật học tư thế trung tính lúc đứng yên
+#define BALANCE_GOVERNOR_EQUILIBRIUM 1  // cờ đánh dấu cho test/mô phỏng (firmware luôn học tư thế trung tính)
 #ifndef BALANCE_GOV_LEAN_DEG
 #define BALANCE_GOV_LEAN_DEG 10.0f  // ngưỡng nghiêng để ép governor (°)
 #endif

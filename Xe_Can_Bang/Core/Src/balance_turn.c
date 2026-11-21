@@ -5,6 +5,9 @@
  * Toàn bộ thông số ở balance_turn.h để chỉnh một chỗ.
  */
 #include "balance_turn.h"
+/* ---- Cửa probe cho host test (mặc định tắt, xem tuning.h) ---- */
+/* 1 = tính trần ngang theo tốc độ ĐO (luật cũ). Chỉ dùng cho test A/B. */
+#define TWIP_PROBE_LATERAL_MEASURED BALANCE_TURN_LATERAL_FROM_MEASURED
 
 /* Tiến tới target tối đa step (rad/s) trong một nhịp. */
 float BalanceTurn_Approach(float old, float target, float step) {
@@ -106,7 +109,7 @@ int BalanceMotion8_Update(BalanceMotion *s, BalanceTurn *t, unsigned permission,
     float wheel_cap = fmaxf(.10f, 2.0f * (envelope - guard) / .262f);
     /* Trần ngang tính theo tốc độ LỆNH, không theo tốc độ đo: nếu theo đo thì
      * trần nhảy qua lại quanh 1,15 rad/s mỗi khi |v| dao động 0,76–0,82. */
-#if BALANCE_TURN_LATERAL_FROM_MEASURED
+#if TWIP_PROBE_LATERAL_MEASURED
     float lateral_cap = fabsf(speed) > .1f ? BALANCE_TURN_LATERAL_ACCEL / fabsf(speed) : max_rate;
 #else
     float lateral_cap = guard > .1f ? BALANCE_TURN_LATERAL_ACCEL / guard : max_rate;

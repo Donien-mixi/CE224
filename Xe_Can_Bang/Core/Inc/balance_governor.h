@@ -19,16 +19,15 @@ typedef struct {
     bool pressure,limited;
 } BalanceGovernor;
 static inline void BalanceGovernor_Reset(BalanceGovernor *g){*g=(BalanceGovernor){0};}
-/* RT22: a STOP must not forget the car's neutral posture. It is clamped to
- * +-2deg, re-measured at rest, and never used for control or ARM admission. */
+/* STOP/re-ARM giữ tư thế trung tính đã học (kẹp ±2°); chỉ dùng cho bộ dự đoán
+ * headroom, không phải điểm đặt điều khiển. */
 static inline void BalanceGovernor_ResetKeepEquilibrium(BalanceGovernor *g){
  float e=g->equilibrium;bool r=g->equilibrium_ready;
  *g=(BalanceGovernor){0};g->equilibrium=e;g->equilibrium_ready=r;
 }
-/* Learn only the headroom predictor's neutral posture from self-balanced rest.
- * Never changes CF, IMU calibration, force gains or hard angle protection.
- * Initial0.5s dwell plus60 valid samples (RT22: was1s/100); motion freezes the
- * last accepted value. */
+/* Học tư thế trung tính của bộ dự đoán headroom khi xe tự cân bằng đứng yên.
+ * Không đổi CF, hiệu chuẩn IMU, gain lực hay chốt góc; chờ 0,5 s + 60 mẫu hợp
+ * lệ, motion đóng băng giá trị cuối. */
 static inline void BalanceGovernor_ObserveRest(BalanceGovernor *g,bool eligible,
  float pitch,float gyro,float speed,float yaw_rate){
  if(!eligible||!isfinite(pitch)||!isfinite(gyro)||!isfinite(speed)||!isfinite(yaw_rate)||
@@ -64,18 +63,15 @@ static inline float BalanceGovernor_Step(BalanceGovernor *g,float old,float targ
     if(!isfinite(old)||!isfinite(target)||!isfinite(pitch)||!isfinite(gyro)||
        !isfinite(rate)||!isfinite(g->acceleration)||!isfinite(g->duty)||!isfinite(g->speed)||!isfinite(g->equilibrium))return NAN;
     float requested=fabsf(target);
-    /* Keep RT16 thresholds; center the predictor on measured quiet posture,
-     * not an assumed perfect0deg. Logs10/11 show quiet posture varying~2deg.
-     * Default0 is exactly the previous predictor until rest is qualified. */
+    /* Giữ ngưỡng cũ; quy tâm dự đoán về tư thế đo được (không giả định 0°) vì tư
+ * thế yên thay đổi ±2°. */
     pitch-=g->equilibrium;
     bool quick_launch=wanted!=0&&fabsf(old)<.50f&&old*target>=0;
     int direction=old>.02f?1:old<-.02f?-1:wanted;
     float predicted=direction*(pitch+.10f*gyro);
     bool accelerating=wanted!=0&&old*target>=0&&fabsf(target)>fabsf(old)+.00001f;
-    /* RT21-A: tracking lag is expected while the reference is still
-     * accelerating. Only treat it as missing headroom while holding/braking.
-     * RT22: lean term is9deg normal /11deg launch, centred on the learned
-     * posture; duty>0.90 and the lag rule are unchanged. */
+    /* Bám trễ là bình thường khi tham chiếu còn tăng tốc; chỉ coi là thiếu dự trữ
+ * khi đang giữ/phanh. Ngưỡng nghiêng 10°/13° tính từ tư thế đã học. */
     if(g->duty>.90f||predicted>(quick_launch?BALANCE_GOV_LEAN_LAUNCH_DEG:BALANCE_GOV_LEAN_DEG)||
        direction*(old-g->speed)>(accelerating?.30f:.12f)){g->pressure=true;g->cool=0;}
     /* At launch, a normal balancing correction can trip the lean predictor.
@@ -93,14 +89,11 @@ static inline float BalanceGovernor_Step(BalanceGovernor *g,float old,float targ
     bool deadlock=false;
     bool retreat=wanted!=0&&old*target>0&&fabsf(old)>.15f&&
         (g->saturated>=8||predicted>BALANCE_GOV_LEAN_DEG+2.5f);
-    /* RT22: pressure limits the commanded acceleration to a crawl instead of
-     * freezing the reference. The old freeze waited for |ref-speed|<0.08, so a
-     * held forward command stalled0.5-4.8s; a crawl keeps obeying the command
-     * while the lean is large, and the anchor still bounds unreachable debt. */
-    /* RT21-A anti-deadlock: a crawling reference below0.2m/s with a
-     * stationary vehicle can never satisfy the clear test (|old-speed|<.08).
-     * Allow a slow crawl so static friction can be broken; the motion blockage
-     * detector still cancels a real wall after its evidence window. */
+    /* Pressure hạ gia tốc tham chiếu xuống mức bò thay vì đóng băng: lệnh vẫn được
+ * thi hành trong lúc thân ngả nhiều, còn neo vẫn chặn "nợ" không tới được. */
+    /* Chống bế tắc: tham chiếu bò dưới 0,2 m/s mà xe đứng thì không bao giờ thoả
+ * điều kiện nhả (|old−speed|<0,08). Cho bò chậm để phá ma sát tĩnh; bộ phát
+ * hiện chặn đường vẫn huỷ tường thật sau đủ bằng chứng. */
     if(g->limited&&wanted!=0&&fabsf(g->speed)<.05f&&fabsf(old)<.15f){
         target=direction*.15f;
         deadlock=true;
@@ -114,9 +107,8 @@ static inline float BalanceGovernor_Step(BalanceGovernor *g,float old,float targ
     if(g->limited&&!deadlock)cap=fminf(cap,BALANCE_GOV_CRAWL);
     if(retreat)cap=.10f;
     float jerk=(braking||g->limited)?2.5f:2.0f;
-    /* RT14: neutral must never spend a stored launch acceleration increasing
-     * the velocity reference. Keep the balance loop untouched; discard only
-     * acceleration pointing away from zero when the operator releases. */
+    /* Nhả lệnh: không dùng gia tốc xuất phát đã tích để tăng tiếp tham chiếu — chỉ
+ * bỏ gia tốc hướng ra xa 0. */
     if(wanted==0&&old*g->acceleration>0)g->acceleration=0;
     /* A new reversal must brake now, not first spend the old launch
      * acceleration making the previous direction faster for~200ms. */

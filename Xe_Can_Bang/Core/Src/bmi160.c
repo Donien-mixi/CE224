@@ -195,8 +195,8 @@ void BMI160_Calibrate_Gyro(uint16_t samples)
     float sum_x = 0.0f, sum_y = 0.0f, sum_z = 0.0f;
     uint8_t raw[12];
 
-    /* Transactional calibration: moving/failed attempts must not publish a
-     * spurious6dps bias (RT16 log11 metadata). ARM still stays locked on failure. */
+    /* Hiệu chuẩn có giao dịch: lần đang động hoặc lỗi không được công bố bias giả
+     * 6 °/s; ARM vẫn bị khoá khi hiệu chuẩn lỗi. */
 
     for (uint16_t i = 0; i < samples; i++)
     {

@@ -6,6 +6,10 @@
  * BalanceMotion_Update nằm trong header vì caller chèn hook governor qua macro.
  */
 #include "balance_motion.h"
+/* ---- Cửa probe cho host test (mặc định tắt, xem tuning.h) ---- */
+/* 1 = luật cũ: cắt tốc độ khi lệch mốc quá 20 cm. Chỉ dùng để chứng minh test
+ * bắt được lỗi cũ; không bao giờ bật trên xe. */
+#define TWIP_PROBE_LEAD_CUT BALANCE_MOTION_LEAD_CUT
 
 /* Bắt đầu phanh: neo mốc tại đúng chỗ đo và xoá mọi bằng chứng chặn đường.
  * Gọi khi nhả lệnh, mất lệnh, hoặc khi lớp trên yêu cầu dừng. */
@@ -188,7 +192,7 @@ int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word,
     /* Ở MAX: bánh đã sát trần duty thì pack không giao nổi 0,90 — nhắm thấp hơn
      * thay vì bão hoà và mất trục. */
     if(s->speed_preset==2)speed_limit*=BalanceMotion_maxhead(-1.0f);
-#if BALANCE_MOTION_LEAD_CUT
+#if TWIP_PROBE_LEAD_CUT
     float target=limited?0:speed_limit*wanted;
 #else
     float target=speed_limit*wanted;

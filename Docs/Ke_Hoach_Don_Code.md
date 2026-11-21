@@ -120,27 +120,7 @@ Bước 6 (tuỳ chọn) đang làm **từng module, mỗi module một commit n
 Sau 3/3, cả ba module đều là `.c` + `.h`; `balance_motion.h` 340→137 dòng, `balance_turn.h` 325→125
 dòng, `balance_motion.c` 259 dòng, `balance_turn.c` 172 dòng.
 
-## 5b. Bước 1 — `tuning.h` (xong 21/11)
-
-Mục tiêu của bước: "chỉnh thông số chỉ cần mở **một** file". Đã gom **55 macro** từ 5 tệp
-(`balance_motion.h` 12, `balance_turn.h` 19, `balance_recovery.h` 8, `balance_governor.h` 11,
-`balance_profile.h` 5) vào [`Core/Inc/tuning.h`](../Xe_Can_Bang/Core/Inc/tuning.h), chia 6 nhóm theo chức
-năng, mỗi dòng `#define TÊN giá_trị  // đơn vị — để làm gì`.
-
-- **Giữ nguyên** tên macro và `#ifndef` để host test / mô phỏng còn override bằng `-D` (9 probe đang dùng).
-- `tuning.h` được include từ `balance_motion.h`, `balance_turn.h`, `balance_recovery.h`,
-  `balance_governor.h`, `balance_profile.h` nên mọi đường biên dịch đều thấy đủ.
-- **Ba macro dùng biến của module gọi** (`BALANCE_MOTION_SPEED`, `BALANCE_MOTION_ACCEL`,
-  `BALANCE_TURN_PURE_RATE`/`DIAGONAL_RATE`) vẫn là macro, có chú thích rõ "dùng biến `s`/`old`", vì đổi
-  sang hàm sẽ làm mất khả năng override `-D` của probe cũ.
-- `balance_profile.h` chỉ còn **thứ không được chỉnh bừa**: build ID, luật R12, hiệu chuẩn cảm biến,
-  cổng ARM, capture, chốt góc/quãng, heartbeat; comment lịch sử RT23–RT29 đã bỏ khỏi tệp này.
-- **Bằng chứng "không đổi hành vi"**: `38/38` host test PASS; build CubeIDE 0 lỗi 0 cảnh báo;
-  `.bin` **giống từng byte** bản trước khi gom (`text 84 176 / data 500 / bss 7 516`, SHA256
-  `3921ebd5…`). Chỉ di chuyển macro thì mã máy phải y nguyên — đây là cổng mạnh nhất của bước 1.
-- **Không làm**: không bump build ID, không nạp board, không push.
-
-### 2/3 — `balance_motion` (bằng chứng chi tiết)
+### Bước 6 — module 2/3: `balance_motion`
 
 - **Tách**: `Core/Src/balance_motion.c` chứa 8 hàm (`BeginBrake`, `BeginBrakeHold`, `Cancel`, `Fault`,
   `Impact`, `corner_budget`, `maxhead`, `maxhead_next`); `balance_motion.h` (340 → 275 dòng ở bước này;
@@ -167,7 +147,7 @@ năng, mỗi dòng `#define TÊN giá_trị  // đơn vị — để làm gì`.
   là hồi quy.
 - **Không làm**: không nạp board, không push `main`, không đổi `CAT_K`/observer/khung 122 B, không bump
   build ID.
-### 3/3 — `balance_turn` (bằng chứng chi tiết)
+### Bước 6 — module 3/3: `balance_turn`
 
 - **Tách**: `Core/Src/balance_turn.c` (172 dòng) chứa `BalanceTurn_Approach`, `BalanceTurn_headroom`,
   `BalanceTurn_headroom_next` và `BalanceMotion8_Update` (thân ~180 dòng); `balance_turn.h` (325 → 125
@@ -194,3 +174,51 @@ năng, mỗi dòng `#define TÊN giá_trị  // đơn vị — để làm gì`.
   `--stress --edge` @0,90 **73/73**, `--stress --launch --launch50` @0,90 **73/73**; chỉ
   `scilab_console.txt` khác đường dẫn/thời điểm. 12 ca/bộ, tất cả 20,000/20 s, `fault 0`.
 - **Không làm**: không bump build ID, không nạp board, không push `main`.
+
+### Bước 1 — `tuning.h` (xong 21/11)
+
+Mục tiêu của bước: "chỉnh thông số chỉ cần mở **một** file". Đã gom **55 macro** từ 5 tệp
+(`balance_motion.h` 12, `balance_turn.h` 19, `balance_recovery.h` 8, `balance_governor.h` 11,
+`balance_profile.h` 5) vào [`Core/Inc/tuning.h`](../Xe_Can_Bang/Core/Inc/tuning.h), chia 6 nhóm theo chức
+năng, mỗi dòng `#define TÊN giá_trị  // đơn vị — để làm gì`.
+
+- **Giữ nguyên** tên macro và `#ifndef` để host test / mô phỏng còn override bằng `-D` (9 probe đang dùng).
+- `tuning.h` được include từ `balance_motion.h`, `balance_turn.h`, `balance_recovery.h`,
+  `balance_governor.h`, `balance_profile.h` nên mọi đường biên dịch đều thấy đủ.
+- **Ba macro dùng biến của module gọi** (`BALANCE_MOTION_SPEED`, `BALANCE_MOTION_ACCEL`,
+  `BALANCE_TURN_PURE_RATE`/`DIAGONAL_RATE`) vẫn là macro, có chú thích rõ "dùng biến `s`/`old`", vì đổi
+  sang hàm sẽ làm mất khả năng override `-D` của probe cũ.
+- `balance_profile.h` chỉ còn **thứ không được chỉnh bừa**: build ID, luật R12, hiệu chuẩn cảm biến,
+  cổng ARM, capture, chốt góc/quãng, heartbeat; comment lịch sử RT23–RT29 đã bỏ khỏi tệp này.
+- **Bằng chứng "không đổi hành vi"**: `38/38` host test PASS; build CubeIDE 0 lỗi 0 cảnh báo;
+  `.bin` **giống từng byte** bản trước khi gom (`text 84 176 / data 500 / bss 7 516`, SHA256
+  `3921ebd5…`). Chỉ di chuyển macro thì mã máy phải y nguyên — đây là cổng mạnh nhất của bước 1.
+- **Không làm**: không bump build ID, không nạp board, không push.
+
+### Bước 2 + 3 — comment và nhánh probe (xong 21/11)
+
+#### Bước 2 — bỏ lịch sử, giữ lý do
+
+- **31 nhãn "RTxx"** trong comment code đã được viết lại thành 1–3 dòng nêu *để làm gì / đánh đổi gì*:
+  `robot_fsm.c` (9 khối), `balance_governor.h` (7 khối), `balance_interlock.h`, `balance_trim.h`,
+  `bmi160.c`, `usart.c`, `tuning.h`.
+- Còn đúng **1 chỗ chứa "RT44"**: literal build ID `BALANCE_BUILD "BAL-20261120-R12-8DIR-RT44-TURN"` —
+  phải giữ (đổi là lệch build ID với ESP32 và phá `test_build_id_sync`).
+- `.bin` **giống từng byte** bản trước bước này (SHA256 `3921ebd5…`) ⇒ chỉ đổi comment.
+
+#### Bước 3 — nhánh chết và cửa probe
+
+- Rà toàn bộ **196 dòng `#if/#ifdef`** trong `Core/Inc` + `Core/Src`: phần lớn là include guard
+  (`#ifndef X_H`) của HAL/CMSIS/CubeMX và **55 `#ifndef` của `tuning.h`** (cửa override `-D`, hợp lệ,
+  giữ nguyên).
+- **Không có nhánh chết thật** trong code của mình: mọi `#if` còn lại đều là probe đang được test dùng.
+  `#ifdef USE_FULL_ASSERT` (main.c) và các khối HAL để nguyên (CubeMX sinh).
+- **Gom 3 probe** về một khối ở đầu mỗi module, đặt tên rõ:
+  | Module | Probe | Dùng cho |
+  |---|---|---|
+  | `balance_motion.c` | `TWIP_PROBE_LEAD_CUT` | test A/B luật cũ "cắt tốc độ khi lệch 20 cm" |
+  | `balance_turn.c` | `TWIP_PROBE_LATERAL_MEASURED` | test A/B trần ngang theo tốc độ đo |
+  | `balance_recovery.c` | `TWIP_PROBE_IMMEDIATE_MANEUVER` | test A/B vào REC1 ngay, không cần 60 ms |
+  Tên cũ (`BALANCE_MOTION_LEAD_CUT`, …) vẫn nằm trong `tuning.h` để 9 probe còn `-D` được; probe chỉ là
+  alias `#define TWIP_PROBE_x BALANCE_…`.
+- `.bin` **giống từng byte** (`3921ebd5…`) ⇒ không đổi mã máy; 38/38 test PASS; 3 bộ mô phỏng trùng.
