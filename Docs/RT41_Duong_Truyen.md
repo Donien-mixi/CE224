@@ -83,3 +83,20 @@ Chi tiết #2: quét có giới hạn `GATEWAY_AP_SCAN_MS_PER_CHANNEL 60` (13 k�
 - Chọn kênh chỉ dựa trên **số AP** (không đo nhiễu thực). Nếu khu vực đông và kênh chọn vẫn chậm, đặt
   `-DGATEWAY_AP_CHANNEL=11` (hoặc 1) cố định để thử.
 - Quét kênh làm AP xuất hiện chậm thêm ~0,3–0,8 s; trang vẫn tự thử lại 20 s nên không thành “trang chết”.
+
+## 7. Cập nhật 21/11 (sửa trực tiếp, GIỮ build ID RT47)
+
+Theo yêu cầu không tạo bản firmware mới: chỉ sửa ESP32 (trang + gateway), **không đổi STM32**, không bump ID.
+
+| Việc | Trước | Sau |
+|---|---|---|
+| Telemetry lên trang | HTTP poll `/balance-status` 200 ms (~620 B/lần, 5 Hz) | **WS push 20 Hz** hàng CSV (`{"t":"r",...}`) + trạng thái đầy đủ 1 Hz (`{"t":"s",...}`) |
+| Poll HTTP | 200 ms | **2 s** (chỉ còn là dự phòng, cập nhật meta/chủ kênh) |
+| Tick lệnh | 20 ms | **10 ms** (`setInterval(driveTick,10)`) |
+| STM32 | — | không đổi (không cần nạp lại) |
+
+Ảnh hưởng: trang tươi 20 Hz thay vì 5 Hz; bớt 5 request HTTP/s; lệnh gửi dày hơn gấp đôi (lease 500 ms vẫn giữ).
+Bằng chứng đã kiểm: ESP32 build 1 094 283 B (0 lỗi); **38/38 host test** (gồm `test_net21_link` chạy chính JS của trang); `test_build_id_sync` PASS.
+
+Cách kiểm trên xe: nạp **ESP32** (STM32 giữ nguyên), mở trang (Ctrl+F5), thấy số liệu cập nhật mượt; sau lượt chạy tải log xem
+`age` p95, `crc_errors=0`, `ws_leaves=0`; `/network-status` xem `loop_gap_max_ms`.

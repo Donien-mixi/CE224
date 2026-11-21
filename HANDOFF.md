@@ -131,6 +131,8 @@ format vùng log Flash (mục 6).
 > **Cảnh báo:** `robot_fsm.c` **không có test tự động** (38 test + mô phỏng chỉ dùng header) ⇒ phải có một
 > lượt chạy thật/kê cao có log trước khi tin bước 4.
 > **Gói nhị phân đã xoá** khi chuyển sang nạp bằng IDE; RT44/RT45/RT46 nằm trong git history.
+> **Sửa trực tiếp 21/11 (giữ nguyên build ID RT47):** telemetry UI chuyển sang **WS push 20 Hz** (poll HTTP
+> còn 2 s dự phòng) và tick lệnh 20 → **10 ms**; chỉ cần nạp lại ESP32. Chi tiết: [RT41 §7](Docs/RT41_Duong_Truyen.md).
 
 ## 1. Đọc nhanh trong 5 phút
 

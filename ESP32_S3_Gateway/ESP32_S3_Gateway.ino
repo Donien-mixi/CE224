@@ -52,6 +52,8 @@ static char balanceMeta[256]={};
 
 void setupBalanceRoutes();
 static void setupNetworkRoutes();
+static void balanceBroadcastFast(void);
+static void balanceBroadcastStatus(void);
 uint8_t testPacket[sizeof(BalanceFrame)];
 unsigned packetLength=42;
 unsigned testPacketUsed = 0;
@@ -301,6 +303,10 @@ void loop() {
   server.handleClient();
   webSocket.loop();
   receiveSTM32();
+  /* Telemetry đẩy qua WS thay poll HTTP: hàng CSV tối đa 20 Hz, trạng thái 1 Hz. */
+  balanceBroadcastFast();
+  static uint32_t lastStatusPush=0;
+  if((uint32_t)(tick-lastStatusPush)>=1000){lastStatusPush=tick;balanceBroadcastStatus();}
 
   /* Gateway heartbeat: a closed browser must not cut the motor. While the STM32
    * reports balancing, keep its command watchdog fresh even with no page open;

@@ -18,6 +18,63 @@ static uint8_t balanceMetaController() {
   char *end;unsigned long mode=strtoul(p,&end,10);
   return (*end==',' && mode==12)?(uint8_t)mode:0;
 }
+
+/* JSON trạng thái đầy đủ — dùng chung cho /balance-status và gói WS 1 Hz.
+ * Caller phải giữ captureMutex. Trả về số byte, 0 nếu tràn buffer. */
+static int balanceStatusJson(char *out, size_t cap) {
+  char row[640];
+  balanceRow(row, sizeof row, balanceLatest);
+  uint32_t age = balanceSeen ? (uint32_t)(millis() - balanceReceived) : 0;
+  int n = snprintf(out, cap,
+    "{\"t\":\"s\",\"seen\":%s,\"age_ms\":%lu,\"row\":\"%s\",\"meta\":\"%s\",\"samples\":%u,"
+    "\"capacity\":%u,\"crc\":%lu,\"gaps\":%lu,\"overflow\":%lu,\"resets\":%lu,\"owner\":%d,"
+    "\"owner_token\":%lu,\"control_revision\":%lu,\"drive_epoch\":%lu,\"stop_source\":\"%s\","
+    "\"boot_id\":%lu,\"uptime_ms\":%lu,\"reset_reason\":\"%s\",\"ws_clients\":%u}",
+    balanceSeen ? "true" : "false", (unsigned long)age, row, balanceMeta,
+    (unsigned)balanceCount, (unsigned)balanceCapacity, (unsigned long)balanceCRC,
+    (unsigned long)balanceGaps, (unsigned long)balanceOverflow, (unsigned long)balanceResets,
+    controlOwner, (unsigned long)(controlOwner >= 0 ? controlTokens[controlOwner] : 0),
+    (unsigned long)controlRevision, (unsigned long)controlDriveEpoch, controlLastStop,
+    (unsigned long)gatewayBootId, (unsigned long)millis(),
+    gatewayResetText(gatewayResetReason), (unsigned)webSocket.connectedClients());
+  return (n > 0 && (size_t)n < cap) ? n : 0;
+}
+
+/* Đẩy hàng CSV của khung mới nhất qua WS, tối đa 20 Hz (mỗi 50 ms).
+ * Chỉ gọi trong loop(): WebSocketsServer không thread-safe với captureTask. */
+static uint32_t balancePushSeq = 0, balancePushRowMs = 0;
+static void balanceBroadcastFast(void) {
+  if (!webSocket.connectedClients() || !balanceSeen) return;
+  uint32_t now = millis();
+  if ((uint32_t)(now - balancePushRowMs) < 50) return;
+  char row[640];
+  uint32_t seq, age;
+  xSemaphoreTake(captureMutex, portMAX_DELAY);
+  seq = balanceLatest.sequence;
+  if (seq == balancePushSeq) { xSemaphoreGive(captureMutex); return; }
+  balanceRow(row, sizeof row, balanceLatest);
+  age = (uint32_t)(now - balanceReceived);
+  xSemaphoreGive(captureMutex);
+  char msg[720];
+  int n = snprintf(msg, sizeof msg, "{\"t\":\"r\",\"age_ms\":%lu,\"r\":\"%s\"}",
+                   (unsigned long)age, row);
+  if (n > 0 && (size_t)n < sizeof msg) {
+    webSocket.broadcastTXT(msg, (size_t)n);
+    balancePushSeq = seq;
+    balancePushRowMs = now;
+  }
+}
+
+/* Trạng thái đầy đủ 1 Hz: meta, bộ đếm log, chủ kênh điều khiển, boot id. */
+static void balanceBroadcastStatus(void) {
+  if (!webSocket.connectedClients()) return;
+  static char buf[2048];
+  xSemaphoreTake(captureMutex, portMAX_DELAY);
+  int n = balanceStatusJson(buf, sizeof buf);
+  xSemaphoreGive(captureMutex);
+  if (n > 0) webSocket.broadcastTXT(buf, (size_t)n);
+}
+
 void setupBalanceRoutes() {
   server.on("/operate",HTTP_POST,[](){
     String action=server.arg("action"),command,message;
@@ -64,20 +121,12 @@ void setupBalanceRoutes() {
     server.send(200,"application/json",String("{\"message\":\"")+message+"\"}");
   });
   server.on("/balance-status",HTTP_GET,[](){
-    char row[640],reply[2048];
+    static char reply[2048];
     xSemaphoreTake(captureMutex,portMAX_DELAY);
-    balanceRow(row,sizeof(row),balanceLatest);
-    snprintf(reply,sizeof(reply),"{\"seen\":%s,\"age_ms\":%lu,\"row\":\"%s\",\"meta\":\"%s\",\"samples\":%u,\"capacity\":%u,\"crc\":%lu,\"gaps\":%lu,\"overflow\":%lu,\"resets\":%lu}",
-      balanceSeen?"true":"false",(unsigned long)(millis()-balanceReceived),row,balanceMeta,
-      (unsigned)balanceCount,(unsigned)balanceCapacity,(unsigned long)balanceCRC,
-      (unsigned long)balanceGaps,(unsigned long)balanceOverflow,(unsigned long)balanceResets);
+    int n=balanceStatusJson(reply,sizeof reply);
     xSemaphoreGive(captureMutex);
-    String status=String(reply);status.remove(status.length()-1);
-    status+=",\"owner\":"+String(controlOwner)+",\"owner_token\":"+String(controlOwner>=0?controlTokens[controlOwner]:0)+",\"control_revision\":"+String(controlRevision)+",\"drive_epoch\":"+String(controlDriveEpoch)+",\"stop_source\":\""+String(controlLastStop)+"\"";
-    /* A page that lost the gateway must be able to say "the ESP32 restarted",
-     * not "the STM32 stopped sending". */
-    status+=",\"boot_id\":"+String(gatewayBootId)+",\"uptime_ms\":"+String(millis())+",\"reset_reason\":\""+String(gatewayResetText(gatewayResetReason))+"\",\"ws_clients\":"+String(webSocket.connectedClients())+"}";
-    server.sendHeader("Cache-Control","no-store");server.send(200,"application/json",status);
+    if(n<=0){server.send(500,"application/json","{\"message\":\"status too large\"}");return;}
+    server.sendHeader("Cache-Control","no-store");server.send(200,"application/json",String(reply));
   });
   server.on("/balance-clear",HTTP_POST,[](){
     xSemaphoreTake(captureMutex,portMAX_DELAY);

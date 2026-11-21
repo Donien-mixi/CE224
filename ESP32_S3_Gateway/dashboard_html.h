@@ -337,7 +337,7 @@ document.addEventListener('pointerup',releasePointer,true);document.addEventList
 // Only all-fingers-up releases the owner; another finger cannot take control.
 ['touchend','touchcancel'].forEach(function(type){document.addEventListener(type,function(e){if(!e.touches||e.touches.length===0)releaseDrive();},true);});
 document.addEventListener('keyup',function(e){if(drivePointer==='keyboard'&&(e.key===' '||e.key==='Enter'))releaseDrive();},true);
-setInterval(driveTick,20);
+setInterval(driveTick,10);
 function stopSource(){return ({controller_background:'Trang điều khiển bị ẩn (chuyển ứng dụng hoặc khóa màn hình)',controller_page_left:'Rời trang điều khiển',controller_disconnected:'Trang điều khiển mất kết nối',stop_button_ws:'Nút DỪNG trên web',stop_button_http:'Nút DỪNG trên web'})[data&&data.stop_source]||'Lệnh STOP; chưa biết nguồn';}
 function isRunning(){return row[4]===3||row[4]===7;}
 function fresh(){return data&&data.seen&&data.age_ms<500&&Date.now()-lastFresh<500;}
@@ -464,6 +464,9 @@ function connect(){
    if(Number.isInteger(h.session)&&Number.isInteger(h.token)&&h.token>0){
     clearTimeout(deadline);session=h.session;sessionToken=h.token;wsOK=true;wsDelay=500;
     if(!document.hidden){socket.send('$PING*');poll();}
+   }else if(h.t==='s'){applyStatus(h);}
+   else if(h.t==='r'&&data&&data.meta&&typeof h.r==='string'){
+    applyStatus(Object.assign({},data,{row:h.r,age_ms:h.age_ms,seen:true}));
    }
   }catch(ignore){}
  };
@@ -501,9 +504,19 @@ async function poll(){
  pollWait=pollBody();
  try{await pollWait;}finally{polling=false;pollWait=null;}
 }
+async function fetchStatus(){
+ var r=await fetch('/balance-status',{cache:'no-store',signal:AbortSignal.timeout(2000)});if(!r.ok)throw Error('HTTP');return await r.json();
+}
 async function pollBody(){
+ try{await applyStatus(await fetchStatus());}catch(e){pollFailed(e);}
+}
+function pollFailed(e){
+ driveHeld=0;driveTurn=0;drivePointer=null;cancelArmWait('Đã hủy chờ vì lỗi kết nối/dữ liệu.');
+ el('link').textContent='Mất dữ liệu mới';
+ el('reason').textContent='Không lấy được dữ liệu: '+e.message;updateButtons();
+}
+async function applyStatus(d){
  try{
-  var r=await fetch('/balance-status',{cache:'no-store',signal:AbortSignal.timeout(2000)});if(!r.ok)throw Error('HTTP');var d=await r.json();
   data=d;
  if(!d.seen||d.age_ms>=500){
    cancelArmWait('Đã hủy chờ vì mất dữ liệu mới từ STM32.');
@@ -578,7 +591,7 @@ async function pollNetwork(){
  }catch(e){el('network-health').textContent='Chưa liên lạc được ESP32. Nếu Wi-Fi biến mất rồi log RAM về0, kiểm tra mục lý do khởi động sau khi kết nối lại. Không rút pin trước khi tải log còn lại.';}
  finally{networkPolling=false;}
 }
-connect();poll();setInterval(poll,200);setInterval(pollNetwork,1000);
+connect();poll();setInterval(poll,2000);setInterval(pollNetwork,1000);
 </script>
 </body></html>
 )dash";
