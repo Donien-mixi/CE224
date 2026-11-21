@@ -518,12 +518,12 @@ Bảng dưới là giá trị của nền PID cũ, **không phải** bản R12 �
 
 | Lớp | Tệp | Việc nó làm |
 |---|---|---|
-| Bộ tốc độ 50/80/90 | `balance_motion.h`, `balance_profile.h` | preset 1 = 0,80; preset 2 = 0,90; trần thường `BALANCE_STOP_SPEED` = 0,90 |
+| Bộ tốc độ 50/80/90 | `tuning.h` (nhóm 1), `balance_profile.h` | preset 1 = 0,80; preset 2 = 0,90; trần thường `BALANCE_STOP_SPEED` = 0,90 |
 | Bù lệch bánh trái | `balance_trim.h` | cộng 110 PWM cho bánh trái theo dấu quay, kẹp ±2499, đặt **sau** bộ phân bổ R12 |
-| Trần cua | `balance_turn.h` + `balance_motion.h` | khi `\|w_ref\| > 0,30`, hạ tham chiếu về `0,87 − \|w_ref\|·0,131` → 0,719 ở 1,15 rad/s (RT39; RT36 dùng 0,90 → 0,749, nhưng đo trên log RT38 cho thấy bánh ngoài 0,90 là 94–96 % duty nên không còn dư cho vòng cân bằng) |
+| Trần cua | `tuning.h` (nhóm 1–2) + `balance_turn.c` | khi `\|w_ref\| > 0,30`, hạ tham chiếu về `0,87 − \|w_ref\|·0,131` → 0,719 ở 1,15 rad/s (RT39; RT36 dùng 0,90 → 0,749, nhưng đo trên log RT38 cho thấy bánh ngoài 0,90 là 94–96 % duty nên không còn dư cho vòng cân bằng) |
 | Neo mốc theo duty | `balance_governor.h` | chỉ kẹp `x_ref` cách 10 cm khi duty > 0,95 (RT36); hết lỗi tiến chậm/cua trái chậm |
 | Ngưỡng nghiêng 10°/13° | `balance_governor.h` | RT37: không cắt gia tốc ở độ ngả 7–12° bình thường khi xuất phát/tăng tốc; duty/lag/trần góc vẫn giữ |
-| Nhả mốc khi đứng yên | `balance_motion.h` | sau 3 s đứng yên, mốc chảy 2 cm/s về vị trí trong phạm vi 15 cm (RT36) |
+| Nhả mốc khi đứng yên | `tuning.h` (nhóm 1) | sau 3 s đứng yên, mốc chảy 2 cm/s về vị trí trong phạm vi 15 cm (RT36) |
 | Phanh nhả nhanh | `balance_governor.h` | cap ramp phanh 0,85 m/s² thay 0,65 (RT36) |
 | Gateway ổn định | `ESP32_S3_Gateway` | TX 11 dBm; chỉ ghi Flash khi xe đã dừng (tránh hỏng FAT khi brownout) |
 

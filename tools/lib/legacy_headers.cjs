@@ -1,6 +1,6 @@
 // Build a copy of Core/Inc + the two moved modules with pre-RT8 constants, so the
 // A/B suites can run the same scenario against "before" and "after".
-// Header-only constants are patched in the Inc copy; constants that now live in
+// Tunables now live in Core/Inc/tuning.h; code-level constants that moved into
 // Core/Src (balance_motion.c) are patched in the Src copy instead.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -26,17 +26,18 @@ function ensureLegacyHeaders(root) {
     }
     fs.writeFileSync(p, t);
   };
-  patch(legacy, 'balance_recovery.h', [['#define BALANCE_RECOVERY_GYRO_DPS 150.0f', '#define BALANCE_RECOVERY_GYRO_DPS 60.0f']]);
-  patch(src, 'balance_motion.c', [
-    ['dir*error>.30f', 'dir*error>.18f'],
-    ['wanted*(s->x_ref-position)>.20f', 'wanted*(s->x_ref-position)>.10f']
-  ]);
-  patch(legacy, 'balance_turn.h', [
+  patch(legacy, 'tuning.h', [
+    /* REC1 ngưỡng gyro thời RT7 là 60 °/s. */
+    ['#define BALANCE_RECOVERY_GYRO_DPS 150.0f', '#define BALANCE_RECOVERY_GYRO_DPS 60.0f'],
     /* RT23 moved the centre-drift knee22cm->45cm/floor40%->55%; the legacy
      * baseline is the RT7 16cm/10cm/20% rule these two suites compare against. */
     ['#define BALANCE_TURN_CENTER_KNEE 0.45f', '#define BALANCE_TURN_CENTER_KNEE 0.16f'],
     ['#define BALANCE_TURN_CENTER_SPAN 0.20f', '#define BALANCE_TURN_CENTER_SPAN 0.10f'],
     ['#define BALANCE_TURN_CENTER_FLOOR 0.55f', '#define BALANCE_TURN_CENTER_FLOOR 0.20f']
+  ]);
+  patch(src, 'balance_motion.c', [
+    ['dir*error>.30f', 'dir*error>.18f'],
+    ['wanted*(s->x_ref-position)>.20f', 'wanted*(s->x_ref-position)>.10f']
   ]);
   return { inc: legacy, src };
 }

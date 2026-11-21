@@ -1,54 +1,15 @@
 #pragma once
+/* balance_governor.h — trần tốc độ/lực: phần inline của lớp governor.
+ *
+ * Governor là bộ hãm phản hồi: khi duty cạn, thân ngả nhiều hoặc bám trễ, nó hạ
+ * gia tốc tham chiếu (không nâng) để xe còn dự trữ cho vòng cân bằng. Không đổi
+ * luật lực R12, không sửa cảm biến. Thông số chỉnh được: xem tuning.h (nhóm 4).
+ */
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
-#define BALANCE_GOVERNOR_EQUILIBRIUM 1
-/* RT22: the neutral posture of this car is ~+1.5deg nose-down (measured at rest)
- * and a normal 0.8m/s forward ramp leans to+6..+9deg. A5deg absolute threshold
- * therefore fired on ordinary acceleration:70% of forward samples in log RT21
- * had pressure and v_ref froze for0.5-4.8s, while reverse (leaning the other
- * way) tripped3.7% of the time. The lean rule now guards a genuine loss of
- * headroom at9deg (11 while launching); duty>0.90 and the tracking-lag rule are
- * unchanged and remain the primary physical limits. */
-/* RT37 (log (2)(5), 18/11): the car leans7-12deg in the first2s of every
- * launch. The old9deg/11deg thresholds therefore tripped pressure for25-44% of
- * that window and the ramp dropped to the0.06 crawl in bursts - the operator's
- * "ngap ngung". The lean thresholds move to10deg normal /13deg launch (the stop
- * guard is25deg, the turn taper8-12deg, so there is still margin). Sim at MAX90
- * stays11/12 (only the11.2V case), and a0.45ramp experiment made it worse
- * (9-10/12), so the ramp itself is unchanged. */
-#ifndef BALANCE_GOV_LEAN_DEG
-#define BALANCE_GOV_LEAN_DEG 10.0f
-#endif
-#ifndef BALANCE_GOV_LEAN_LAUNCH_DEG
-#define BALANCE_GOV_LEAN_LAUNCH_DEG 13.0f
-#endif
-#ifndef BALANCE_GOV_CLEAR_DEG
-#define BALANCE_GOV_CLEAR_DEG 5.0f
-#endif
-#ifndef BALANCE_GOV_CLEAR_GYRO
-#define BALANCE_GOV_CLEAR_GYRO 30.0f
-#endif
-#ifndef BALANCE_GOV_LAUNCH_GYRO
-#define BALANCE_GOV_LAUNCH_GYRO 45.0f
-#endif
-#ifndef BALANCE_GOV_CRAWL
-#define BALANCE_GOV_CRAWL 0.06f
-#endif
-/* RT36: a commanded release brakes at up to0.85m/s^2, not0.65. Log spd90
- * (290.99s) and rev_turn (976.35s) release from0.76-0.92m/s and take1.7-1.8s /
- * ~1m to stop, felt as "does not stop when the command is released" and as
- * reverse drift. The reference ramp is still bounded by motion's0.90 decel and
- * the2.5m/s^3 jerk; only the governor's extra cap moves. */
-#ifndef BALANCE_GOV_BRAKE_CAP
-#define BALANCE_GOV_BRAKE_CAP .85f
-#endif
-#ifndef BALANCE_GOV_REST_DWELL
-#define BALANCE_GOV_REST_DWELL 100U
-#endif
-#ifndef BALANCE_GOV_REST_SAMPLES
-#define BALANCE_GOV_REST_SAMPLES 60U
-#endif
+#include "tuning.h"
+
 /* Feedback reference shaper, NOT an invariant-set / formally certified RG.
  * No gains, measurements or operator commands are changed. Called at200Hz. */
 typedef struct {
@@ -83,28 +44,16 @@ static inline void BalanceGovernor_ObserveRest(BalanceGovernor *g,bool eligible,
   g->equilibrium_ready=true;g->rest_samples=0;g->rest_sum=0;
  }
 }
-/* RT39: `BalanceGovernor_ReserveNeeded` (|pitch|>5 || |gyro|>60) is removed with
- * the lean-gated reserve it guarded. A lean gate cannot recognise a straight
- * runaway on a flat body, and it let the reserve fire on every corner where the
- * body rides at~6deg. The overspeed reserve in balance_recovery.h now uses the
- * same ceiling as the speed interlock and needs no lean evidence. */
+/* Đo duty bánh (lọc 0,125) và đếm nhịp bánh bão hoà; gọi mỗi 5 ms. */
 static inline void BalanceGovernor_Observe(BalanceGovernor *g,int left,int right,float speed){
     g->speed=speed;
     float duty=fmaxf(fabsf((float)left),fabsf((float)right))/2499.0f;
     g->duty+=.125f*(fminf(1.0f,duty)-g->duty);
     if(duty>=.985f){if(g->saturated<1000)g->saturated++;}else g->saturated=0;
 }
-/* RT36: the anchor may only bound debt when the wheels are genuinely out of
- * headroom. Log 18/11 (idle/fwd_turn/rev_turn/spd90) shows the old rule clamping
- * `x_ref` at +10 cm on a benign steady lag (duty 0.83, lean predicted 0.6 deg):
- * forward then held 0.79-0.84 m/s against a 0.90 reference while reverse, which
- * tracked with lag 0.015, reached 0.90. The same clamp held the left turn at
- * 0.61 m/s. Pressure from a tracking lag alone therefore no longer moves the
- * anchor; only a saturated duty (>0.95, i.e. the 0.90 preset at a weak pack)
- * may. */
-#ifndef BALANCE_GOV_ANCHOR_DUTY
-#define BALANCE_GOV_ANCHOR_DUTY 0.95f
-#endif
+/* Chỉ chặn "nợ" tham chiếu không thể tới khi bánh THẬT SỰ cạn duty (>0,95) và
+ * đang có pressure; giữ >6 cm để bộ phát hiện chặn đường còn tác dụng. Bám trễ
+ * đơn thuần không được dời mốc (đó là lỗi làm mất 0,79–0,84 m/s ở bản cũ). */
 static inline void BalanceGovernor_Anchor(const BalanceGovernor *g,float *reference,float position,int direction){
     /* Bound only unreachable forward reference debt. Keep >6cm so the
      * existing low-speed blockage detector still operates against a wall. */

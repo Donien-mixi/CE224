@@ -9,62 +9,9 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "tuning.h"
 
-/* ---- Thông số chỉnh được ---- */
-
-/* Tốc độ đặt theo ba mốc 50 / 80 / 90 cm/s (chỉ dùng trong BalanceMotion_Update). */
-#ifndef BALANCE_MOTION_SPEED
-#define BALANCE_MOTION_SPEED (s->speed_preset==2? .90f:s->speed_preset? .80f:.50f)
-#endif
-
-/* Lệnh quá tuổi này (ms) thì coi là mất kết nối và phanh. */
-#ifndef BALANCE_MOTION_STALE_MS
-#define BALANCE_MOTION_STALE_MS 500U
-#endif
-
-/* Gia tốc tăng tốc (m/s²): mốc cao tăng nhanh hơn, và giảm nửa khi đã quá 0,5 m/s. */
-#ifndef BALANCE_MOTION_ACCEL
-#define BALANCE_MOTION_ACCEL (s->speed_preset?(fabsf(old)>.50f?.40f:.70f):(fabsf(old)>.50f?.30f:.60f))
-#endif
-
-/* Giảm tốc khi nhả lệnh (m/s²). */
-#ifndef BALANCE_MOTION_DECEL
-#define BALANCE_MOTION_DECEL .90f
-#endif
-
-/* Giảm tốc khi đảo chiều (m/s²) — nhanh hơn nhả lệnh để không vọt. */
-#ifndef BALANCE_MOTION_REVERSE_DECEL
-#define BALANCE_MOTION_REVERSE_DECEL 1.0f
-#endif
-
-/* Nhả dần mốc khi đứng yên (m/s) và phạm vi được phép nhả (m). */
-#ifndef BALANCE_MOTION_HOLD_RELAX
-#define BALANCE_MOTION_HOLD_RELAX .02f
-#endif
-#ifndef BALANCE_MOTION_HOLD_SPAN
-#define BALANCE_MOTION_HOLD_SPAN .15f
-#endif
-
-/* Số nhịp 5 ms giữ lệnh cũ khi nút gửi neutral: đổi hướng không bị phanh giữa. */
-#ifndef BALANCE_MOTION_RELEASE_HOLD_TICKS
-#define BALANCE_MOTION_RELEASE_HOLD_TICKS 24U
-#endif
-
-/* Chỉ dùng cho test: 1 = luật cũ (cắt tốc độ khi lệch mốc quá 20 cm). */
-#ifndef BALANCE_MOTION_LEAD_CUT
-#define BALANCE_MOTION_LEAD_CUT 0
-#endif
-
-/* Trần MAX theo duty còn dư: bắt đầu hạ ở 96 %, hồi ở 90 %, sàn 86 %. */
-#ifndef BALANCE_MOTION_MAXHEAD_HI
-#define BALANCE_MOTION_MAXHEAD_HI 0.96f
-#endif
-#ifndef BALANCE_MOTION_MAXHEAD_LO
-#define BALANCE_MOTION_MAXHEAD_LO 0.90f
-#endif
-#ifndef BALANCE_MOTION_MAXHEAD_FLOOR
-#define BALANCE_MOTION_MAXHEAD_FLOOR 0.86f
-#endif
+/* Thông số chỉnh được: xem tuning.h (nhóm 1). */
 
 /* ---- Trạng thái quỹ đạo dọc ---- */
 

@@ -10,47 +10,9 @@
 #include <stdint.h>
 #include <math.h>
 #include "balance_interlock.h"
+#include "tuning.h"
 
-#define BALANCE_RECOVERY_LIVE_COMMANDS 1
-
-/* ---- Thông số chỉnh được ---- */
-
-/* Ngưỡng gyro để coi là bị đập (°/s). Dưới ngưỡng này chỉ là xóc ổ gà. */
-#ifndef BALANCE_RECOVERY_GYRO_DPS
-#define BALANCE_RECOVERY_GYRO_DPS 150.0f
-#endif
-
-/* Ngưỡng nghiêng khi ĐANG giữ lệnh. Đo trên log: một cú phanh bình thường ngả
- * tới 15,1°, nên để 16° để không vào REC1 mỗi lần phanh. */
-#ifndef BALANCE_RECOVERY_TILT_MANEUVER
-#define BALANCE_RECOVERY_TILT_MANEUVER 16.0f
-#endif
-
-/* Ngưỡng nghiêng khi KHÔNG có lệnh (bị đẩy lúc đứng yên): nhạy hơn. */
-#ifndef BALANCE_RECOVERY_TILT_IDLE
-#define BALANCE_RECOVERY_TILT_IDLE 8.0f
-#endif
-
-/* Hạn một cuộc REC1 (ms). Đủ dài cho một lần bị giữ tay; 50°/1,0 m/interlock
- * vẫn là các chốt độc lập. */
-#ifndef BALANCE_RECOVERY_TIMEOUT_MS
-#define BALANCE_RECOVERY_TIMEOUT_MS 8000U
-#endif
-
-/* Bằng chứng vượt tốc độ phải duy trì bao nhiêu nhịp 5 ms (20 = 100 ms). */
-#ifndef BALANCE_RECOVERY_OVERSPEED_TICKS
-#define BALANCE_RECOVERY_OVERSPEED_TICKS 20U
-#endif
-
-/* Chỉ dùng cho test: >0 để hạ ngưỡng vượt tốc độ xuống dưới trần (mô phỏng luật cũ). */
-#ifndef BALANCE_RECOVERY_OVERSPEED_SLACK
-#define BALANCE_RECOVERY_OVERSPEED_SLACK 0.0f
-#endif
-
-/* Chỉ dùng cho test: 1 = vào REC1 ngay khi có lệnh (mô phỏng luật trước RT38). */
-#ifndef BALANCE_RECOVERY_IMMEDIATE_MANEUVER
-#define BALANCE_RECOVERY_IMMEDIATE_MANEUVER 0
-#endif
+/* Thông số chỉnh được: xem tuning.h (nhóm 3). */
 
 /* ---- Trạng thái một cuộc REC1 ---- */
 typedef struct {

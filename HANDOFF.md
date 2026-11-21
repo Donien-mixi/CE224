@@ -104,6 +104,9 @@ format vùng log Flash (mục 6).
 > `balance_turn`. Ba module giờ đều là `.c` + `.h`; hook governor chuyển từ macro của caller sang **ba hàm
 > yếu** trong `balance_motion.c` (bản mạnh cài ở `robot_fsm.c`). Kiểm: **38/38** host test, **3 bộ mô phỏng
 > trùng 73/73 file** với trước khi tách, build 0 lỗi 0 cảnh báo (`text 84 176 / data 500 / bss 7 516`).
+> **Bước 1 đã xong**: 55 thông số chỉnh được gom vào [`Core/Inc/tuning.h`](Xe_Can_Bang/Core/Inc/tuning.h);
+> `.bin` **giống từng byte** bản trước khi gom (SHA256 `3921ebd5…`). Còn bước 2 (comment), 3 (nhánh chết),
+> 4 (tách hàm trong `robot_fsm.c`).
 > **Bản nạp trên xe vẫn là RT44/NET44 đóng gói ngày 20/11, không nạp lại**: `.bin` build từ HEAD hiện khác
 > byte bản đóng gói (do refactor). Muốn nạp thì phải bump RT45, đóng gói lại và chạy lại cổng kiểm chứng.
 

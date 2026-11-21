@@ -14,8 +14,8 @@ Trong `Xe_Can_Bang/Core`:
 
 | Nhóm file | Nội dung | Bạn có thể sửa |
 |---|---|---|
-| `balance_profile.h` | build ID, hằng số dùng chung, chốt an toàn cấp hệ | có (cẩn thận) |
-| `balance_tuning.h` | **bảng thông số chỉnh được** (tốc độ, cua, REC1, governor…) | **đây là file để chỉnh xe** |
+| `balance_profile.h` | build ID, luật R12 đóng băng, cổng ARM, capture, chốt an toàn cấp hệ | có (rất cẩn thận) |
+| `tuning.h` | **toàn bộ thông số chỉnh được** (tốc độ, cua, REC1, governor, giám sát tốc độ, bù bánh trái) | **đây là file để chỉnh xe** |
 | `balance_motion.h` + `Core/Src/balance_motion.c`, `balance_turn.h` + `Core/Src/balance_turn.c` | quỹ đạo tốc độ và cua (thân hàm đã tách ra `.c`) | có |
 | `balance_recovery.h`, `balance_governor.h`, `balance_interlock.h`, `balance_trim.h` | lớp giám sát: chống đẩy, giữ lại lực, trần tốc độ, bù bánh trái | có |
 | `cat_control.*` (nếu có), `motor.c`, `encoder.c`, `bmi160.c`, `filter.c` | luật lực R12, động cơ, encoder, IMU, lọc | **không** (đóng băng) |
