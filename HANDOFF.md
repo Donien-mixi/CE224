@@ -96,8 +96,13 @@
 ## 0. Trạng thái một dòng
 
 Xe đã chốt phần điều khiển: cân bằng, 3 mức tốc độ, 8 hướng, cua, chống đẩy, tự cắt an toàn.
-**Không có thay đổi firmware nào đang dở.** Việc còn mở đều là phần cứng/cơ khí và một thao tác
+**Không có thay đổi hành vi firmware nào đang dở.** Việc còn mở đều là phần cứng/cơ khí và một thao tác
 format vùng log Flash (mục 6).
+
+> **Đang dọn code, không đổi hành vi, không bump build ID** (kế hoạch: [`Docs/Ke_Hoach_Don_Code.md`](Docs/Ke_Hoach_Don_Code.md)).
+> Bước 6 tách module `.h` → `.c` đã xong **2/3**: `balance_recovery` (`c8c299c`) và `balance_motion`
+> (commit sau `c8c299c`: 38/38 test, hex cùng `text/data/bss`, 3 bộ mô phỏng trùng từng byte). Còn
+> **`balance_turn`** — chưa làm. Bản nạp trên xe vẫn là RT44/NET44 đóng gói ngày 20/11, **không** nạp lại.
 
 ## 1. Đọc nhanh trong 5 phút
 

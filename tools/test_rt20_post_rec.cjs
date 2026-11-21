@@ -57,7 +57,7 @@ int main(void){
  return 0;}
 `;
 fs.writeFileSync(dir+'/test.c',src);
-let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror','-I'+(process.env.TWIP_HEADER_DIR||'Xe_Can_Bang/Core/Inc'),dir+'/test.c','-lm','-o',dir+'/test.exe'],{encoding:'utf8'});
+let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror','-I'+(process.env.TWIP_HEADER_DIR||'Xe_Can_Bang/Core/Inc'),dir+'/test.c','Xe_Can_Bang/Core/Src/balance_motion.c','-lm','-o',dir+'/test.exe'],{encoding:'utf8'});
 assert.equal(r.status,0,r.stderr);
 r=cp.spawnSync(dir+'/test.exe',[],{encoding:'utf8'});
 if(r.status!==0){process.stdout.write(r.stdout);process.stderr.write(r.stderr);}

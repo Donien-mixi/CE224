@@ -16,7 +16,7 @@ Trong `Xe_Can_Bang/Core`:
 |---|---|---|
 | `balance_profile.h` | build ID, hằng số dùng chung, chốt an toàn cấp hệ | có (cẩn thận) |
 | `balance_tuning.h` | **bảng thông số chỉnh được** (tốc độ, cua, REC1, governor…) | **đây là file để chỉnh xe** |
-| `balance_motion.h`, `balance_turn.h` | quỹ đạo tốc độ và cua | có |
+| `balance_motion.h` + `Core/Src/balance_motion.c`, `balance_turn.h` | quỹ đạo tốc độ và cua (motion đã tách `.c`; turn còn trong header) | có |
 | `balance_recovery.h`, `balance_governor.h`, `balance_interlock.h`, `balance_trim.h` | lớp giám sát: chống đẩy, giữ lại lực, trần tốc độ, bù bánh trái | có |
 | `cat_control.*` (nếu có), `motor.c`, `encoder.c`, `bmi160.c`, `filter.c` | luật lực R12, động cơ, encoder, IMU, lọc | **không** (đóng băng) |
 | `robot_fsm.c` | vòng 200 Hz + máy trạng thái | có (theo thứ tự pipeline) |

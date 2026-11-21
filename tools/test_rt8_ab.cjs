@@ -78,7 +78,7 @@ const file = path.join(out, 'ab.c');
 fs.writeFileSync(file, src);
 const exeOld = path.join(out, 'ab_legacy.exe'), exeNew = path.join(out, 'ab_rt8.exe');
 function build(exe, legacyFirst) {
-  const args = ['-std=c11', '-O2', '-Wall', '-Wextra', file, path.join(root,'Xe_Can_Bang/Core/Src/balance_recovery.c'),'-lm', '-o', exe];
+  const args = ['-std=c11', '-O2', '-Wall', '-Wextra', file, path.join(root,'Xe_Can_Bang/Core/Src/balance_recovery.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),'-lm', '-o', exe];
   args.unshift(...(legacyFirst ? ['-I' + legacy, '-I' + inc] : ['-I' + inc]));
   const r = cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe', args, { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);

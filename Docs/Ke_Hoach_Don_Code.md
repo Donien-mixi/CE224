@@ -104,3 +104,41 @@ Sau mỗi bước tôi báo: hex giống/khác baseline, test, mô phỏng, và 
 2. **Cho xoá 1,8 GB thư mục sinh ra** (`.build`, `Simulation/results`, `Xe_Can_Bang/Debug`,
    `.metadata`) không? Đều sinh lại được, nhưng lần build đầu sẽ chậm hơn và mất các lần chạy mô phỏng
    cũ (kết quả đã ghi trong `Docs/`).
+
+## 5. Tiến độ (cập nhật 21/11/2026)
+
+Bước 6 (tuỳ chọn) đang làm **từng module, mỗi module một commit nhỏ**. **Không bump build ID, không
+nạp board**: đây là refactor, hành vi phải y nguyên. Bước 5 (dọn thư mục) đã xong ở commit `da4583d`.
+
+| Module | Trạng thái | Commit | Bằng chứng |
+|---|---|---|---|
+| 1/3 `balance_recovery` | xong 21/11 | `c8c299c` | 38/38 bộ test chạy được; mô phỏng @0,80 12/12, số từng ca trùng |
+| 2/3 `balance_motion` | xong 21/11 | commit sau `c8c299c` | 38/38 bộ test + 9 probe; hex cùng kích thước; 3 bộ mô phỏng trùng từng byte |
+| 3/3 `balance_turn` | **chưa làm** | — | 19 bộ test include `balance_turn.h` |
+
+### 2/3 — `balance_motion` (bằng chứng chi tiết)
+
+- **Tách**: `Core/Src/balance_motion.c` chứa 8 hàm (`BeginBrake`, `BeginBrakeHold`, `Cancel`, `Fault`,
+  `Impact`, `corner_budget`, `maxhead`, `maxhead_next`); `balance_motion.h` (340 → 275 dòng) chỉ còn
+  thông số (giữ nguyên tên + `#ifndef`), struct, `Clear`, prototype và `BalanceMotion_Update`.
+- **`BalanceMotion_Update` vẫn inline**: caller chèn hook governor qua macro `BALANCE_MOTION_FILTER` /
+  `BALANCE_MOTION_ANCHOR` **trước khi** include (`robot_fsm.c:30`, `Simulation/current/motion_native.c:4`,
+  10 bộ test). Đưa nốt vào `.c` thì phải đổi hook thành con trỏ hàm — để dành khi tách `balance_turn`.
+- **Token**: 8 thân hàm đã chuyển + `BalanceMotion_Update` **trùng từng token** với bản cũ (so
+  `gcc -E -P` sau khi bỏ khoảng trắng). Khác duy nhất: `static inline` → liên kết ngoài.
+- **Host test**: 42 tệp `test_*.cjs`, trong đó **4 tệp rỗng 0 B** (`test_production_*`) → **38/38 bộ
+  chạy được PASS**, gồm 9 probe hằng số cũ phải fail. **24 bộ test + `run_governor_sim.cjs`** được thêm
+  `balance_motion.c` vào lệnh gcc. `tools/test_uart_schedule.py` PASS.
+- **Build**: CubeIDE headless (workspace `D:\CubeIDE_ws_verify`), **0 lỗi 0 cảnh báo**;
+  `text 83 952 / data 500 / bss 7 516` **giống hệt** bản trước khi tách. `.bin` 84 460 B,
+  SHA256 `f23eb682…` (trước khi tách: `7814c318…`) — khác vì địa chỉ/độ inline đổi, không phải đổi
+  hành vi. Build ID vẫn `RT44-TURN`, có trong `.bin`.
+- **Mô phỏng** (so **từng file** với lần chạy ngay trước khi tách, cùng bộ ca/seed):
+  `--stress` @0,80: **73/73** file trùng; `--stress --edge` @0,90: **72/73**;
+  `--stress --launch --launch50` @0,90: **72/73**. File khác duy nhất là `scilab_console.txt`
+  (đường dẫn/ thời điểm). Mỗi bộ **12 ca**, tất cả `20,000/20 s`, `fault = 0`.
+- **Bẫy khi chạy lại**: `TWIP_SPEED_MAX` phải khớp bộ đang so (stress so ở 0,80; edge/launch ở 0,90).
+  Nếu lệch, `guard*.csv` khác ở cột `speed_limit` (1,12 so với 0,90) dù quỹ đạo giống — dễ đọc nhầm
+  là hồi quy.
+- **Không làm**: không nạp board, không push `main`, không đổi `CAT_K`/observer/khung 122 B, không bump
+  build ID.
