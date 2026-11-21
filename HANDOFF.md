@@ -390,6 +390,8 @@ banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — N�
 | [`Docs/RT39_Cua_80_Khong_Khung.md`](Docs/RT39_Cua_80_Khong_Khung.md) | 80 cm/s khựng/dừng lâu khi cua ở cả 4 hướng; 12 cước REC1, bất đối xứng bánh trái, 2 sửa |
 | [`Docs/RT40_Het_Ngap_Ngung.md`](Docs/RT40_Het_Ngap_Ngung.md) | 8 log RT39 (1 100 s): 8,4 s ngập ngừng do độ ngả phanh, cắt motor khi bị giữ, 3 lần ngã khi rẽ ở 90 vì bánh ghim duty |
 | [`Docs/RT41_Duong_Truyen.md`](Docs/RT41_Duong_Truyen.md) | **Mới:** đo đường lệnh (age p95 28 ms), UART 921600, chọn kênh Wi-Fi, và lý do không làm 5/7 đề xuất |
+| [`Docs/RT45_Clean_Code_Thay_Doi.md`](Docs/RT45_Clean_Code_Thay_Doi.md) | **Mới:** tổng thể thay đổi của đợt dọn code (bảng trước/sau, bất biến, chuỗi bằng chứng, chỗ còn có thể cải thiện) |
+| [`Docs/RT45_Log_Dau_Tien.md`](Docs/RT45_Log_Dau_Tien.md) | **Mới:** log RT45 đầu tiên trên xe — toàn vẹn, REC1 5/5, MAX 90, 3 khoảng trống |
 | Báo cáo vòng | [RT22](Docs/RT22_Doi_Xung_Va_Be_Huong.md) · [RT23](Docs/RT23_Nut_That_Va_Loi_Toc_Do.md) · [RT24](Docs/RT24_Taper_Nghieng_Quay_Trai.md) · [RT27](Docs/RT27_Tro_Ve_Nen_RT21_Chong_Chiu.md) · [RT28](Docs/RT28_Giu_Moc_Vi_Tri_Khi_Bi_Day.md) · [RT29](Docs/RT29_Tu_Ngat_4096.md) · [RT32](Docs/RT32_Bo_Toc_Do_50_80_90.md) · [RT33](Docs/RT33_On_Dinh_Ket_Noi.md) · [RT34](Docs/RT34_Cua_Muot.md) · [RT35](Docs/RT35_Mo_Phong_Khop_Log.md) · [RT36](Docs/RT36_Sua_4_Loi.md) · [RT37](Docs/RT37_Xuat_Phat_Muot.md) · [RT38](Docs/RT38_Chuyen_Huong_Lien_Tuc.md) · [RT39](Docs/RT39_Cua_80_Khong_Khung.md) · [RT40](Docs/RT40_Het_Ngap_Ngung.md) · [RT41](Docs/RT41_Duong_Truyen.md) |
 
 ## 9. Lịch sử
