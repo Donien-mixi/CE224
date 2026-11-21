@@ -222,3 +222,41 @@ năng, mỗi dòng `#define TÊN giá_trị  // đơn vị — để làm gì`.
   Tên cũ (`BALANCE_MOTION_LEAD_CUT`, …) vẫn nằm trong `tuning.h` để 9 probe còn `-D` được; probe chỉ là
   alias `#define TWIP_PROBE_x BALANCE_…`.
 - `.bin` **giống từng byte** (`3921ebd5…`) ⇒ không đổi mã máy; 38/38 test PASS; 3 bộ mô phỏng trùng.
+### Bước 4 — tách hàm trong `robot_fsm.c` (xong 21/11)
+
+- Vòng 200 Hz (178 dòng, một hàm) giờ là **9 hàm `static`** + một `RobotTick` giữ giá trị dùng chung
+  trong nhịp; hàm `Robot_ControlLoop_200Hz` chỉ còn 10 dòng gọi đúng thứ tự 16 bước:
+
+  | Hàm | Bước | Việc |
+  |---|---|---|
+  | `robot_tick_start` | 1 | DWT, khoảng cách nhịp, `loop_count`, lấy lệnh |
+  | `robot_read_inputs` | 2–4 | đọc BMI160, lọc bù, encoder, `x_actual` (IMU lỗi → cắt 32) |
+  | `robot_check_safe_state` | 5–7 | xoá đích, STOP khẩn, cấu hình, NaN (cắt 512) |
+  | `robot_update_arm_gate` | 8 | cổng ARM 200 ms (góc/gyro/bánh/nhịp) |
+  | `robot_handle_arm` | 9 | nhận ARM, reset tích phân/encoder/mốc |
+  | `robot_run_veto_chain` | 10 | chuỗi veto: heartbeat, va đập, capture, REC1, governor, quỹ đạo, góc/quãng, interlock |
+  | `robot_apply_balance_law` | 11–14 | lõi R12 (nguồn PWM duy nhất), bù bánh trái, ghi PWM / dừng |
+  | `robot_check_deadline` | 15 | nhịp > 4 ms → cắt 64 |
+  | `robot_emit_telemetry` | 16 | khung 122 B mỗi 4 nhịp |
+
+- **Bằng chứng tương đương**: đối chiếu **từng câu lệnh và thứ tự** giữa thân hàm cũ và 9 thân hàm mới
+  (bỏ tiền tố `t->`, thay khai báo cục bộ bằng trường `RobotTick`, `break`→`return`): **9 236 ký tự đã
+  chuẩn hoá trùng khớp hoàn toàn**. Không mất, không thêm, không đảo câu lệnh nào.
+- Build CubeIDE: **0 lỗi, 0 cảnh báo**; `text 84 072 / data 500 / bss 7 572` (bss +56 B do `RobotTick`),
+  `.bin` 84 580 B, SHA256 `4cb735bd…` — **khác byte** bản trước, đúng như dự kiến của bước 4 (gọi hàm thay
+  vì inline), nên bằng chứng phải là đối chiếu câu lệnh chứ không phải hash.
+- **Giới hạn phải nói rõ**: `robot_fsm.c` **không có test tự động** (38 bộ test và mô phỏng chỉ dùng
+  header), nên bước này **không có lưới test**. Muốn tin hoàn toàn phải có một lượt chạy thật (hoặc kê
+  cao bánh) với log trước khi nạp; đây là lý do vẫn **không bump build ID và không nạp board**.
+- **Không làm**: không đổi thứ tự 16 bước, không đổi câu lệnh nào, không bump, không nạp, không push.
+
+## 6. Tổng kết dọn code
+
+| Bước | Nội dung | Trạng thái | Bằng chứng |
+|---|---|---|---|
+| 1 | `tuning.h` một chỗ chỉnh thông số | ✅ `de3b7c8` | `.bin` giống từng byte |
+| 2 | Comment bỏ lịch sử | ✅ `4b3ec41` | `.bin` giống từng byte |
+| 3 | Nhánh chết / gom probe | ✅ `4b3ec41` | 3 probe `TWIP_PROBE_*`, không có nhánh chết |
+| 4 | Tách hàm `robot_fsm.c` | ✅ bước này | đối chiếu câu lệnh 9 236 ký tự khớp |
+| 5 | Dọn thư mục sinh ra | ✅ `da4583d` | 1,8 GB, thêm `Cay_Thu_Muc.md` |
+| 6 | Tách module `.h` → `.c` | ✅ `c8c299c`, `d42131d`, `70a89a2` | 3 bộ mô phỏng 73/73 file trùng |

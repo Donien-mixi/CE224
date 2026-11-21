@@ -99,18 +99,18 @@ Xe đã chốt phần điều khiển: cân bằng, 3 mức tốc độ, 8 hư�
 **Không có thay đổi hành vi firmware nào đang dở.** Việc còn mở đều là phần cứng/cơ khí và một thao tác
 format vùng log Flash (mục 6).
 
-> **Đang dọn code, không đổi hành vi, không bump build ID** (kế hoạch: [`Docs/Ke_Hoach_Don_Code.md`](Docs/Ke_Hoach_Don_Code.md)).
-> Bước 6 tách module `.h` → `.c` đã xong **3/3**: `balance_recovery` (`c8c299c`), `balance_motion`,
-> `balance_turn`. Ba module giờ đều là `.c` + `.h`; hook governor chuyển từ macro của caller sang **ba hàm
-> yếu** trong `balance_motion.c` (bản mạnh cài ở `robot_fsm.c`). Kiểm: **38/38** host test, **3 bộ mô phỏng
-> trùng 73/73 file** với trước khi tách, build 0 lỗi 0 cảnh báo (`text 84 176 / data 500 / bss 7 516`).
-> **Bước 1 đã xong**: 55 thông số chỉnh được gom vào [`Core/Inc/tuning.h`](Xe_Can_Bang/Core/Inc/tuning.h);
-> `.bin` **giống từng byte** bản trước khi gom (SHA256 `3921ebd5…`). **Bước 2+3 cũng xong**: 31 nhãn "RTxx"
-> trong comment code đã viết lại thành lý do (chỉ còn literal build ID RT44), 3 cửa probe gom thành
-> `TWIP_PROBE_*` ở đầu mỗi module; `.bin` vẫn `3921ebd5…`, 3 bộ mô phỏng trùng 73/73 file.
-> **Chỉ còn bước 4** (tách hàm trong `robot_fsm.c`, 457 dòng).
+> **Dọn code đã xong 6/6 bước** (kế hoạch + bằng chứng: [`Docs/Ke_Hoach_Don_Code.md`](Docs/Ke_Hoach_Don_Code.md)),
+> không đổi hành vi điều khiển, không bump build ID:
+> Bước 6 tách 3 module `.c` + hook governor thành hàm yếu (`c8c299c`, `d42131d`, `70a89a2`); bước 1 gom 55
+> thông số vào [`Core/Inc/tuning.h`](Xe_Can_Bang/Core/Inc/tuning.h) (`de3b7c8`) — `.bin` giống từng byte;
+> bước 2+3 bỏ 31 nhãn "RTxx" trong comment và gom 3 probe `TWIP_PROBE_*` (`4b3ec41`) — `.bin` giống từng
+> byte; bước 4 tách `robot_fsm.c` thành 9 hàm theo đúng 16 bước (commit này) — hash đổi, đối chiếu câu lệnh
+> **9 236 ký tự khớp**; bước 5 dọn 1,8 GB (`da4583d`).
+> **Cảnh báo:** `robot_fsm.c` **không có test tự động** (38 test + mô phỏng chỉ dùng header) ⇒ phải có một
+> lượt chạy thật/kê cao có log trước khi tin bước 4.
 > **Bản nạp trên xe vẫn là RT44/NET44 đóng gói ngày 20/11, không nạp lại**: `.bin` build từ HEAD hiện khác
-> byte bản đóng gói (do refactor). Muốn nạp thì phải bump RT45, đóng gói lại và chạy lại cổng kiểm chứng.
+> byte bản đóng gói (do refactor). Muốn nạp thì phải bump RT45, đóng gói lại, chạy lại 38 test + 3 bộ mô
+> phỏng và một lượt bench.
 
 ## 1. Đọc nhanh trong 5 phút
 

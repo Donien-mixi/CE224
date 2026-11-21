@@ -256,47 +256,82 @@ void Robot_BalanceService(void) {
     }
 }
 static float BalanceTurn_Yaw(void){int32_t l,r;Encoder_GetHardwareTicks(&l,&r);return (-(float)r-(float)l)*METERS_PER_TICK/CAT_PARAM[0];}
-void Robot_ControlLoop_200Hz(void) {
-    uint32_t begin=DWT->CYCCNT;
-    uint32_t spacing=bal_last_cycle?(uint32_t)(begin-bal_last_cycle)/(SystemCoreClock/1000000U):5000;
-    bal_last_cycle=begin;s_robot.loop_count++;
-    ESP32_Command_t *cmd=ESP32_Comm_GetCommand();
-    BMI160_Data_t imu={0};bool valid=!bal_imu_failed&&BMI160_Read_All(&imu);
-    if(!valid) {bal_imu_failed=true;BalanceStop(32);s_robot.state=ROBOT_STATE_EMERGENCY;}
+/* ---- Vòng 200 Hz: mỗi bước một hàm có tên, đúng thứ tự 16 bước ---- */
+typedef struct {
+    uint32_t begin;       /* DWT đầu nhịp */
+    uint32_t spacing;     /* µs giữa hai nhịp */
+    ESP32_Command_t *cmd; /* lệnh gateway (con trỏ tới struct tĩnh) */
+    BMI160_Data_t imu;
+    bool valid;
+    float norm;
+    bool finite;
+    bool just_armed;
+    uint32_t execution;
+} RobotTick;
+static RobotTick bal_tick;
+
+/* Bước 1: đo nhịp thật, tăng bộ đếm, lấy lệnh. */
+static void robot_tick_start(void) {
+    RobotTick *t=&bal_tick;
+    t->begin=DWT->CYCCNT;
+    t->spacing=bal_last_cycle?(uint32_t)(t->begin-bal_last_cycle)/(SystemCoreClock/1000000U):5000;
+    bal_last_cycle=t->begin;s_robot.loop_count++;
+    t->cmd=ESP32_Comm_GetCommand();
+}
+
+/* Bước 2–4: đọc IMU, lọc bù, cập nhật encoder. IMU lỗi thì dừng ngay (32). */
+static void robot_read_inputs(void) {
+    RobotTick *t=&bal_tick;
+    t->imu=(BMI160_Data_t){0};t->valid=!bal_imu_failed&&BMI160_Read_All(&t->imu);
+    if(!t->valid) {bal_imu_failed=true;BalanceStop(32);s_robot.state=ROBOT_STATE_EMERGENCY;}
     else {
         /* No runtime controller switching in the finalized R12 baseline. */
-        cmd->profile_request=0;
-        s_robot.pitch=Filter_Complementary_Update(imu.gy,imu.ax,imu.az,0.005f);
-        s_robot.gyro_rate=PITCH_GYRO_SIGN*imu.gy;
+        t->cmd->profile_request=0;
+        s_robot.pitch=Filter_Complementary_Update(t->imu.gy,t->imu.ax,t->imu.az,0.005f);
+        s_robot.gyro_rate=PITCH_GYRO_SIGN*t->imu.gy;
         Encoder_Update(0.005f);
         s_robot.v_left=Encoder_GetLeftVelocity();s_robot.v_right=Encoder_GetRightVelocity();
         s_robot.v_actual=Encoder_GetAverageVelocity();
-        /* Same encoder frame as the force controller. Integrating the LPF
-         * velocity delayed the supervisory anchor by~1.5cm at MAX95. Counts
-         * are never reset by a press/release/recovery, only while stopped/ARM. */
+        /* Same encoder frame as the force controller; counts only reset when
+         * stopped/ARM, never by a press/release/recovery. */
         int32_t ticks_l,ticks_r;Encoder_GetHardwareTicks(&ticks_l,&ticks_r);
         s_robot.x_actual=.5f*((float)ticks_l-(float)ticks_r)*METERS_PER_TICK;
     }
+}
+
+/* Bước 5–7: xoá lệnh đích, STOP khẩn, kiểm cấu hình và NaN. */
+static void robot_check_safe_state(void) {
+    RobotTick *t=&bal_tick;
     /* Verify register setup outside IRQ at initialization/recalibration instead. */
     s_robot.v_target=s_robot.steer_cmd=0;
-    if(cmd->emergency_stop) {cmd->emergency_stop=0;cmd->arm_request=cmd->pulse_request=cmd->profile_request=0;BalanceStop(1);}
+    if(t->cmd->emergency_stop) {t->cmd->emergency_stop=0;t->cmd->arm_request=t->cmd->pulse_request=t->cmd->profile_request=0;BalanceStop(1);}
     if(!BMI160_CalibrationOK()) {s_robot.fault|=128;bal_still=0;}
-    float norm=imu.ax*imu.ax+imu.ay*imu.ay+imu.az*imu.az;
-    bool finite=isfinite(s_robot.pitch)&&isfinite(s_robot.gyro_rate)&&
+    t->norm=t->imu.ax*t->imu.ax+t->imu.ay*t->imu.ay+t->imu.az*t->imu.az;
+    t->finite=isfinite(s_robot.pitch)&&isfinite(s_robot.gyro_rate)&&
         isfinite(s_robot.v_actual)&&isfinite(s_robot.x_actual);
-    if(!finite)BalanceStop(512);
-    if(valid&&finite&&BMI160_CalibrationOK()&&bal_config_ok&&
+    if(!t->finite)BalanceStop(512);
+}
+
+/* Bước 8: cổng ARM — đứng yên 200 ms, góc/gyro/bánh trong hạn, nhịp hợp lệ. */
+static void robot_update_arm_gate(void) {
+    RobotTick *t=&bal_tick;
+    if(t->valid&&t->finite&&BMI160_CalibrationOK()&&bal_config_ok&&
        s_robot.state!=ROBOT_STATE_EMERGENCY && fabsf(s_robot.pitch)<=BALANCE_ARM_ANGLE_FOR(bal_controller)&&
-       fabsf(imu.gx)<BALANCE_ARM_GYRO && fabsf(imu.gy)<BALANCE_ARM_GYRO && fabsf(imu.gz)<BALANCE_ARM_GYRO &&
+       fabsf(t->imu.gx)<BALANCE_ARM_GYRO && fabsf(t->imu.gy)<BALANCE_ARM_GYRO && fabsf(t->imu.gz)<BALANCE_ARM_GYRO &&
        fabsf(s_robot.v_left)<BALANCE_ARM_WHEEL_SPEED && fabsf(s_robot.v_right)<BALANCE_ARM_WHEEL_SPEED &&
-       norm>.72f&&norm<1.32f && spacing>=4000&&spacing<=6000) {
+       t->norm>.72f&&t->norm<1.32f && t->spacing>=4000&&t->spacing<=6000) {
         if(bal_still<BALANCE_ARM_STILL_CYCLES)bal_still++;
     } else bal_still=0;
     s_robot.ready=bal_still>=BALANCE_ARM_STILL_CYCLES;
-    bool just_armed=false;
-    if(cmd->arm_request) {
-        cmd->arm_request=0;
-        if(s_robot.ready && cmd->arm_profile==bal_controller && s_robot.state!=ROBOT_STATE_BALANCING && s_robot.state!=ROBOT_STATE_BENCH_TEST) {
+}
+
+/* Bước 9: nhận ARM — reset tích phân/encoder/mốc, sang BALANCING. */
+static void robot_handle_arm(void) {
+    RobotTick *t=&bal_tick;
+    t->just_armed=false;
+    if(t->cmd->arm_request) {
+        t->cmd->arm_request=0;
+        if(s_robot.ready && t->cmd->arm_profile==bal_controller && s_robot.state!=ROBOT_STATE_BALANCING && s_robot.state!=ROBOT_STATE_BENCH_TEST) {
             PID_Reset_Integral();Encoder_Reset();s_robot.x_actual=s_robot.x_target=0;
             cat_reset(bal_catalog,s_robot.pitch*DEG_TO_RAD);
             bal_armed_ms=HAL_GetTick();
@@ -305,98 +340,104 @@ void Robot_ControlLoop_200Hz(void) {
             BalanceRecovery_Clear(&bal_recovery);
             /* Giữ tư thế trung tính qua ARM; sẽ đo lại khi xe đứng yên. */
             BalanceGovernor_ResetKeepEquilibrium(&bal_governor);BalanceMotion_Clear(&bal_motion);BalanceTurn_Clear(&bal_turn);s_robot.motion_ready=0;
-            cmd->drive_word=cmd->drive_rx_ms=0;cmd->drive_epoch=cmd->arm_drive_epoch;cmd->drive_speed_preset=0;cmd->drive_turn=0;
+            t->cmd->drive_word=t->cmd->drive_rx_ms=0;t->cmd->drive_epoch=t->cmd->arm_drive_epoch;t->cmd->drive_speed_preset=0;t->cmd->drive_turn=0;
             s_robot.v_actual=s_robot.v_left=s_robot.v_right=0;
-            s_robot.fault=0;s_robot.state=ROBOT_STATE_BALANCING;just_armed=true;
+            s_robot.fault=0;s_robot.state=ROBOT_STATE_BALANCING;t->just_armed=true;
         }
     }
-    if(s_robot.state==ROBOT_STATE_BALANCING) {
-        do {
-        if(HAL_GetTick()-cmd->last_cmd_time>BALANCE_HEARTBEAT_MS){BalanceStop(2);break;}
-        uint16_t impact_fault=BalanceMotion_Impact(&bal_motion,!bal_startup.active&&!just_armed,s_robot.gyro_rate,norm);
-        if(impact_fault){BalanceStop(impact_fault);break;}
-        uint16_t startup_fault=BalanceStartup_Update(&bal_startup,s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,HAL_GetTick());
-        if(startup_fault){BalanceStop(startup_fault);break;}
-        BalanceRecovery_Impact(&bal_recovery,!bal_startup.active&&!just_armed,bal_motion.used,
-            s_robot.gyro_rate,norm,s_robot.x_actual-bal_motion.x_ref,bal_startup.budget,HAL_GetTick());
-        /* Một trần duy nhất cho "dự phòng vượt tốc", tính TRƯỚC quỹ đạo và interlock để
- * REC1 kịp nâng trần ngay trong cùng nhịp. */
-        BalanceRecovery_OverSpeed(&bal_recovery,!bal_startup.active&&!just_armed,
-            s_robot.v_actual,bal_motion.v_ref,s_robot.x_actual-bal_motion.x_ref,
-            bal_startup.budget,bal_max_envelope?1.12f:BalanceStartup_SpeedLimit(&bal_startup),
-            HAL_GetTick());
-        uint16_t recovery_fault=BalanceRecovery_UpdateMode(&bal_recovery,
-            s_robot.state==ROBOT_STATE_BALANCING&&!bal_startup.active&&!just_armed,
-            s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual-bal_motion.v_ref,s_robot.x_actual-bal_motion.x_ref,
-            bal_startup.budget,HAL_GetTick(),BalanceMotion8_Maneuver(&bal_motion,&bal_turn,HAL_GetTick()));
-        if(recovery_fault){BalanceStop(recovery_fault);break;}
-        if(cmd->drive_speed_preset==2&&!bal_startup.active&&!just_armed)bal_max_envelope=true;
-        if(cmd->drive_speed_preset!=2&&fabsf(s_robot.v_actual)<.76f&&fabsf(bal_motion.v_ref)<.73f)bal_max_envelope=false;
-        bal_motion.speed_preset=cmd->drive_speed_preset;
-        BalanceGovernor_Observe(&bal_governor,s_robot.pwm_left,s_robot.pwm_right,s_robot.v_actual);
-        BalanceGovernor_ObserveRest(&bal_governor,!bal_startup.active&&!bal_recovery.active&&
-            !(cmd->drive_word&3U)&&!cmd->drive_turn&&!bal_motion.braking&&!bal_turn.braking&&
-            !bal_motion.cancel_flags&&fabsf(bal_motion.v_ref)<.01f&&fabsf(bal_turn.w_ref)<.01f&&
-            norm>.72f&&norm<1.32f,
-            s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,(s_robot.v_right-s_robot.v_left)/CAT_PARAM[0]);
-        int8_t previous_turn=bal_turn.requested;
-        /* Taper nghiêng tính trên độ nghiêng vượt tư thế trung tính, nên cú quay bình
- * thường không tự bóp tốc độ quay. */
-        bal_turn.lean_ref=bal_governor.equilibrium_ready?bal_governor.equilibrium:0.0f;
-        /* Đang cua: giữ ít nhất một bánh khỏi trần duty. Trần cua chỉ tác dụng khi có
- * lệnh quay; chạy thẳng không đổi nên vẫn đạt mốc đã chọn. */
-        BalanceTurn_headroom(BalanceTurn_headroom_next(
-            fmaxf(fabsf((float)s_robot.pwm_left),fabsf((float)s_robot.pwm_right))/2499.0f,
-            cmd->drive_turn!=0));
-        /* Cùng bằng chứng duty đó cũng hạ trần MAX ở đường thẳng, nhưng chỉ khi KHÔNG
- * cua, để trần cua giữ thang riêng. */
-        BalanceMotion_maxhead(BalanceMotion_maxhead_next(
-            fmaxf(fabsf((float)s_robot.pwm_left),fabsf((float)s_robot.pwm_right))/2499.0f,
-            cmd->drive_turn==0&&cmd->drive_speed_preset==2&&fabsf(bal_motion.v_ref)>.80f));
-        unsigned drive_mode=BalanceRecovery_DriveMode(&bal_recovery,!bal_startup.active&&!just_armed,
-            s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,bal_motion.v_ref);
-        if(!BalanceMotion8_Update(&bal_motion,&bal_turn,
-            drive_mode,
-            cmd->drive_word,cmd->drive_turn,s_robot.x_actual,s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,
-            BalanceTurn_Yaw(),(s_robot.v_right-s_robot.v_left)/CAT_PARAM[0],HAL_GetTick())){BalanceStop(512);break;}
-        if(bal_governor.limited)bal_motion.flags|=16384U;
-        if(previous_turn*bal_turn.requested<0)bal_catalog[CAT_N]=0;
-        bal_motion.flags|=(cmd->drive_speed_preset==2?4096U:0U)|(bal_max_envelope?8192U:0U);
-        s_robot.motion_ready=(bal_motion.flags&1U)!=0;
-        s_robot.x_target=bal_motion.x_ref;s_robot.v_target=bal_motion.v_ref;
-        uint16_t motion_fault=BalanceMotion_Fault(&bal_motion,s_robot.x_actual,HAL_GetTick());
-        if(motion_fault){BalanceStop(motion_fault);break;}
-        if(fabsf(s_robot.pitch)>BalanceRecovery_Angle(&bal_recovery,bal_startup.angle_limit)){BalanceStop(4);break;}
-        if(fabsf(s_robot.x_actual-bal_motion.x_ref)>BalanceRecovery_Distance(&bal_recovery,bal_startup.budget)){BalanceStop(8);break;}
-        /* Mẫu vượt trần là quán tính khi vòng R12 đang bắt nghiêng, không phải lệnh
- * dừng: cắt motor lúc đó chính là làm xe ngã. Trần đi theo lệnh (|v_ref|+0,12),
- * cần 200 ms vượt liên tục, và mốc 1,45 m/s vẫn cắt ngay. */
-        float speed_ceiling=bal_max_envelope?1.12f:BalanceRecovery_Speed(&bal_recovery,BalanceStartup_SpeedLimit(&bal_startup));
-        if(BalanceInterlock_Step(&bal_interlock,s_robot.v_actual,s_robot.v_left,s_robot.v_right,
-            speed_ceiling,bal_motion.v_ref,bal_max_envelope)){BalanceStop(16);break;}
-        if(spacing<4000||spacing>6000)BalanceStop(64);
-        } while(0);
-    }
+}
+
+/* Bước 10: chuỗi veto khi đang BALANCING — dừng ngay khi có lỗi. */
+static void robot_run_veto_chain(void) {
+    RobotTick *t=&bal_tick;
+    if(HAL_GetTick()-t->cmd->last_cmd_time>BALANCE_HEARTBEAT_MS){BalanceStop(2);return;}
+    uint16_t impact_fault=BalanceMotion_Impact(&bal_motion,!bal_startup.active&&!t->just_armed,s_robot.gyro_rate,t->norm);
+    if(impact_fault){BalanceStop(impact_fault);return;}
+    uint16_t startup_fault=BalanceStartup_Update(&bal_startup,s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,HAL_GetTick());
+    if(startup_fault){BalanceStop(startup_fault);return;}
+    BalanceRecovery_Impact(&bal_recovery,!bal_startup.active&&!t->just_armed,bal_motion.used,
+        s_robot.gyro_rate,t->norm,s_robot.x_actual-bal_motion.x_ref,bal_startup.budget,HAL_GetTick());
+    /* Một trần duy nhất cho "dự phòng vượt tốc", tính TRƯỚC quỹ đạo và interlock
+     * để REC1 kịp nâng trần ngay trong cùng nhịp. */
+    BalanceRecovery_OverSpeed(&bal_recovery,!bal_startup.active&&!t->just_armed,
+        s_robot.v_actual,bal_motion.v_ref,s_robot.x_actual-bal_motion.x_ref,
+        bal_startup.budget,bal_max_envelope?1.12f:BalanceStartup_SpeedLimit(&bal_startup),
+        HAL_GetTick());
+    uint16_t recovery_fault=BalanceRecovery_UpdateMode(&bal_recovery,
+        s_robot.state==ROBOT_STATE_BALANCING&&!bal_startup.active&&!t->just_armed,
+        s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual-bal_motion.v_ref,s_robot.x_actual-bal_motion.x_ref,
+        bal_startup.budget,HAL_GetTick(),BalanceMotion8_Maneuver(&bal_motion,&bal_turn,HAL_GetTick()));
+    if(recovery_fault){BalanceStop(recovery_fault);return;}
+    if(t->cmd->drive_speed_preset==2&&!bal_startup.active&&!t->just_armed)bal_max_envelope=true;
+    if(t->cmd->drive_speed_preset!=2&&fabsf(s_robot.v_actual)<.76f&&fabsf(bal_motion.v_ref)<.73f)bal_max_envelope=false;
+    bal_motion.speed_preset=t->cmd->drive_speed_preset;
+    BalanceGovernor_Observe(&bal_governor,s_robot.pwm_left,s_robot.pwm_right,s_robot.v_actual);
+    BalanceGovernor_ObserveRest(&bal_governor,!bal_startup.active&&!bal_recovery.active&&
+        !(t->cmd->drive_word&3U)&&!t->cmd->drive_turn&&!bal_motion.braking&&!bal_turn.braking&&
+        !bal_motion.cancel_flags&&fabsf(bal_motion.v_ref)<.01f&&fabsf(bal_turn.w_ref)<.01f&&
+        t->norm>.72f&&t->norm<1.32f,
+        s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,(s_robot.v_right-s_robot.v_left)/CAT_PARAM[0]);
+    int8_t previous_turn=bal_turn.requested;
+    /* Taper nghiêng tính trên độ nghiêng vượt tư thế trung tính, nên cú quay bình
+     * thường không tự bóp tốc độ quay. */
+    bal_turn.lean_ref=bal_governor.equilibrium_ready?bal_governor.equilibrium:0.0f;
+    /* Đang cua: giữ ít nhất một bánh khỏi trần duty. Trần cua chỉ tác dụng khi có
+     * lệnh quay; chạy thẳng không đổi nên vẫn đạt mốc đã chọn. */
+    BalanceTurn_headroom(BalanceTurn_headroom_next(
+        fmaxf(fabsf((float)s_robot.pwm_left),fabsf((float)s_robot.pwm_right))/2499.0f,
+        t->cmd->drive_turn!=0));
+    /* Cùng bằng chứng duty đó cũng hạ trần MAX ở đường thẳng, nhưng chỉ khi KHÔNG
+     * cua, để trần cua giữ thang riêng. */
+    BalanceMotion_maxhead(BalanceMotion_maxhead_next(
+        fmaxf(fabsf((float)s_robot.pwm_left),fabsf((float)s_robot.pwm_right))/2499.0f,
+        t->cmd->drive_turn==0&&t->cmd->drive_speed_preset==2&&fabsf(bal_motion.v_ref)>.80f));
+    unsigned drive_mode=BalanceRecovery_DriveMode(&bal_recovery,!bal_startup.active&&!t->just_armed,
+        s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,bal_motion.v_ref);
+    if(!BalanceMotion8_Update(&bal_motion,&bal_turn,
+        drive_mode,
+        t->cmd->drive_word,t->cmd->drive_turn,s_robot.x_actual,s_robot.pitch,s_robot.gyro_rate,s_robot.v_actual,
+        BalanceTurn_Yaw(),(s_robot.v_right-s_robot.v_left)/CAT_PARAM[0],HAL_GetTick())){BalanceStop(512);return;}
+    if(bal_governor.limited)bal_motion.flags|=16384U;
+    if(previous_turn*bal_turn.requested<0)bal_catalog[CAT_N]=0;
+    bal_motion.flags|=(t->cmd->drive_speed_preset==2?4096U:0U)|(bal_max_envelope?8192U:0U);
+    s_robot.motion_ready=(bal_motion.flags&1U)!=0;
+    s_robot.x_target=bal_motion.x_ref;s_robot.v_target=bal_motion.v_ref;
+    uint16_t motion_fault=BalanceMotion_Fault(&bal_motion,s_robot.x_actual,HAL_GetTick());
+    if(motion_fault){BalanceStop(motion_fault);return;}
+    if(fabsf(s_robot.pitch)>BalanceRecovery_Angle(&bal_recovery,bal_startup.angle_limit)){BalanceStop(4);return;}
+    if(fabsf(s_robot.x_actual-bal_motion.x_ref)>BalanceRecovery_Distance(&bal_recovery,bal_startup.budget)){BalanceStop(8);return;}
+    /* Mẫu vượt trần là quán tính khi vòng R12 đang bắt nghiêng, không phải lệnh
+     * dừng: cắt motor lúc đó chính là làm xe ngã. Trần đi theo lệnh (|v_ref|+0,12),
+     * cần 200 ms vượt liên tục, và mốc 1,45 m/s vẫn cắt ngay. */
+    float speed_ceiling=bal_max_envelope?1.12f:BalanceRecovery_Speed(&bal_recovery,BalanceStartup_SpeedLimit(&bal_startup));
+    if(BalanceInterlock_Step(&bal_interlock,s_robot.v_actual,s_robot.v_left,s_robot.v_right,
+        speed_ceiling,bal_motion.v_ref,bal_max_envelope)){BalanceStop(16);return;}
+    if(t->spacing<4000||t->spacing>6000)BalanceStop(64);
+}
+
+/* Bước 11–14: lõi R12 (nguồn PWM duy nhất), bù bánh trái, ghi PWM hoặc dừng. */
+static void robot_apply_balance_law(void) {
+    RobotTick *t=&bal_tick;
     if(s_robot.state==ROBOT_STATE_BALANCING && bal_controller==BALANCE_CONTROLLER_R12) {
         /* Frozen R12 float32 law; same header as Scilab native experiment.
          * Raw ticks are L forward-positive, R forward-negative. No extra DB. */
         int32_t ticks_l,ticks_r;Encoder_GetHardwareTicks(&ticks_l,&ticks_r);
         float input[7]={s_robot.pitch*DEG_TO_RAD,s_robot.gyro_rate*DEG_TO_RAD,
-            PITCH_ACC_SIGN*Filter_CalibratedRawPitch(imu.ax,imu.az)*DEG_TO_RAD,
+            PITCH_ACC_SIGN*Filter_CalibratedRawPitch(t->imu.ax,t->imu.az)*DEG_TO_RAD,
             .5f*((float)ticks_l-(float)ticks_r)*METERS_PER_TICK,
             s_robot.v_left,s_robot.v_right,
             (-(float)ticks_r-(float)ticks_l)*METERS_PER_TICK};
         float output[4];
         if(!motion_cat_step8_mode(input,bal_catalog,output,bal_motion.x_ref,bal_motion.v_ref,bal_turn.psi_ref,bal_turn.w_ref,bal_turn.rate_mode))BalanceStop(512);
-        else if(just_armed) {
+        else if(t->just_armed) {
             /* Observer updates once; first ARM tick still holds brake. */
             bal_catalog[CAT_N]=bal_catalog[CAT_N+2]=0;
             Motor_Stop();s_robot.pwm_left=s_robot.pwm_right=0;
             s_robot.pwm_base=0;
             s_robot.v_control=bal_catalog[1];s_robot.theta_control=bal_catalog[2]*RAD_TO_DEG;
         } else {
-            /* Bù lệch cơ khí bánh trái — xem balance_trim.h. Đặt SAU bộ phân bổ R12,
- * kẹp ±MOTOR_MAX_PWM. */
+            /* Bù lệch cơ khí bánh trái — xem balance_trim.h. Đặt SAU bộ phân bổ
+             * R12, kẹp ±MOTOR_MAX_PWM. */
             float pwm_l=BalanceTrim_Left(output[0],BALANCE_TRIM_LEFT_PWM,(float)MOTOR_MAX_PWM);
             s_robot.pwm_left=(int16_t)pwm_l;s_robot.pwm_right=(int16_t)output[1];
             s_robot.pwm_base=.5f*(pwm_l+output[1]);
@@ -407,12 +448,22 @@ void Robot_ControlLoop_200Hz(void) {
         Motor_Stop();s_robot.pwm_left=s_robot.pwm_right=0;
         s_robot.v_control=s_robot.theta_control=s_robot.pwm_base=0;
     }
-    uint32_t execution=(uint32_t)(DWT->CYCCNT-begin)/(SystemCoreClock/1000000U);
-    if(execution>4000 && (s_robot.state==ROBOT_STATE_BALANCING||s_robot.state==ROBOT_STATE_BENCH_TEST))BalanceStop(64);
+}
+
+/* Bước 15: nhịp vượt 4 ms thì tự cắt (64). */
+static void robot_check_deadline(void) {
+    RobotTick *t=&bal_tick;
+    t->execution=(uint32_t)(DWT->CYCCNT-t->begin)/(SystemCoreClock/1000000U);
+    if(t->execution>4000 && (s_robot.state==ROBOT_STATE_BALANCING||s_robot.state==ROBOT_STATE_BENCH_TEST))BalanceStop(64);
+}
+
+/* Bước 16: telemetry 122 B mỗi 4 nhịp (50 Hz) vào queue IRQ→main. */
+static void robot_emit_telemetry(void) {
+    RobotTick *t=&bal_tick;
     if(s_robot.loop_count%4==0) {
         BalanceFrame f={0};BMI160_RawData_t raw;BMI160_GetLastRaw(&raw);
         f.sync=0x60a5;f.sequence=bal_seq++;f.t_ms=HAL_GetTick();
-        f.dt_us=spacing>65535?65535:spacing;f.execution_us=execution>65535?65535:execution;
+        f.dt_us=t->spacing>65535?65535:t->spacing;f.execution_us=t->execution>65535?65535:t->execution;
         f.gx=raw.gx_raw;f.gy=raw.gy_raw;f.gz=raw.gz_raw;
         f.ax=raw.ax_raw;f.ay=raw.ay_raw;f.az=raw.az_raw;
         int32_t raw_l,raw_r;Encoder_GetHardwareTicks(&raw_l,&raw_r);
@@ -425,8 +476,8 @@ void Robot_ControlLoop_200Hz(void) {
         f.controller=bal_controller;f.capture=bal_startup.active?1U:(bal_recovery.active?2U:0U);
         f.distance_limit=BalanceRecovery_Distance(&bal_recovery,bal_startup.budget);f.fault=s_robot.fault;
         f.x_ref=bal_motion.x_ref;f.v_ref=bal_motion.v_ref;
-        f.drive_epoch=cmd->drive_epoch;f.motion_flags=bal_motion.flags;f.drive_direction=bal_motion.requested;
-        f.drive_sequence=cmd->drive_word>>2;f.drive_rx_ms=cmd->drive_rx_ms;
+        f.drive_epoch=t->cmd->drive_epoch;f.motion_flags=bal_motion.flags;f.drive_direction=bal_motion.requested;
+        f.drive_sequence=t->cmd->drive_word>>2;f.drive_rx_ms=t->cmd->drive_rx_ms;
         f.psi_ref=bal_turn.psi_ref;f.w_ref=bal_turn.w_ref;f.turn_direction=bal_turn.requested;
         f.state=s_robot.state;f.ready=s_robot.ready;f.dropped=bal_drops;
         f.crc=TestCRC((uint8_t*)&f,sizeof(f)-2);
@@ -434,6 +485,19 @@ void Robot_ControlLoop_200Hz(void) {
         if(next==bal_tail) {if(bal_drops<65535)bal_drops++;}
         else {bal_queue[bal_head]=f;__DMB();bal_head=next;}
     }
+}
+
+/* Vòng 16 bước. Không đổi thứ tự: mỗi bước là một hàm ở trên. */
+void Robot_ControlLoop_200Hz(void) {
+    robot_tick_start();
+    robot_read_inputs();
+    robot_check_safe_state();
+    robot_update_arm_gate();
+    robot_handle_arm();
+    if(s_robot.state==ROBOT_STATE_BALANCING) robot_run_veto_chain();
+    robot_apply_balance_law();
+    robot_check_deadline();
+    robot_emit_telemetry();
 }
 
 Robot_Data_t *Robot_GetData(void) { return &s_robot; }
