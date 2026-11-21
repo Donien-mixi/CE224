@@ -9,8 +9,8 @@ làm gateway Wi-Fi có trang điều khiển và ghi log, Scilab mô phỏng l�
 **0,72 m/s** ở cả hai chiều, chống trôi khi đứng yên, xuất phát mượt, đổi hướng liên tục, không ngập
 ngừng khi phanh, không cắt motor khi bị giữ, **UART 921600, tự chọn/đổi kênh Wi-Fi, log mang theo chất
 lượng sóng, trần MAX 90 theo duty**.
-RT47 nạp bằng IDE từ source (chưa đóng gói); bản đóng gói gần nhất là ``Firmware/RT45_CLEAN_20261121/``
-(dùng để quay lui), trước nữa là RT44.
+RT47 nạp bằng IDE từ source; **không còn gói nhị phân trong repo**. Muốn quay lui thì `git checkout <commit>`
+rồi Build/Upload lại.
 Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
 ## 1. Kiến trúc
@@ -29,16 +29,14 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 |---|---|---|---|
 | **RT47-SLIM / NET47** (bản hiện hành) | STM32 | `BAL-20261121-R12-8DIR-RT47-SLIM` | nạp bằng IDE (Clean → Build → Run) |
 | | ESP32-S3 | `TWIP-WEB-20261121-BAL-R12-8DIR-RT47-SLIM-NET47` | nạp bằng Arduino IDE (Upload) |
-| RT45-CLEAN / NET45 (quay lui) | STM32 + ESP32 | `BAL-20261121-R12-8DIR-RT45-CLEAN` / `…-NET45` | `Firmware/RT45_CLEAN_20261121/` |
-| RT44-TURN / NET44 (bản trước) | STM32 + ESP32 | `BAL-20261120-R12-8DIR-RT44-TURN` / `…-NET44` | `Firmware/RT44_TURN_20261120/` — quay lui |
+
 
 - Hash đầy đủ: `SHA256.json` trong từng thư mục; hash **20 tệp nguồn đã sinh ra binary**:
   `SOURCE_SHA256.json` (RT45).
 - Hai board phải nạp cùng bản: gateway đối chiếu build ID với STM32, lệch là khoá điều khiển.
 - Cách nạp: STM32CubeIDE (**Clean** → **Build** → **Run**) và Arduino IDE (**Upload**) — xem
-  [`Firmware/README.md`](Firmware/README.md); quay lui bằng `nap_rt45.bat` / `nap_rt44.bat`.
-- **Chọn giữa các bản và hướng dẫn nạp đầy đủ:** [`Firmware/README.md`](Firmware/README.md)
-  (nạp bằng IDE: [`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md)).
+  [`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md). Quay lui: `git checkout <commit>` rồi nạp lại.
+
 
 ## 3. Cấu trúc repo
 
@@ -47,8 +45,8 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 | `Xe_Can_Bang/` | Project STM32CubeIDE. Luật điều khiển và giám sát ở `Core/Inc/balance_*.h`, FSM và vòng 200 Hz ở `Core/Src/robot_fsm.c`. |
 | `ESP32_S3_Gateway/` | Sketch Arduino + trang web (`dashboard_html.h`), giao thức UART, phiên điều khiển, log RAM/Flash. |
 | `Simulation/` | Mô hình Scilab, harness native dùng chung header firmware, bộ 36 ca kiểm tra, cấu hình plant. |
-| `tools/` | **38 host test** chạy được (42 tệp `test_*.cjs`, 4 tệp rỗng), script mô phỏng/build, tải log cứu hộ. Mock gateway dùng cho route test ở `tools/lib/gateway_mock.cjs`. |
-| `Firmware/` | RT45 và RT44 (đóng gói, dùng quay lui); RT47 nạp bằng IDE từ source. Bản cũ hơn nằm trong git history. |
+| `tools/` | **38 host test** (38 tệp `test_*.cjs`), script chạy mô phỏng, tải log cứu hộ. Mock gateway cho route test ở `tools/lib/gateway_mock.cjs`. |
+| *(không còn)* | Gói nhị phân đã xoá; firmware nạp bằng IDE, bản cũ nằm trong git history. |
 | `Hardware/` | Schematic, PCB KiCad, thư viện footprint, tài liệu lắp ráp. |
 | `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT45 (danh sách ở mục 7). |
 

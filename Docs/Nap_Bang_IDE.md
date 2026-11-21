@@ -46,7 +46,7 @@ Nếu **Run** báo không tìm thấy ST-LINK: kiểm driver ST-LINK, cắm lạ
 4. Bấm **Upload**. Chờ `Done uploading`.
 5. Rút cáp, cấp nguồn, kiểm banner.
 
-> Arduino IDE **build lại** từ source nên hash `.bin` khác bản đóng gói (dấu thời gian build), nhưng
+> Mỗi lần **Build** cho ra hash riêng (dấu thời gian build), nên so sánh hành vi bằng log, không so hash;
 > build ID và hành vi đúng bản. Không dùng hash để so ở đường IDE.
 
 ## 3. Kiểm sau khi nạp
@@ -68,5 +68,5 @@ Nếu trang báo “Chờ thông tin phiên bản STM32…” hoặc nút BẬT 
 - Không nạp khi xe đang cân bằng/đang chạy; bánh kê cao.
 - **Luôn nạp cả hai board**: UART 921600 ở cả hai đầu, lệch một board là mất liên lạc.
 - Mức MAX 90 chỉ đạt đúng 0,90 m/s khi pin **≥ 12,0 V**.
-- Cách nạp bằng script (không cần mở IDE): `Firmware\RT45_CLEAN_20261121\nap_rt45.bat` (bản trước; quay lui `nap_rt44.bat`).
+- Quay lui: `git checkout <commit cũ> -- Xe_Can_Bang ESP32_S3_Gateway` rồi Build/Upload lại cả hai board.
 - Bản firmware cũ (RT29 → RT43) đã xoá khỏi cây làm việc; vẫn lấy lại được bằng `git history`.

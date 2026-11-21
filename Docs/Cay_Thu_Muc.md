@@ -28,19 +28,18 @@ Trong `Xe_Can_Bang/Core`:
 
 | Thư mục | Dung lượng | Xoá được? | Sinh lại bằng |
 |---|---:|---|---|
-| `.build/` | ~665 MB | **có** | chạy test/build (`tools/build_stm32.ps1`, `node tools/run_governor_sim.cjs`) |
-| `Xe_Can_Bang/Debug/` | ~29 MB | **có** | bấm **Build** trong CubeIDE (hoặc `tools/build_stm32.ps1`) |
-| `Simulation/results/` | ~1,1 GB | **có** | `node tools/run_governor_sim.cjs --stress` |
-| `.metadata/` | ~7 MB | **có** | CubeIDE tự tạo lại (workspace thật là `D:\CubeIDE_ws`) |
+| `.build/` | — (đã xoá) | **có** | chạy test / `node tools/run_governor_sim.cjs` |
+| `Xe_Can_Bang/Debug/` | — (đã xoá) | **có** | bấm **Build** trong CubeIDE (tự sinh lại) |
+| `Simulation/results/` | — (đã xoá) | **có** | `node tools/run_governor_sim.cjs --stress` |
+| `.metadata/` | — (đã xoá) | **có** | CubeIDE tự tạo lại (workspace thật là `D:\CubeIDE_ws`) |
 | `.dsh/`, `.vscode/` | nhỏ | không cần xoá | — |
 
 ## 3. Tài liệu, bản nạp, công cụ
 
 | Thư mục | Là gì |
 |---|---|
-| `Firmware/RT45_CLEAN_20261121/` | Bản đóng gói gần nhất (quay lui): hex/bin/elf STM32, 4 tệp ESP32, hash, `nap_rt45.bat`; RT44 cũng còn. RT46 nạp bằng IDE từ source |
 | `Docs/` | Báo cáo từng vòng (`RTxx_*.md`), hướng dẫn nạp, luật điều khiển, kế hoạch dọn code |
-| `tools/` | 38 host test chạy được (42 tệp `test_*.cjs`), script build (`build_stm32.ps1`), chạy mô phỏng |
+| `tools/` | 38 host test (38 tệp `test_*.cjs`), script chạy mô phỏng |
 | `Simulation/` | Mô hình Scilab + harness native dùng chung header firmware (`Simulation/current/`) |
 | `Hardware/` | Sơ đồ, PCB KiCad, footprint |
 | `output/` | Log thô đã tải về + script phân tích theo từng vòng (`output/RTxx/`) |
@@ -57,10 +56,9 @@ Nên giữ hoặc nén lại khi làm báo cáo; nếu muốn lưu trong repo th
 ## 5. Ba việc nhanh
 
 ```powershell
-# Build firmware STM32 (ra .build + Xe_Can_Bang/Debug)
-powershell -File tools\build_stm32.ps1
+# Build + nạp: mở STM32CubeIDE → Clean → Build → Run (IDE tự tạo Debug/)
 
-# Chạy toàn bộ 42 test trên máy (không cần xe)
+# Chạy toàn bộ 38 test trên máy (không cần xe)
 Get-ChildItem tools\test_*.cjs | ForEach-Object { node $_.FullName }
 
 # Chạy mô phỏng 12 ca (mất ~1 phút, sinh Simulation/results)

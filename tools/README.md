@@ -1,6 +1,6 @@
 > **Trạng thái đồ án · 21/11/2026.** Workspace ở **RT47-SLIM / NET47**: **38/38 host test** chạy được
-> pass (42 tệp `test_*.cjs`, 4 tệp rỗng); mô phỏng native **12/12 ca × 3 bộ** đủ 20/20 s.
-> Firmware hiện hành nạp bằng IDE từ source (xem [Firmware/README](../Firmware/README.md)).
+> pass (38 tệp `test_*.cjs`); mô phỏng native **12/12 ca × 3 bộ** đủ 20/20 s.
+> Firmware nạp bằng IDE từ source — xem [Docs/Nap_Bang_IDE](../Docs/Nap_Bang_IDE.md).
 > Xem [trạng thái kỹ thuật](../HANDOFF.md) và [tổng quan](../Docs/Tong_Quan_Do_An.md).
 
 # Công cụ kiểm thử và build
@@ -42,19 +42,15 @@ Mỗi test sửa hành vi đều có **old-constant probe**: tự biên dịch l
 
 ## Script
 
-- `build_stm32.ps1`: biên dịch STM32 hiện tại, không tự nạp. ESP32 build/nạp bằng Arduino IDE hoặc
-  `arduino-cli` theo `../ESP32_S3_Gateway/README.md`.
 - `run_governor_sim.cjs`: chạy mô phỏng native (xem `../Simulation/README.md`).
   `--stress` = 12 ca tốc độ, `--edge` = 12 ca biên, `--launch --launch50` = 12 ca khởi hành 50 cm/s.
-- `run_load_speed_sim.cjs`: mô phỏng thử tải/đo tốc độ, không dùng để kết luận thông số.
 - `Tai_Log_Cuu_Ho.*`: tải log qua cổng cứu hộ khi trang web không mở được.
 - `log_manifest_template.csv`: mẫu ghi điều kiện từng lượt chạy xe.
 
 ## Điều kiện chạy trên máy khác
 
 Node.js (đã kiểm với 24.19) từ gốc repo. Các test dùng GCC/G++ trỏ `C:/msys64/ucrt64/bin/`; cần cài
-đúng hoặc chỉnh đường dẫn trong từng test. `build_stm32.ps1` cần STM32CubeIDE và cấu trúc `Debug/`
-đã được build một lần; máy mới hãy build toàn project bằng CubeIDE trước.
+đúng hoặc chỉnh đường dẫn trong từng test. Bản build do CubeIDE tạo `Debug/` ở lần **Build** đầu tiên.
 
 `test_rt8_replay.cjs` cần `Simulation/data/raw/twip_balance_R12_27_replay.csv` (721 kB). Tệp này
 **có** trong Git — `.gitignore` chỉ mở đúng một ngoại lệ cho nó; mọi dữ liệu đo khác không lên Git.

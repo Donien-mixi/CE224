@@ -16,11 +16,9 @@
 > hook governor thành 3 hàm yếu, 55 thông số vào `tuning.h`, bỏ 31 nhãn lịch sử trong comment, gom 3 probe
 > `TWIP_PROBE_*`, tách vòng 200 Hz thành 9 hàm. Không đổi `CAT_K`/observer/khung 122 B/giá trị thông số nào.
 > Kiểm: **38/38** host test, **3 bộ mô phỏng 73/73 tệp trùng**, bước 1–3 `.bin` **giống từng byte**
-> (`3921ebd5…`), bước 4 đối chiếu **9 236 ký tự câu lệnh khớp**. Gói:
-> [`Firmware/RT45_CLEAN_20261121`](Firmware/RT45_CLEAN_20261121/README.md): 7 binary + hash; STM32 bin
-> 84 588 B `9e017396…`, ESP32 app 1 094 304 B `1b76a1d6…`.
-> **Lượt chạy đầu là nghiệm thu:** `robot_fsm.c` không có test tự động → làm đúng mục 4 của README gói;
-> nếu có bất thường quay lui bằng `nap_rt44.bat`.
+> (`3921ebd5…`), bước 4 đối chiếu **9 236 ký tự câu lệnh khớp**.
+> **Lượt chạy đầu là nghiệm thu:** `robot_fsm.c` không có test tự động → chạy đúng 6 bước trong
+> [`Docs/RT45_Log_Dau_Tien.md`](Docs/RT45_Log_Dau_Tien.md); nếu bất thường thì `git checkout` bản cũ rồi nạp lại.
 > **Đã chạy thử trên xe 21/11** (`output/RT45/…`, 30 000 mẫu / 600 s): `crc_errors=0`, `fault=0` toàn bộ,
 > `exec` p95 **660 µs**, `age` p95 28 ms, REC1 **5/5 episode tự thoát không cắt motor**, MAX 90 đạt
 > 0,883 m/s với duty p95 0,915, cua 4 hướng không ngã. Chi tiết + 3 khoảng trống:
@@ -29,7 +27,7 @@
 > **BẢN TRƯỚC — RT44 (20/11):** log RT42+RT41 ở MAX 90, cùng lệnh 1,15 rad/s: yaw thực trải **0,90–1,38 rad/s**
 > (lệch 53 %), vượt tới 20 %, dao động tới 0,38 rad/s; hai hướng xấu nhất cần **bánh trái** nhanh nhất
 > (bánh trái cần ~11 % duty nhiều hơn). Sửa: hệ số dư duty nhân vào **cả tham chiếu yaw**, ngưỡng
-> 96→**92 %**, hồi ≤86 %. Chi tiết: [`Firmware/RT44_TURN_20261120/README.md`](Firmware/RT44_TURN_20261120/README.md).
+> 96→**92 %**, hồi ≤86 %. Chi tiết: git history (RT44).
 >
 > **RT43: STM32 `BAL-20261120-R12-8DIR-RT43-MAX` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT43-MAX-NET43`.**
 > **RT43 (20/11, từ log RT42 tại nhà — 148,6 s):** đường lệnh **đã đạt** (`age` p50 13 / p95 **27** /
@@ -132,8 +130,7 @@ format vùng log Flash (mục 6).
 > **9 236 ký tự khớp**; bước 5 dọn 1,8 GB (`da4583d`).
 > **Cảnh báo:** `robot_fsm.c` **không có test tự động** (38 test + mô phỏng chỉ dùng header) ⇒ phải có một
 > lượt chạy thật/kê cao có log trước khi tin bước 4.
-> **Đã bump RT45 + đóng gói** (`Firmware/RT45_CLEAN_20261121`, 7 binary + hash, `nap_rt45.bat`) để nạp thử.
-> Nếu chưa nạp thì xe vẫn chạy RT44/NET44 (20/11); quay lui bất cứ lúc nào bằng `nap_rt44.bat`.
+> **Gói nhị phân đã xoá** khi chuyển sang nạp bằng IDE; RT44/RT45/RT46 nằm trong git history.
 
 ## 1. Đọc nhanh trong 5 phút
 
@@ -261,19 +258,14 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 | Tệp được theo dõi | 466 |
 | Thư mục build local | `.build/` 156 MB, `Xe_Can_Bang/Debug/` 29 MB, `.metadata/` 7 MB — **đã gitignore**, xoá được nếu cần chỗ |
 
-### 4.2 Bản nạp và hash
+### 4.2 Bản nạp
 
-| Bản | Thư mục | Ghi chú |
-|---|---|---|
-| **RT47-SLIM / NET47** (bản hiện hành) | source (nạp bằng IDE) | Tách `balance_governor.c` + xoá `tools/legacy`; bin 84 420 B `a507c4da…`, hex `70c92c4a…` |
-| RT45-CLEAN / NET45 (bản trước) | `Firmware/RT45_CLEAN_20261121/` | Đã chạy thử trên xe 21/11 (log 600 s); quay lui bằng `nap_rt45.bat` |
-| RT44-TURN / NET44 (bản trước nữa) | `Firmware/RT44_TURN_20261120/` | `nap_rt44.bat` |
+**Không còn gói nhị phân trong repo.** Firmware nạp bằng IDE từ source: STM32CubeIDE (**Clean → Build → Run**)
+và Arduino IDE (**Upload**). Build sạch trong workspace `D:\CubeIDE_ws_verify` cho ra `.elf/.hex/.bin` trùng
+đúng source hiện tại: RT47 `text 83 912 / data 500 / bss 7 540`, `.bin` 84 420 B, SHA256 `a507c4da…`.
 
-Kiểm 21/11 (RT45): **7/7** binary khớp `SHA256.json`; **20/20** tệp nguồn khớp `SOURCE_SHA256.json` →
-`.bin/.hex` được build từ đúng source hiện tại. Build lại trong workspace sạch `D:\CubeIDE_ws_verify` ra
-`.hex` **trùng hash** bản đóng gói (`16b9c7a5…`). `test_build_id_sync` PASS: 9 literal trên 55 tệp.
-
-Kiểm 20/11 (RT44): `.hex` `0ee37a5c…`, `test_build_id_sync` PASS.
+Bản cũ (RT44, RT45, RT46) nằm trong **git history**. Muốn quay lui: `git checkout <commit> -- Xe_Can_Bang
+ESP32_S3_Gateway` rồi Build/Upload lại (**cả hai** board), sau đó `git checkout main -- …` để trở về bản hiện hành.
 
 ### 4.3 Build
 
@@ -306,7 +298,7 @@ node tools/run_governor_sim.cjs --stress --edge                        # 12 ca
 node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 ```
 
-- Host test: **38/38 bộ** chạy được PASS (42 tệp `test_*.cjs`, 4 tệp rỗng 0 B) + 9 probe hằng số cũ phải
+- Host test: **38/38 bộ** PASS (38 tệp `test_*.cjs`) + 9 probe hằng số cũ phải
   fail (Node.js 24, GCC msys2). `tools/test_uart_schedule.py` và `test_build_id_sync` PASS.
 - Mô phỏng (21/11, sau RT45): **73/73 tệp trùng** với bản trước khi dọn — `--stress` @0,80,
   `--stress --edge` @0,90, `--stress --launch --launch50` @0,90; mỗi bộ **12 ca**, tất cả 20,000/20 s,
@@ -315,20 +307,15 @@ node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 
 ### 4.5 Nạp
 
-RT46: mở STM32CubeIDE (workspace của bạn, project `Xe_Can_Bang`) → **Clean** → **Build** → **Run**; mở
-`ESP32_S3_Gateway.ino` trong Arduino IDE → **Upload** (**bắt buộc** nạp cả hai: build ID đổi ở cả hai board,
-ESP32 kiểm tra `$BINFO` của STM32). Cách script cũ: `nap_rt45.bat` (RT45) hoặc `nap_rt44.bat` (RT44). Script nạp STM32 bằng `STM32_Programmer_CLI.exe`,
-ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
-Kiểm sau khi nạp: banner `RT47-SLIM-NET47`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
-Serial ESP32 có `[UART] … @ 921600 bps` và `[NET41] … -> AP chN`, log có `crc_errors=0` và BINFO
-`BAL-20261121-R12-8DIR-RT47-SLIM`.
-Quay lui: `nap_rt44.bat` trong `Firmware\RT44_TURN_20261120` (nạp lại **cả hai** board).
+1. **STM32CubeIDE**: mở project `Xe_Can_Bang` → **Project → Clean** → **Build** → **Run** (ST-LINK).
+2. **Arduino IDE**: mở `ESP32_S3_Gateway.ino` → **Upload** (USB). **Bắt buộc nạp cả hai board**: build ID đổi ở
+   cả hai và ESP32 đối chiếu `$BINFO` của STM32.
+3. Kiểm: banner `RT47-SLIM-NET47`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được; Serial ESP32 có
+   `[UART] … @ 921600 bps` và `[NET41] … -> AP chN`; log có `crc_errors=0` và BINFO
+   `BAL-20261121-R12-8DIR-RT47-SLIM`.
+4. Quay lui: `git checkout <commit cũ> -- Xe_Can_Bang ESP32_S3_Gateway` → Build/Upload lại cả hai board.
 
-Chín bản (RT43 / RT42 / RT41 / RT40 / RT39 / RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
-banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — Nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload):
-[`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md) — workspace RT43 là `D:\CubeIDE_ws`, RT42 là
-`D:\CubeIDE_ws_rt42`, RT41 là
-`D:\CubeIDE_ws_rt41`, RT40 là `D:\CubeIDE_ws_rt40`, RT39 là `D:\CubeIDE_ws_rt39`, RT38 là `D:\CubeIDE_ws_rt38`.
+Chi tiết từng bước IDE: [`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md).
 
 ## 5. Quy tắc vận hành
 

@@ -261,5 +261,5 @@ năng, mỗi dòng `#define TÊN giá_trị  // đơn vị — để làm gì`.
 | 5 | Dọn thư mục sinh ra | ✅ `da4583d` | 1,8 GB, thêm `Cay_Thu_Muc.md` |
 | 6 | Tách module `.h` → `.c` | ✅ `c8c299c`, `d42131d`, `70a89a2` | 3 bộ mô phỏng 73/73 file trùng |
 
-> **Đã đóng gói RT45 (21/11):** `Firmware/RT45_CLEAN_20261121/` — 7 binary + 20 nguồn có hash, `nap_rt45.bat`.
+> **Đã đóng gói RT45 (21/11), sau đó xoá khỏi cây** khi chuyển sang nạp bằng IDE — gói còn trong git history (`0e7b8d1`).
 > Xem mục 4 của README gói để chạy lượt nghiệm thu đầu tiên (vì `robot_fsm.c` không có test tự động).
