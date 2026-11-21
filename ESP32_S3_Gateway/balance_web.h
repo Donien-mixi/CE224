@@ -40,12 +40,12 @@ void setupBalanceRoutes() {
     }
     xSemaphoreTake(captureMutex,portMAX_DELAY);
     bool fresh=balanceSeen && millis()-balanceReceived<500;
-    bool matched=!strncmp(balanceMeta,"$BINFO,BAL-20261121-R12-8DIR-RT46-SLIM,",sizeof("$BINFO,BAL-20261121-R12-8DIR-RT46-SLIM,")-1);
+    bool matched=!strncmp(balanceMeta,"$BINFO,BAL-20261121-R12-8DIR-RT47-SLIM,",sizeof("$BINFO,BAL-20261121-R12-8DIR-RT47-SLIM,")-1);
     bool running=balanceLatest.state==3||balanceLatest.state==7;
     if(action!="calib" && !sessionOK) message="Trang chưa có kênh điều khiển đang hoạt động. Giữ trang này mở và kết nối lại Wi-Fi.";
     else if(action!="calib" && !revisionOK) message="Đã có lệnh DỪNG sau yêu cầu cũ. Chờ thông số mới rồi bấm lại nếu muốn chạy.";
     else if(!fresh) message="Chưa nhận dữ liệu mới từ STM32. Kiểm tra nguồn, UART hoặc chế độ đo linh kiện.";
-    else if(!matched) message="STM32 chưa báo BAL-20261121-R12-8DIR-RT46-SLIM. Cần nạp đúng phiên bản STM32.";
+    else if(!matched) message="STM32 chưa báo BAL-20261121-R12-8DIR-RT47-SLIM. Cần nạp đúng phiên bản STM32.";
     else if(running) message="Motor đang chạy. Bấm DỪNG trước khi đổi bài.";
     else if(balanceDownloading) message="Đang tải log. Chờ tải xong.";
     else if(action=="arm" && (controller!=balanceLatest.controller || balanceMetaController()!=controller)) message="Chế độ đã thay đổi hoặc STM32 chưa xác nhận cấu hình. Chờ thông số mới rồi chọn/bấm lại.";
@@ -123,7 +123,7 @@ void setupBalanceRoutes() {
     uint8_t logController=balanceFrames[0].controller;
     for(size_t i=1;i<count;i++)if(balanceFrames[i].controller!=logController){logController=0;break;}
     String filename=logController?String("twip_balance_R")+String(logController)+".txt":"twip_balance_MIXED.txt";
-    String header="# TWIP_BALANCE_RT4_V1; frame122 sync0x60a5 50Hz; build BAL-20261121-R12-8DIR-RT46-SLIM\n# last_live_meta (not necessarily the configuration of every stored row): ";
+    String header="# TWIP_BALANCE_RT4_V1; frame122 sync0x60a5 50Hz; build BAL-20261121-R12-8DIR-RT47-SLIM\n# last_live_meta (not necessarily the configuration of every stored row): ";
     header+=balanceMeta;
 #ifdef ARDUINO
     header+="\n# GATEWAY_NET1 build="+String(TWIP_WEB_BUILD)+" boot="+String(gatewayBootId)+" reset="+String(gatewayResetText(gatewayResetReason))+" heap_min="+String(ESP.getMinFreeHeap())+" archive_saved="+String((unsigned long)archiveSaved)+" archive_error="+String((unsigned long)archiveError)+"\n";

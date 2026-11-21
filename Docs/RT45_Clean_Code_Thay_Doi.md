@@ -156,3 +156,17 @@ Sau khi RT45 chạy thử trên xe 600 s (0 fault), đợt dọn tiếp theo ch�
 Bằng chứng không đổi hành vi: **38/38** host test, **3 bộ mô phỏng 73/73 tệp trùng**, build 0 lỗi 0 cảnh
 báo; STM32 `text` 84 080 → **83 912** (−168 B), `bss` 7 572 → **7 540** (−32 B, đúng phần static của PID);
 bin 84 420 B `29271b0d…`. Build ID bump **RT46-SLIM / NET46** để log không lẫn với RT45.
+
+## 9. RT47 — hoàn tất dọn code
+
+| Việc | Chi tiết |
+|---|---|
+| Tách `balance_governor.h` → `.c` + `.h` | header 129 → **31** dòng (struct + 6 prototype), `balance_governor.c` **123** dòng; 6 thân hàm **trùng từng token** với bản inline; 14 bộ test + harness mô phỏng được thêm `balance_governor.c` vào lệnh biên dịch |
+| Xoá `tools/legacy/` | 6 test RT8/RT9 + `factory/` (header RT8/RT9) vốn không chạy được. Mock C mà `test_net1_routes` mượn được chuyển thành fixture `tools/lib/gateway_mock.cjs` (không nằm trong vùng quét build-ID) |
+| Build ID | `RT47-SLIM / NET47` |
+
+Bằng chứng: **38/38** host test, **3 bộ mô phỏng 73/73 tệp trùng**, build 0 lỗi 0 cảnh báo; `text 83 912 / data 500 /
+bss 7 540` (không đổi so với RT46), bin 84 420 B `a507c4da…`, hex `70c92c4a…`.
+
+Sau RT47, cấu trúc firmware đồng nhất: **mọi module điều khiển đều là `.c` + `.h`**; chỉ còn
+`balance_interlock.h` (33 dòng) và `balance_trim.h` (23 dòng) để inline vì quá nhỏ.

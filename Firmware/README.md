@@ -1,14 +1,14 @@
-# Firmware — bản hiện hành RT46-SLIM / NET46 (nạp bằng IDE) + gói quay lui RT45/RT44
+# Firmware — bản hiện hành RT47-SLIM / NET47 (nạp bằng IDE) + gói quay lui RT45/RT44
 
-**RT46 không đóng gói**: nạp bằng IDE từ source (**Clean → Build → Run** cho STM32, **Upload** cho ESP32).
+**RT47 không đóng gói**: nạp bằng IDE từ source (**Clean → Build → Run** cho STM32, **Upload** cho ESP32).
 Hai gói nhị phân trong repo là **RT45** (đóng gói 21/11, đã chạy thử trên xe) và **RT44** — cả hai dùng để
 quay lui bằng `nap_rt45.bat` / `nap_rt44.bat`. Các bản cũ hơn (RT29 → RT43) còn trong **git history**
 (`git log --oneline -- Firmware`).
 
 | Board | Build ID | Tệp nạp |
 |---|---|---|
-| STM32F411CEU6 | `BAL-20261121-R12-8DIR-RT46-SLIM` | nạp bằng IDE từ source (Clean → Build → Run); bin build 84 420 B |
-| ESP32-S3 | `TWIP-WEB-20261121-BAL-R12-8DIR-RT46-SLIM-NET46` | nạp bằng Arduino IDE (Upload); app 1 094 304 B |
+| STM32F411CEU6 | `BAL-20261121-R12-8DIR-RT47-SLIM` | nạp bằng IDE từ source (Clean → Build → Run); bin build 84 420 B |
+| ESP32-S3 | `TWIP-WEB-20261121-BAL-R12-8DIR-RT47-SLIM-NET47` | nạp bằng Arduino IDE (Upload); app 1 094 304 B |
 | *Quay lui* | `BAL-20261121-R12-8DIR-RT45-CLEAN` / `…-NET45` | `Firmware/RT45_CLEAN_20261121/` + `nap_rt45.bat` |
 | *Quay lui xa hơn* | `BAL-20261120-R12-8DIR-RT44-TURN` / `…-NET44` | `Firmware/RT44_TURN_20261120/` + `nap_rt44.bat` |
 

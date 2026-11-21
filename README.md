@@ -4,12 +4,12 @@
 làm gateway Wi-Fi có trang điều khiển và ghi log, Scilab mô phỏng lại đúng phần luật điều khiển
 đang nạp trên xe.
 
-**Bản phát hành hiện hành: STM32 `RT46-SLIM` + ESP32 `NET46` (21/11/2026)** — **xoá code chết, không
-đổi hành vi điều khiển** so với RT45 (PID cascade + 2 header không dùng): ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái, cua
+**Bản phát hành hiện hành: STM32 `RT47-SLIM` + ESP32 `NET47` (21/11/2026)** — **hoàn tất dọn code, không
+đổi hành vi điều khiển** so với RT45 (tách nốt governor ra `.c`, xoá PID + 2 header chết + 6 test legacy): ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái, cua
 **0,72 m/s** ở cả hai chiều, chống trôi khi đứng yên, xuất phát mượt, đổi hướng liên tục, không ngập
 ngừng khi phanh, không cắt motor khi bị giữ, **UART 921600, tự chọn/đổi kênh Wi-Fi, log mang theo chất
 lượng sóng, trần MAX 90 theo duty**.
-RT46 nạp bằng IDE từ source (chưa đóng gói); bản đóng gói gần nhất là ``Firmware/RT45_CLEAN_20261121/``
+RT47 nạp bằng IDE từ source (chưa đóng gói); bản đóng gói gần nhất là ``Firmware/RT45_CLEAN_20261121/``
 (dùng để quay lui), trước nữa là RT44.
 Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
@@ -27,8 +27,8 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
 | Bản | Board | Build ID | Tệp |
 |---|---|---|---|
-| **RT46-SLIM / NET46** (bản hiện hành) | STM32 | `BAL-20261121-R12-8DIR-RT46-SLIM` | nạp bằng IDE (Clean → Build → Run) |
-| | ESP32-S3 | `TWIP-WEB-20261121-BAL-R12-8DIR-RT46-SLIM-NET46` | nạp bằng Arduino IDE (Upload) |
+| **RT47-SLIM / NET47** (bản hiện hành) | STM32 | `BAL-20261121-R12-8DIR-RT47-SLIM` | nạp bằng IDE (Clean → Build → Run) |
+| | ESP32-S3 | `TWIP-WEB-20261121-BAL-R12-8DIR-RT47-SLIM-NET47` | nạp bằng Arduino IDE (Upload) |
 | RT45-CLEAN / NET45 (quay lui) | STM32 + ESP32 | `BAL-20261121-R12-8DIR-RT45-CLEAN` / `…-NET45` | `Firmware/RT45_CLEAN_20261121/` |
 | RT44-TURN / NET44 (bản trước) | STM32 + ESP32 | `BAL-20261120-R12-8DIR-RT44-TURN` / `…-NET44` | `Firmware/RT44_TURN_20261120/` — quay lui |
 
@@ -47,10 +47,10 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 | `Xe_Can_Bang/` | Project STM32CubeIDE. Luật điều khiển và giám sát ở `Core/Inc/balance_*.h`, FSM và vòng 200 Hz ở `Core/Src/robot_fsm.c`. |
 | `ESP32_S3_Gateway/` | Sketch Arduino + trang web (`dashboard_html.h`), giao thức UART, phiên điều khiển, log RAM/Flash. |
 | `Simulation/` | Mô hình Scilab, harness native dùng chung header firmware, bộ 36 ca kiểm tra, cấu hình plant. |
-| `tools/` | 42 host test (`test_*.cjs`), script mô phỏng/build, tải log cứu hộ. `tools/legacy/` giữ test của bản RT8/RT9 đã bỏ. |
-| `Firmware/` | RT45 và RT44 (đóng gói, dùng quay lui); RT46 nạp bằng IDE từ source. Bản cũ hơn nằm trong git history. |
+| `tools/` | **38 host test** chạy được (42 tệp `test_*.cjs`, 4 tệp rỗng), script mô phỏng/build, tải log cứu hộ. Mock gateway dùng cho route test ở `tools/lib/gateway_mock.cjs`. |
+| `Firmware/` | RT45 và RT44 (đóng gói, dùng quay lui); RT47 nạp bằng IDE từ source. Bản cũ hơn nằm trong git history. |
 | `Hardware/` | Schematic, PCB KiCad, thư viện footprint, tài liệu lắp ráp. |
-| `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT42 (danh sách ở mục 7). |
+| `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT45 (danh sách ở mục 7). |
 
 ## 4. Chạy nhanh
 

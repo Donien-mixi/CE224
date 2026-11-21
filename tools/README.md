@@ -1,6 +1,6 @@
-> **Trạng thái đồ án · 18/11/2026.** Workspace ở **RT38-CONT / NET38**: **39/39 host test pass**,
-> mô phỏng native 36/36 ca đủ 20/20 s khi mức ≤ 80 và **35/36** ở MAX 90 (ca trượt là pin 11,2 V).
-> Firmware phát hành ở ``Firmware/RT37_SMOOTH_20261118/``.
+> **Trạng thái đồ án · 21/11/2026.** Workspace ở **RT47-SLIM / NET47**: **38/38 host test** chạy được
+> pass (42 tệp `test_*.cjs`, 4 tệp rỗng); mô phỏng native **12/12 ca × 3 bộ** đủ 20/20 s.
+> Firmware hiện hành nạp bằng IDE từ source (xem [Firmware/README](../Firmware/README.md)).
 > Xem [trạng thái kỹ thuật](../HANDOFF.md) và [tổng quan](../Docs/Tong_Quan_Do_An.md).
 
 # Công cụ kiểm thử và build
@@ -14,7 +14,7 @@ Get-ChildItem tools/test_*.cjs | ForEach-Object { node $_.FullName }
 Mỗi test tự biên dịch phần C/C++ tương ứng vào `.build/<tên_test>/` rồi chạy. Không test nào nạp
 firmware hay mở cổng COM.
 
-## Test đang dùng (39)
+## Test đang dùng (38 tệp chạy được)
 
 | Nhóm | Tệp | Kiểm cái gì |
 |---|---|---|
@@ -34,10 +34,11 @@ firmware hay mở cổng COM.
 Mỗi test sửa hành vi đều có **old-constant probe**: tự biên dịch lại với hằng số của bản trước và
 **yêu cầu fail**, để chứng minh test bắt đúng lỗi chứ không phải chỉ chạy qua.
 
-## Test đã ngừng dùng
+## Dữ liệu / tiện ích dùng chung
 
-`tools/legacy/` giữ 6 test của các bản RT8/RT9 và khối đo tốc độ bằng tay đã bị gỡ — không chạy được
-trên firmware hiện hành. Danh sách và test tương đương ở [`legacy/README.md`](legacy/README.md).
+- `lib/gateway_mock.cjs`: mock C của gateway (nguồn bản RT8) để `test_net1_routes` kiểm route/CRC.
+- `lib/legacy_headers.cjs`: dựng bản header hằng số cũ cho 3 test phát lại log RT8.
+- 6 test RT8/RT9 cũ (cần khôi phục firmware RT8 từ git mới chạy) đã xoá ở RT47; còn trong git history.
 
 ## Script
 

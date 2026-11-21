@@ -92,7 +92,7 @@ fs.writeFileSync(file,src);
 const inc='-I'+path.join(root,'Xe_Can_Bang/Core/Inc');
 function build(extra){
   const exe=path.join(out,extra.length?'old.exe':'sym.exe');
-  const r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror',inc,...extra,file,'-lm','-o',exe],{encoding:'utf8'});
+  const r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror',inc,...extra,file,'Xe_Can_Bang/Core/Src/balance_governor.c','-lm','-o',exe],{encoding:'utf8'});
   assert.equal(r.status,0,r.stderr||String(r.error));
   return exe;
 }

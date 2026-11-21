@@ -93,7 +93,7 @@ const file=path.join(out,'turn.c');
 fs.writeFileSync(file,src);
 const inc='-I'+path.join(root,'Xe_Can_Bang/Core/Inc');
 const exe=path.join(out,'turn.exe');
-let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror',inc,file,path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_turn.c'),'-lm','-o',exe],{encoding:'utf8'});
+let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror',inc,file,path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_turn.c'),'Xe_Can_Bang/Core/Src/balance_governor.c','-lm','-o',exe],{encoding:'utf8'});
 assert.equal(r.status,0,r.stderr||String(r.error));
 const run=cp.spawnSync(exe,[],{encoding:'utf8'});
 process.stdout.write(run.stdout||'');
@@ -102,7 +102,7 @@ assert.equal(run.status,0,(run.stdout||'')+(run.stderr||''));
 const old=path.join(out,'turn_old.exe');
 r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror',inc,
  '-DBALANCE_TURN_PURE_RATE=(s->speed_preset?2.2f:1.2f)','-DBALANCE_TURN_DIAGONAL_RATE=(s->speed_preset?.55f:.80f)',
- '-DBALANCE_TURN_ACCEL=3.0f','-DBALANCE_TURN_LATERAL_ACCEL=0.4f',file,path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_turn.c'),'-lm','-o',old],{encoding:'utf8'});
+ '-DBALANCE_TURN_ACCEL=3.0f','-DBALANCE_TURN_LATERAL_ACCEL=0.4f',file,path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_turn.c'),'Xe_Can_Bang/Core/Src/balance_governor.c','-lm','-o',old],{encoding:'utf8'});
 assert.equal(r.status,0,r.stderr||String(r.error));
 const oldRun=cp.spawnSync(old,[],{encoding:'utf8'});
 assert.notEqual(oldRun.status,0,'the RT21 turn constants should fail the sharper-steering checks');
@@ -111,7 +111,7 @@ console.log('old-constant probe fails as expected (0.50rad/s diagonal, 2.2rad/s 
 const prior=path.join(out,'turn_rt22.exe');
 r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror',inc,
  '-DBALANCE_TURN_WHEEL_ENV_72=0.80f','-DBALANCE_TURN_CENTER_KNEE=0.22f','-DBALANCE_TURN_CENTER_SPAN=0.10f',
- '-DBALANCE_TURN_CENTER_FLOOR=0.40f',file,path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_turn.c'),'-lm','-o',prior],{encoding:'utf8'});
+ '-DBALANCE_TURN_CENTER_FLOOR=0.40f',file,path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_turn.c'),'Xe_Can_Bang/Core/Src/balance_governor.c','-lm','-o',prior],{encoding:'utf8'});
 assert.equal(r.status,0,r.stderr||String(r.error));
 const priorRun=cp.spawnSync(prior,[],{encoding:'utf8'});
 assert.notEqual(priorRun.status,0,'the RT22 turn scaling should fail the RT23 regression checks');

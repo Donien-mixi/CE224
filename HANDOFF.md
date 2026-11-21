@@ -1,13 +1,16 @@
 # Bàn giao đồ án TWIP — 19/11/2026 (bản RT40)
 
 # (dòng dưới là bản hiện hành RT41)
-> **Bản hiện hành: STM32 `BAL-20261121-R12-8DIR-RT46-SLIM` + ESP32 `TWIP-WEB-20261121-BAL-R12-8DIR-RT46-SLIM-NET46`.**
-> **RT46 (21/11) — xoá code chết, KHÔNG đổi hành vi điều khiển:** xoá `pid.c`/`pid.h` (cascade PID không còn
-> dùng; chỉ còn `PID_Init`/`PID_Reset_Integral` gọi vào state nội bộ của chính nó) và 2 header không được
-> include ở đâu: `balance_assist.h`, `wheel_measurement.h`. Không đổi giá trị nào, không đổi thứ tự 16 bước.
-> Kiểm: **38/38** host test, **3 bộ mô phỏng 73/73 tệp trùng**, build 0 lỗi 0 cảnh báo; STM32 `text` 84 080 →
-> **83 912** (−168 B), `bss` 7 572 → **7 540** (−32 B); bin 84 420 B `29271b0d…`, hex `117da638…`, ESP32 app
-> 1 094 304 B `22ec9f3f…`. **Chưa đóng gói** — nạp bằng IDE từ source; RT45 package giữ để quay lui.
+> **Bản hiện hành: STM32 `BAL-20261121-R12-8DIR-RT47-SLIM` + ESP32 `TWIP-WEB-20261121-BAL-R12-8DIR-RT47-SLIM-NET47`.**
+> **RT47 (21/11) — hoàn tất dọn code, KHÔNG đổi hành vi điều khiển:** tách nốt `balance_governor.h` (129 → **31**
+> dòng) ra `Core/Src/balance_governor.c` (123 dòng, 6 hàm — thân hàm **trùng từng token**), và xoá `tools/legacy/`
+> (6 test RT8/RT9 + factory headers vốn không chạy được; mock mà `test_net1_routes` mượn đã inline vào test).
+> Kiểm: **38/38** host test, **3 bộ mô phỏng 73/73 tệp trùng**, build 0 lỗi 0 cảnh báo; `text 83 912 / data 500 /
+> bss 7 540` (không đổi — thân hàm chỉ chuyển chỗ), bin 84 420 B `a507c4da…`, hex `70c92c4a…`, ESP32 app
+> 1 094 304 B. **Chưa đóng gói** — nạp bằng IDE; RT45 package giữ để quay lui.
+>
+> **BẢN TRƯỚC — RT46 (21/11):** xoá `pid.c`/`pid.h` + `balance_assist.h`/`wheel_measurement.h` (cả firmware chỉ
+> còn `PID_Init`/`PID_Reset_Integral` gọi vào state nội bộ); `text` −168 B, `bss` −32 B.
 >
 > **BẢN TRƯỚC — RT45 (21/11):** dọn code, không đổi hành vi điều khiển: tách `balance_motion/turn/recovery` ra `.c`,
 > hook governor thành 3 hàm yếu, 55 thông số vào `tuning.h`, bỏ 31 nhãn lịch sử trong comment, gom 3 probe
@@ -262,7 +265,7 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 
 | Bản | Thư mục | Ghi chú |
 |---|---|---|
-| **RT46-SLIM / NET46** (bản hiện hành) | source (nạp bằng IDE) | Xoá PID + 2 header chết; bin 84 420 B `29271b0d…`, hex `117da638…` |
+| **RT47-SLIM / NET47** (bản hiện hành) | source (nạp bằng IDE) | Tách `balance_governor.c` + xoá `tools/legacy`; bin 84 420 B `a507c4da…`, hex `70c92c4a…` |
 | RT45-CLEAN / NET45 (bản trước) | `Firmware/RT45_CLEAN_20261121/` | Đã chạy thử trên xe 21/11 (log 600 s); quay lui bằng `nap_rt45.bat` |
 | RT44-TURN / NET44 (bản trước nữa) | `Firmware/RT44_TURN_20261120/` | `nap_rt44.bat` |
 
@@ -316,9 +319,9 @@ RT46: mở STM32CubeIDE (workspace của bạn, project `Xe_Can_Bang`) → **Cle
 `ESP32_S3_Gateway.ino` trong Arduino IDE → **Upload** (**bắt buộc** nạp cả hai: build ID đổi ở cả hai board,
 ESP32 kiểm tra `$BINFO` của STM32). Cách script cũ: `nap_rt45.bat` (RT45) hoặc `nap_rt44.bat` (RT44). Script nạp STM32 bằng `STM32_Programmer_CLI.exe`,
 ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
-Kiểm sau khi nạp: banner `RT46-SLIM-NET46`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
+Kiểm sau khi nạp: banner `RT47-SLIM-NET47`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
 Serial ESP32 có `[UART] … @ 921600 bps` và `[NET41] … -> AP chN`, log có `crc_errors=0` và BINFO
-`BAL-20261121-R12-8DIR-RT46-SLIM`.
+`BAL-20261121-R12-8DIR-RT47-SLIM`.
 Quay lui: `nap_rt44.bat` trong `Firmware\RT44_TURN_20261120` (nạp lại **cả hai** board).
 
 Chín bản (RT43 / RT42 / RT41 / RT40 / RT39 / RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm

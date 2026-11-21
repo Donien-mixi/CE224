@@ -19,7 +19,7 @@ class FakeWS{
 const elements={};
 function element(){return {style:{},dataset:{},classList:{toggle(){}},addEventListener(k,f){this['on'+k]=f;},checked:false,disabled:false,hidden:false,textContent:'',children:[],appendChild(x){this.children.push(x);},replaceChildren(){this.children=[];},getContext(){return {clearRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){}};}};}
 const row=[1,1000,5000,500,3,1,0,0,0,0,0,-8,-3,8,0,0,4096,.1,0,0,0,0,0,0,0,0,0,12,0,.3,0,.8,1,1,0,0,0,0,0,0];
-const meta='$BINFO,BAL-20261121-R12-8DIR-RT46-SLIM,9.150813,6.128855,14.327945,1.160484,0.25,898.225,160,200,200,140,-.46,-.18,.46,2.166942649,1,12,.998,60,0,0,0,0,1.940,1';
+const meta='$BINFO,BAL-20261121-R12-8DIR-RT47-SLIM,9.150813,6.128855,14.327945,1.160484,0.25,898.225,160,200,200,140,-.46,-.18,.46,2.166942649,1,12,.998,60,0,0,0,0,1.940,1';
 let data={seen:true,age_ms:0,row:row.join(','),meta,samples:100,capacity:18000,crc:0,gaps:0,overflow:0,resets:0,owner:0,owner_token:7,stop_source:'none',control_revision:17,drive_epoch:1,boot_id:5,uptime_ms:60000};
 let net={boot_id:5,reset_reason:'brownout',uptime_ms:60000,heap_free:200000,heap_min:197568,ap_clients:1,ap_leaves:0,ap_reason:0,loop_gap_max_ms:12,archive_ready:false,archive_error:'filesystem_unavailable_preserved',archive_saved:0};
 let statusCalls=0,archiveCalls=0;

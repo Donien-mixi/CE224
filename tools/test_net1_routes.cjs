@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_pro
 const root=path.resolve(__dirname,'..'),out=path.join(root,'.build/net1_routes');fs.mkdirSync(out,{recursive:true});
 // The ESP32 fake-FS harness (the `mock` template below) lives in the archived
 // gateway test; only that C harness is reused, no assertion comes from it.
-let mock=fs.readFileSync(path.join(__dirname,'legacy','test_drive8_gateway.cjs'),'utf8').match(/const mock=String.raw`([\s\S]*?)`;/)[1];
+let mock=require('./lib/gateway_mock.cjs');
 mock=mock.replace('void remove(size_t p){erase(p);}','void remove(size_t p){erase(p);} int indexOf(char c)const{auto i=find(c);return i==npos?-1:(int)i;} int indexOf(const char*c)const{auto i=find(c);return i==npos?-1:(int)i;}');
 mock=mock.replace('int captureMutex,portMAX_DELAY,HTTP_GET=1,HTTP_POST=2;','bool archiveLocked=false;int captureMutex=0,archiveMutex=1,portMAX_DELAY,HTTP_GET=1,HTTP_POST=2;');
 mock=mock.replace('void xSemaphoreTake(int,int){assert(!held);held=true;}','int xSemaphoreTake(int m,int){if(m){assert(!archiveLocked);archiveLocked=true;}else{assert(!held);held=true;}return 1;}');

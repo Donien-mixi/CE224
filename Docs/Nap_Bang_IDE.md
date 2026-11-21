@@ -1,11 +1,11 @@
-# Nạp firmware bằng IDE (Build + Run / Upload) — bản RT46-SLIM / NET46
+# Nạp firmware bằng IDE (Build + Run / Upload) — bản RT47-SLIM / NET47
 
 Chỉ còn **một bản** firmware trong repo. Hai đường nạp bằng IDE:
 
 | Board | Mở ở đâu | Nút |
 |---|---|---|
-| **STM32F411** (`BAL-20261121-R12-8DIR-RT46-SLIM`) | STM32CubeIDE → workspace **`D:\CubeIDE_ws`** | **Build** (búa) → **Run** (tam giác xanh) |
-| **ESP32-S3** (`TWIP-WEB-20261121-BAL-R12-8DIR-RT46-SLIM-NET46`) | Arduino IDE → **`D:\DA_HTN\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`** | **Upload** (mũi tên →) |
+| **STM32F411** (`BAL-20261121-R12-8DIR-RT47-SLIM`) | STM32CubeIDE → workspace **`D:\CubeIDE_ws`** | **Build** (búa) → **Run** (tam giác xanh) |
+| **ESP32-S3** (`TWIP-WEB-20261121-BAL-R12-8DIR-RT47-SLIM-NET47`) | Arduino IDE → **`D:\DA_HTN\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`** | **Upload** (mũi tên →) |
 
 Source STM32 nằm ở **`D:\DA_HTN\Xe_Can_Bang`** — workspace `D:\CubeIDE_ws` đã import sẵn project
 `Xe_Can_Bang` và build sẵn, nên mở là bấm Build/Run được ngay (project trỏ vào thư mục nguồn, nên luôn
@@ -55,10 +55,10 @@ Mở Wi-Fi `TWIP_RACER_S3` / `12345678` → `http://192.168.4.1/ui/r12`:
 
 | Mục | Giá trị đúng |
 |---|---|
-| Banner | **`RT46-SLIM-NET46`** |
+| Banner | **`RT47-SLIM-NET47`** |
 | Nút tốc độ | **50 / 80 / MAX 90** |
 | Serial ESP32 | `[UART] … @ 921600 bps` và `[NET41] … -> AP chN` |
-| Log tải về | `$BINFO,BAL-20261121-R12-8DIR-RT46-SLIM,…`, có `# RADIO ch=… rssi=… phy=…`, `crc_errors=0` |
+| Log tải về | `$BINFO,BAL-20261121-R12-8DIR-RT47-SLIM,…`, có `# RADIO ch=… rssi=… phy=…`, `crc_errors=0` |
 
 Nếu trang báo “Chờ thông tin phiên bản STM32…” hoặc nút BẬT CÂN BẰNG bị khoá: **hai board lệch bản**
 — nạp lại cả hai từ cùng bản này.

@@ -40,7 +40,7 @@ Trong `Xe_Can_Bang/Core`:
 |---|---|
 | `Firmware/RT45_CLEAN_20261121/` | Bản đóng gói gần nhất (quay lui): hex/bin/elf STM32, 4 tệp ESP32, hash, `nap_rt45.bat`; RT44 cũng còn. RT46 nạp bằng IDE từ source |
 | `Docs/` | Báo cáo từng vòng (`RTxx_*.md`), hướng dẫn nạp, luật điều khiển, kế hoạch dọn code |
-| `tools/` | 42 host test (`test_*.cjs`), script build (`build_stm32.ps1`), chạy mô phỏng |
+| `tools/` | 38 host test chạy được (42 tệp `test_*.cjs`), script build (`build_stm32.ps1`), chạy mô phỏng |
 | `Simulation/` | Mô hình Scilab + harness native dùng chung header firmware (`Simulation/current/`) |
 | `Hardware/` | Sơ đồ, PCB KiCad, footprint |
 | `output/` | Log thô đã tải về + script phân tích theo từng vòng (`output/RTxx/`) |
