@@ -17,7 +17,7 @@ bo chuyển tiếp để lắp các module.
 
 - **Bản hiện hành:** STM32 `BAL-20261118-R12-8DIR-RT38-CONT` + ESP32
   `TWIP-WEB-20261118-BAL-R12-8DIR-RT38-CONT-NET38`. Binary và hash trong
-  [`Firmware/RT37_SMOOTH_20261118/`](../Firmware/RT37_SMOOTH_20261118/README.md).
+  ``Firmware/RT37_SMOOTH_20261118/``.
 - **Bản trước:** RT36-SYM / NET36 trong `Firmware/RT36_SYM_20261118/` (đã có log 154 s, 4 kịch bản);
   RT34-CORNER / NET35 trong `Firmware/RT34_CORNER_20261117/` (đã có log 173 s).
 - **Bản dự phòng:** RT29-NOCUT / NET30 (ba mức 50/72/80) trong `Firmware/RT29_NOCUT_20261115/`.

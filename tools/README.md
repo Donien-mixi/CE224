@@ -1,6 +1,6 @@
 > **Trạng thái đồ án · 18/11/2026.** Workspace ở **RT38-CONT / NET38**: **39/39 host test pass**,
 > mô phỏng native 36/36 ca đủ 20/20 s khi mức ≤ 80 và **35/36** ở MAX 90 (ca trượt là pin 11,2 V).
-> Firmware phát hành ở [`Firmware/RT37_SMOOTH_20261118/`](../Firmware/RT37_SMOOTH_20261118/README.md).
+> Firmware phát hành ở ``Firmware/RT37_SMOOTH_20261118/``.
 > Xem [trạng thái kỹ thuật](../HANDOFF.md) và [tổng quan](../Docs/Tong_Quan_Do_An.md).
 
 # Công cụ kiểm thử và build

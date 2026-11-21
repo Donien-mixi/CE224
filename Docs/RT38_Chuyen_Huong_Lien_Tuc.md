@@ -50,7 +50,7 @@ khung 122 B, lease 350 ms, cắt góc/quãng/I2C.
   ca còn lại vẫn là pin 11,2 V như RT35/RT36/RT37, không phát sinh ca mới. Bộ `--disturbance`
   (xô 1–4 N) vẫn khó như thiết kế, không dùng để kết luận “không ngã”.
 - Build: STM32 0 lỗi 0 cảnh báo; ESP32 1 090 907 B. Hash trong
-  [`Firmware/RT38_CONT_20261118/`](../Firmware/RT38_CONT_20261118/README.md).
+  ``Firmware/RT38_CONT_20261118/``.
 
 ## 5. Chưa kiểm trên xe
 

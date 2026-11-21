@@ -6,7 +6,7 @@
 
 Cần nạp STM32 `BAL-20261118-R12-8DIR-RT38-CONT` và ESP32
 `TWIP-WEB-20261118-BAL-R12-8DIR-RT38-CONT-NET38`. Binary, hash và lệnh nạp ở
-[`../Firmware/RT37_SMOOTH_20261118/`](../Firmware/RT37_SMOOTH_20261118/README.md). Mở
+``../Firmware/RT37_SMOOTH_20261118/``. Mở
 `http://192.168.4.1/ui/r12?v=RT38-CONT-NET38`.
 
 NET38 chỉ đổi literal build ID so với NET36; hành vi gateway không đổi. Các thay đổi gateway đang

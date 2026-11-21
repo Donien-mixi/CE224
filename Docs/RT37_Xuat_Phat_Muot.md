@@ -80,7 +80,7 @@ nhả, trần cua, neo mốc… **không đổi** so với RT36.
 - Mô phỏng sau sửa: **12/12** @MAX 80, **12/12** biên, **12/12** khởi hành 50, **11/12** @MAX 90
   (chỉ ca pin 11,2 V — như RT35/RT36, không phát sinh ca mới).
 - Build: STM32 83 160 B text / 0 lỗi 0 cảnh báo; ESP32 1 090 907 B. Hash trong
-  [`Firmware/RT37_SMOOTH_20261118/`](../Firmware/RT37_SMOOTH_20261118/README.md).
+  ``Firmware/RT37_SMOOTH_20261118/``.
 
 ## 6. Chưa kiểm trên xe
 

@@ -1,6 +1,6 @@
 # RT42 — Nhiễu sóng 2.4 GHz: đo được, chịu được, đổi kênh được
 
-Bản chi tiết + cách nạp: [`Firmware/RT42_RF_20261120/README.md`](../Firmware/RT42_RF_20261120/README.md).
+Bản RT42 đã xoá khỏi cây (còn trong git history); bản đang dùng và cách nạp: [`Firmware/README.md`](../Firmware/README.md).
 Tài liệu này ghi phần **phân tích sóng** và các con số đo.
 
 ## 1. Log RT41 (`twip_balance_R12 (39).txt`, 20/11)

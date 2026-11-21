@@ -15,7 +15,7 @@
 > trái/phải (0,91 vs 0,71 m/s) → thân quật ±55°. Pack ~11,6 V không đủ cho 0,90 m/s. RT43 thêm
 > **trần MAX theo duty ở đường thẳng** (bánh ≥96 % → hạ tham chiếu, sàn 0,86 = 0,774 m/s; pack tươi
 > ≤90 % duty thì không can thiệp nên vẫn đạt 0,90). Chi tiết:
-> [`Firmware/RT43_MAX_20261120/README.md`](Firmware/RT43_MAX_20261120/README.md).
+> `RT43_MAX_20261120 (đã xoá khỏi cây, còn trong git history)`.
 >
 > **RT42: STM32 `BAL-20261120-R12-8DIR-RT42-RF` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT42-RF-NET42`.**
 > **RT42 (20/11, chống nhiễu 2.4 GHz):** log RT41 (50,4 s) cho `age` p50 13 / p95 29 / p99 45 ms, `drops=0`,
@@ -24,7 +24,7 @@
 > có `rssi`/`phy`/`channel`; (3) `POST /network-channel` đổi kênh AP khi xe **đang đỗ**; (4) lease lệnh
 > **350→500 ms** (`BALANCE_MOTION_STALE_MS`) để một cú nghen 300–400 ms không phanh oan; (5) HTTP poll
 > **100→200 ms**. Không đổi gain/observer/phân bổ R12, REC1, interlock, khung 122 B. Chi tiết:
-> [`Firmware/RT42_RF_20261120/README.md`](Firmware/RT42_RF_20261120/README.md).
+> `RT42_RF_20261120 (đã xoá khỏi cây, còn trong git history)`.
 >
 > **RT41: STM32 `BAL-20261120-R12-8DIR-RT41-LINK` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT41-LINK-NET41`.**
 > **RT41 (20/11, chỉ đường truyền):** UART STM32↔ESP32 **115200 → 921600** (khung telemetry 122 B giữ
@@ -35,12 +35,12 @@
 > (WS core 0, bỏ HTTP poll, payload nhỏ, lệnh nhị phân) **không làm** vì lý do đo được — xem
 > [`Docs/RT41_Duong_Truyen.md`](Docs/RT41_Duong_Truyen.md) mục 4. Đo đường lệnh trên 6 log RT39
 > (25 481 mẫu): `age` p50 13 ms / p95 28 ms, khoảng cách gói lệnh p95 35 ms, chỉ 0,1–0,2 % vượt 60 ms.
-> **Phải nạp cả hai board** (UART đổi hai đầu). Bản nạp: [`Firmware/RT41_LINK_20261120/`](Firmware/RT41_LINK_20261120/README.md).
+> **Phải nạp cả hai board** (UART đổi hai đầu). Bản nạp: `RT41_LINK_20261120 (đã xoá khỏi cây, còn trong git history)`.
 
 > **RT40: STM32 `BAL-20261119-R12-8DIR-RT40-HOLD` + ESP32 `TWIP-WEB-20261119-BAL-R12-8DIR-RT40-HOLD-NET40`.**
 > Ba mức **50 / 80 / 90 cm/s**, bù lệch bánh trái **+110 PWM**, cua **0,72 m/s** (tự hạ thêm khi bánh
 > sát 100 % duty), chống trôi khi đứng yên, đổi hướng liên tục, **không ngập ngừng khi phanh, không cắt
-> motor khi bị giữ**. Bản nạp + hash: [`Firmware/RT40_HOLD_20261119/`](Firmware/RT40_HOLD_20261119/README.md).
+> motor khi bị giữ**. Bản nạp + hash: `RT40_HOLD_20261119 (đã xoá khỏi cây, còn trong git history)`.
 >
 > **RT40 (19/11, 8 log của RT39 — 1 100 s, cả 3 mốc và 8 hướng):** người vận hành báo đẩy xe thì
 > **motor bị ngắt**, xe **ngập ngừng chưa thực thi ngay** khi nhận lệnh, và **rẽ liên tục 4 hướng ở 90
@@ -56,7 +56,7 @@
 > Ba mức tốc độ **50 / 80 / 90 cm/s**, bù lệch bánh trái **+110 PWM**, cua **0,719 m/s (72 cm/s)** ở cả
 > hai chiều, chống trôi khi đứng yên, phanh nhả nhanh hơn, xuất phát mượt, đổi hướng liên tục,
 > **mốc 80 vào cua không còn tự dừng**. Bản nạp + hash:
-> [`Firmware/RT39_CORNER_20261119/`](Firmware/RT39_CORNER_20261119/README.md).
+> `RT39_CORNER_20261119 (đã xoá khỏi cây, còn trong git history)`.
 >
 > **RT39 (19/11, log `twip_balance_R12 (39).txt` của RT38 — 4 198 mẫu / 84 s, preset 80, bốn hướng rẽ):**
 > người vận hành báo xe **khựng khi cua và có lúc dừng rất lâu để cân bằng ở cả bốn hướng**. Log sạch
@@ -226,18 +226,9 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 
 ### 4.2 Bản nạp và hash
 
-| Bản | Thư mục | Khi nào dùng |
+| Bản | Thư mục | Ghi chú |
 |---|---|---|
-| **RT43-MAX / NET43** (hiện hành) | `Firmware/RT43_MAX_20261120/` | Chạy bình thường; hết ngã ở MAX 90 |
-| RT42-RF / NET42 (trước) | `Firmware/RT42_RF_20261120/` | Chống nhiễu 2.4 GHz, log `# RADIO` |
-| RT41-LINK / NET41 (trước) | `Firmware/RT41_LINK_20261120/` | UART 921600, kênh chọn lúc khởi động |
-| RT40-HOLD / NET40 (trước) | `Firmware/RT40_HOLD_20261119/` | Luật điều khiển y hệt RT41 nhưng UART 115200, kênh AP 6 |
-| RT39-CORNER / NET39 (trước) | `Firmware/RT39_CORNER_20261119/` | Bản đã có 8 log (1 100 s) — nguồn của 3 lỗi RT40 sửa |
-| RT38-CONT / NET38 (trước) | `Firmware/RT38_CONT_20261118/` | Bản đã có log `(39)` 84 s (chính là ca khựng ở 80 mà RT39 sửa) |
-| RT37-SMOOTH / NET37 (trước) | `Firmware/RT37_SMOOTH_20261118/` | Bản thử ngay trước RT38 |
-| RT36-SYM / NET36 (trước) | `Firmware/RT36_SYM_20261118/` | Bản đã có log 154 s (4 kịch bản) |
-| RT34-CORNER / NET35 (trước) | `Firmware/RT34_CORNER_20261117/` | Bản đã có log xe 173 s |
-| RT29-NOCUT / NET30 (dự phòng) | `Firmware/RT29_NOCUT_20261115/` | Quay về bản cũ nhất: ba mức 50/72/80, chưa có bù bánh trái và trần cua |
+| **RT44-TURN / NET44** (bản chốt) | `Firmware/RT44_TURN_20261120/` | Bản duy nhất còn trong repo; các bản RT29 → RT43 đã xoá khỏi cây làm việc (còn trong git history) |
 
 Kiểm ngày 20/11 (RT41): **7/7** tệp binary khớp `SHA256.json`; **15/15** tệp nguồn khớp
 `SOURCE_SHA256.json` → bản `.bin/.hex` được build từ **đúng source hiện tại**. Build lại trong
@@ -285,14 +276,13 @@ node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 
 ### 4.5 Nạp
 
-Nháy đúp `nap_rt44.bat` trong thư mục bản nạp → nhập COM của ESP32 (**bắt buộc** cho RT41/RT42). Script nạp STM32 bằng
+Nháy đúp `nap_rt44.bat` trong `Firmware\RT44_TURN_20261120` → nhập COM của ESP32 (**bắt buộc** cho RT41/RT42). Script nạp STM32 bằng
 `STM32_Programmer_CLI.exe`, ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
 Kiểm sau khi nạp: banner `RT44-TURN-NET44`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
 Serial ESP32 có `[UART] … @ 921600 bps` và `[NET41] … -> AP chN`, log có `crc_errors=0`.
 
 Chín bản (RT43 / RT42 / RT41 / RT40 / RT39 / RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
-banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — hoặc chạy menu
-`Firmware/nap_chon_ban.bat`. Nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload):
+banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — Nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload):
 [`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md) — workspace RT43 là `D:\CubeIDE_ws`, RT42 là
 `D:\CubeIDE_ws_rt42`, RT41 là
 `D:\CubeIDE_ws_rt41`, RT40 là `D:\CubeIDE_ws_rt40`, RT39 là `D:\CubeIDE_ws_rt39`, RT38 là `D:\CubeIDE_ws_rt38`.

@@ -84,7 +84,7 @@ phép 0,90). Người vận hành cảm nhận là “không dừng ngay, còn t
 - Mô phỏng (bộ 3×12 ca, chạy lại sau khi sửa): **12/12** ở MAX 80, **12/12** biên, **12/12**
   khởi hành 50, **11/12** ở MAX 90 — ca trượt vẫn là **pin 11,2 V** như bản RT35, không phát sinh ca mới.
 - Build: STM32 83 152 B text / 0 lỗi 0 cảnh báo; ESP32 1 090 907 B. Hash và 13 tệp nguồn trong
-  [`Firmware/RT36_SYM_20261118/`](../Firmware/RT36_SYM_20261118/README.md).
+  ``Firmware/RT36_SYM_20261118/``.
 
 ## 4. Chưa kiểm trên xe
 

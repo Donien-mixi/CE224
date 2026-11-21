@@ -130,7 +130,7 @@ ngưỡng REC1 do nghiêng (12° khi có lệnh / 8° khi không), ngưỡng gyr
 | `--stress --launch --launch50` | **12/12**, pitch từng ca **trùng khớp** RT38 | 12/12 |
 
 - **Build**: STM32 `text 82 920 B` → bin 83 420 B, 0 lỗi 0 cảnh báo; ESP32 1 091 072 B.
-- **Hash**: đóng gói ở [`Firmware/RT39_CORNER_20261119`](../Firmware/RT39_CORNER_20261119).
+- **Hash**: đóng gói ở ``Firmware/RT39_CORNER_20261119``.
 
 ## 6. Cần log gì để xác nhận
 

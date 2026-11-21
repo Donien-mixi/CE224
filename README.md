@@ -4,11 +4,11 @@
 làm gateway Wi-Fi có trang điều khiển và ghi log, Scilab mô phỏng lại đúng phần luật điều khiển
 đang nạp trên xe.
 
-**Bản phát hành hiện hành: STM32 `RT43-MAX` + ESP32 `NET43` (20/11/2026)** — ba mức tốc độ
+**Bản phát hành hiện hành: STM32 `RT44-TURN` + ESP32 `NET44` (20/11/2026)** — ba mức tốc độ
 **50 / 80 / 90 cm/s**, bù lệch bánh trái, cua **0,72 m/s** ở cả hai chiều, chống trôi khi đứng yên,
 xuất phát mượt, đổi hướng liên tục, không ngập ngừng khi phanh, không cắt motor khi bị giữ, và
 **đường truyền UART 921600, tự chọn/đổi kênh Wi-Fi, log mang theo chất lượng sóng, và trần MAX 90 theo duty**.
-Firmware đóng gói kèm hash ở [`Firmware/RT43_MAX_20261120/`](Firmware/RT43_MAX_20261120/).
+Firmware đóng gói kèm hash ở ``Firmware/RT44_TURN_20261120/``.
 Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
 ## 1. Kiến trúc
@@ -25,25 +25,16 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 
 | Bản | Board | Build ID | Tệp |
 |---|---|---|---|
-| **RT43-MAX / NET43** (hiện hành) | STM32 | `BAL-20261120-R12-8DIR-RT43-MAX` | `STM32_BAL_R12_RT43_MAX.hex` (+`.bin`, `.elf`) |
-| | ESP32-S3 | `TWIP-WEB-20261120-BAL-R12-8DIR-RT43-MAX-NET43` | `ESP32_RT43_MAX_NET43.app.bin` (+ bootloader, partitions, boot_app0) |
-| RT42-RF / NET42 (trước) | cả hai | `BAL-20261120-…-RT42-RF` / `…-NET42` | trong `Firmware/RT42_RF_20261120/` |
-| RT41-LINK / NET41 (trước) | cả hai | `BAL-20261120-…-RT41-LINK` / `…-NET41` | trong `Firmware/RT41_LINK_20261120/` |
-| RT40-HOLD / NET40 (trước) | cả hai | `BAL-20261119-…-RT40-HOLD` / `…-NET40` | trong `Firmware/RT40_HOLD_20261119/` |
-| RT39-CORNER / NET39 (trước) | cả hai | `BAL-20261119-…-RT39-CORNER` / `…-NET39` | trong `Firmware/RT39_CORNER_20261119/` (8 log, 1 100 s) |
-| RT38-CONT / NET38 (trước) | cả hai | `BAL-20261118-…-RT38-CONT` / `…-NET38` | trong `Firmware/RT38_CONT_20261118/` (log 84 s) |
-| RT37-SMOOTH / NET37 (trước) | cả hai | `BAL-20261118-…-RT37-SMOOTH` / `…-NET37` | trong `Firmware/RT37_SMOOTH_20261118/` |
-| RT36-SYM / NET36 (trước) | cả hai | `BAL-20261118-…-RT36-SYM` / `…-NET36` | trong `Firmware/RT36_SYM_20261118/` (có log 154 s) |
-| RT34-CORNER / NET35 (trước) | cả hai | `BAL-20261117-…-RT34-CORNER` / `…-NET35` | trong `Firmware/RT34_CORNER_20261117/` |
-| RT29-NOCUT / NET30 (dự phòng) | cả hai | `BAL-20261115-R12-8DIR-RT29-NOCUT` / `…-NET30` | trong `Firmware/RT29_NOCUT_20261115/` |
+| **RT44-TURN / NET44** (bản chốt) | STM32 | `BAL-20261120-R12-8DIR-RT44-TURN` | `STM32_BAL_R12_RT44_TURN.hex` (+`.bin`, `.elf`) |
+| | ESP32-S3 | `TWIP-WEB-20261120-BAL-R12-8DIR-RT44-TURN-NET44` | `ESP32_RT44_TURN_NET44.app.bin` (+ bootloader, partitions, boot_app0) |
 
 - Hash đầy đủ: `SHA256.json` trong từng thư mục; hash **13 tệp nguồn đã sinh ra binary**:
   `SOURCE_SHA256.json`.
 - Hai board phải nạp cùng bản: gateway đối chiếu build ID với STM32, lệch là khoá điều khiển.
-- Cách nạp: nháy đúp `nap_rt43.bat` (nhập COM ESP32 — **bắt buộc**) hoặc lệnh tay trong
-  [`Firmware/RT43_MAX_20261120/README.md`](Firmware/RT43_MAX_20261120/README.md).
+- Cách nạp: nháy đúp `Firmware\RT44_TURN_20261120\nap_rt44.bat` (nhập COM ESP32) hoặc lệnh tay
+  ``Firmware/RT44_TURN_20261120/README.md``.
 - **Chọn giữa các bản và hướng dẫn nạp đầy đủ:** [`Firmware/README.md`](Firmware/README.md)
-  (menu `Firmware/nap_chon_ban.bat`; nạp bằng IDE: [`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md)).
+  (nạp bằng IDE: [`Docs/Nap_Bang_IDE.md`](Docs/Nap_Bang_IDE.md)).
 
 ## 3. Cấu trúc repo
 
@@ -53,7 +44,7 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 | `ESP32_S3_Gateway/` | Sketch Arduino + trang web (`dashboard_html.h`), giao thức UART, phiên điều khiển, log RAM/Flash. |
 | `Simulation/` | Mô hình Scilab, harness native dùng chung header firmware, bộ 36 ca kiểm tra, cấu hình plant. |
 | `tools/` | 42 host test (`test_*.cjs`), script mô phỏng/build, tải log cứu hộ. `tools/legacy/` giữ test của bản RT8/RT9 đã bỏ. |
-| `Firmware/` | Chín bản nạp (RT43 hiện hành, RT42/RT41/RT40/RT39/RT38/RT37/RT36/RT34 trước, RT29 dự phòng) + hash. |
+| `Firmware/` | Bản chốt RT44 (hex/bin/elf + 4 tệp ESP32 + hash + `nap_rt44.bat`); bản cũ nằm trong git history. |
 | `Hardware/` | Schematic, PCB KiCad, thư viện footprint, tài liệu lắp ráp. |
 | `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT42 (danh sách ở mục 7). |
 

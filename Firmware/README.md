@@ -1,159 +1,77 @@
-# Mười bản firmware — chọn bản nào và nạp thế nào
+# Firmware — bản chốt RT44-TURN / NET44
 
-Mười bản nằm sẵn trong mười thư mục con, **mỗi bản có đủ file cho cả STM32 và ESP32-S3**. Chỉ nạp khi
-hai board cùng một bản: gateway đọc build ID từ STM32 (`$BINFO`), lệch bản là trang web khoá điều
-khiển.
+Chỉ còn **một bản** trong repo. Các bản cũ (RT29 → RT43) đã xoá khỏi cây làm việc cho gọn; nếu cần
+lấy lại thì còn nguyên trong **git history** (`git log --oneline -- Firmware`).
 
-## 1. Chọn bản nào?
+| Board | Build ID | Tệp nạp |
+|---|---|---|
+| STM32F411CEU6 | `BAL-20261120-R12-8DIR-RT44-TURN` | `STM32_BAL_R12_RT44_TURN.hex` (khuyến nghị) · `.bin` (nạp thô tại `0x08000000`) · `.elf` (chỉ để debug) |
+| ESP32-S3 | `TWIP-WEB-20261120-BAL-R12-8DIR-RT44-TURN-NET44` | `ESP32_RT44_TURN_NET44.app.bin` (`0x10000`) + `bootloader.bin` (`0x0`) + `partitions.bin` (`0x8000`) + `boot_app0.bin` (`0xe000`) |
 
-| # | Bản | Build ID (STM32 / ESP32) | Tốc độ | Có gì | Khi nào chọn | Đã kiểm trên xe |
-|---|---|---|---|---|---|---|
-| **1** | **RT44-TURN / NET44** (hiện hành) | `BAL-20261120-R12-8DIR-RT44-TURN` / `TWIP-WEB-20261120-…-RT44-TURN-NET44` | 50 / 80 / **90** cm/s | RT43 + **trần yaw theo duty** (cua 4 hướng đều nhau) | Mặc định. Cua mượt, không văng | **Có** — 2 log 199 s + 42/42 test |
-| **2** | **RT43-MAX / NET43** | `BAL-20261120-R12-8DIR-RT43-MAX` / `TWIP-WEB-20261120-…-RT43-MAX-NET43` | 50 / 80 / **90** cm/s | RT42 + **trần MAX theo duty** (bánh ≥96 % duty thì hạ tham chiếu, sàn 0,774 m/s; pack tươi vẫn đạt 0,90) | Mặc định. Hết ngã ở MAX 90 (log RT42 ngã 2 lần) | **Có** — log RT42 148 s + 42/42 host test |
-| **3** | **RT42-RF / NET42** | `BAL-20261120-R12-8DIR-RT42-RF` / `TWIP-WEB-20261120-…-RT42-RF-NET42` | 50 / 80 / **90** cm/s | RT41 + **log mang dòng `# RADIO ch= rssi= phy=`**, **đổi kênh AP khi đang đỗ** (`POST /network-channel`), **lease lệnh 350→500 ms**, **poll 200 ms** | Mặc định. Dùng khi chạy ở nơi nhiều Wi-Fi/BT | **Có** — log RT41 50 s + 41/41 host test |
-| **4** | **RT41-LINK / NET41** | `BAL-20261120-R12-8DIR-RT41-LINK` / `TWIP-WEB-20261120-…-RT41-LINK-NET41` | 50 / 80 / **90** cm/s | RT40 + **chỉ đường truyền**: UART **921600** (cả hai board, có `.ioc`), **chọn kênh Wi-Fi** 1/6/11 ít nhiễu | Mặc định. Nhanh hơn RT40 2,6 ms mỗi lệnh, UART bận 53 %→6,7 % | **Chưa** — 41/41 host test + build trùng hash |
-| **5** | **RT40-HOLD / NET40** | `BAL-20261119-R12-8DIR-RT40-HOLD` / `TWIP-WEB-20261119-…-RT40-HOLD-NET40` | 50 / 80 / **90** cm/s | RT39 + **ngưỡng nghiêng khi có lệnh 12°→16°** (hết REC1 vì độ ngả của cú phanh), **hạn REC1 4 s→8 s** (không cắt motor khi bị giữ), **trần cua theo duty** (không để bánh ghim 100 % khi cua) | Mặc định. Sửa lỗi từ 8 log RT39: ngập ngừng khi phanh, cắt motor khi đẩy, ngã khi rẽ ở 90 | **Có** — 8 log RT39 (1 100 s) + 41/41 host test + mô phỏng |
-| **6** | **RT39-CORNER / NET39** | `BAL-20261119-…-RT39-CORNER` / `TWIP-WEB-20261119-…-RT39-CORNER-NET39` | 50 / 80 / **90** cm/s | RT38 + một guard vượt tốc độ theo trần interlock + trần cua 0,87 (cua 72 cm/s) | Bản đã đo 8 log; chính 8 log đó cho thấy 3 lỗi mà RT40 sửa | **Có** — 8 log (1 100 s), 3 lần ngã ở 90 |
-| **7** | **RT38-CONT / NET38** | `BAL-20261118-…-RT38-CONT` / `TWIP-WEB-20261118-…-RT38-CONT-NET38` | 50 / 80 / **90** cm/s | RT37 + đổi hướng liên tục (giữ lệnh 120 ms), neo mốc thay vì cắt tốc độ khi lệch 20 cm, REC1 do gyro cần 60 ms khi có lệnh | Bản đã có log `(39)` 84 s | **Có** — log `(39)`, 84 s, 0 ngã |
-| **8** | **RT37-SMOOTH / NET37** | `BAL-20261118-…-RT37-SMOOTH` / `TWIP-WEB-20261118-…-NET37` | 50 / 80 / **90** cm/s | RT36 + ngưỡng nghiêng governor 10°/13° | Bản thử ngay trước RT38 | **Chưa** |
-| **9** | **RT34-CORNER / NET35** | `BAL-20261117-…-RT34-CORNER` / `TWIP-WEB-20261117-…-NET35` | 50 / 80 / **90** cm/s | Ba mức + bù bánh trái 110 PWM + trần cua 0,80 | Khi RT39/RT38 có hành vi lạ; đây là bản **đã có log 173 s, 0 ngã** | **Có** — log 17/11 |
-| **10** | **RT29-NOCUT / NET30** (dự phòng) | `BAL-20261115-…-RT29-NOCUT` / `TWIP-WEB-20261115-…-NET30` | 50 / **72 / 80** cm/s | Bản cũ, **không** có bù bánh trái, **không** có trần cua, **không** có mức 90 | Khi cần quay về bản đơn giản nhất từng chạy ổn; hoặc để so sánh | **Có** — nhiều lượt trước 15/11 |
+Ba mức tốc độ **50 / 80 / MAX 90 cm/s**; cua 0,719 m/s (tự hạ khi bánh sát trần duty); bù lệch bánh
+trái 110 PWM.
 
-Bảng chọn theo triệu chứng:
+> **Nạp cả hai board trong cùng một lượt.** UART giữa hai board chạy 921600 từ RT41; gateway đối chiếu
+> build ID với STM32 (`$BINFO`), lệch bản là trang khoá nút BẬT CÂN BẰNG.
 
-| Hiện tượng | Nên thử |
+## 1. Nạp bằng IDE (cách bạn đang dùng)
+
+| Board | Mở ở đâu |
 |---|---|
-| Xe ngập ngừng khi phanh/đổi hướng, hoặc cắt motor khi bị đẩy | Nạp **RT40** hoặc **RT41** |
-| Xe ngã khi để MAX 90 (pack yếu) | Nạp **RT43**: trần MAX tự hạ khi bánh sát 100 % duty |
-| Chạy ở nơi nhiều Wi-Fi/Bluetooth, lệnh chập chờn | Nạp **RT42/R43**; xem dòng `# RADIO` trong log rồi `POST /network-channel` khi xe đang đỗ |
-| Trang điều khiển/telemetry có vẻ chậm, Wi-Fi chập chờn | Nạp **RT41** hoặc **RT42**. **Phải nạp cả hai board** |
-| RT40 vẫn ngã khi rẽ ở 90 | Ghi lại duty bánh trái/phải lúc ngã; nếu một bánh vẫn 1,00 thì là giới hạn cơ khí bánh trái |
-| RT39 khựng khi cua ở 80 | Nạp **RT40** |
-| Cần bản “chắc” nhất để demo, không cần 90 | **RT34** (đã có log 173 s) hoặc **RT29** |
-| Cần bản “chắc” nhất để demo, không cần 90 | **RT34** (đã có log 173 s) hoặc **RT29** |
-| Trang báo “Chờ thông tin phiên bản STM32…” | Hai board lệch bản — nạp lại **cả hai** cùng một bản |
-| Muốn thử 90 cm/s | RT39/RT38/RT37/RT34, **chỉ khi pin đo ≥ 12,0 V** |
+| STM32 | STM32CubeIDE → workspace **`D:\CubeIDE_ws`** → project `Xe_Can_Bang` (source `D:\DA_HTN\Xe_Can_Bang`) → **Build** → **Run** |
+| ESP32-S3 | Arduino IDE → **`D:\DA_HTN\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`** → **Upload** |
 
-## 2. File trong mỗi thư mục
+Tools cho Arduino IDE: Board **ESP32S3 Dev Module**, USB CDC On Boot **Enabled**, Flash Size
+**16MB (128Mb)**, Partition **16M Flash (3MB APP/9.9MB FATFS)**, PSRAM **OPI PSRAM**, Upload **921600**.
 
-| Tệp | Nạp vào |
-|---|---|
-| `STM32_BAL_R12_*.hex` | STM32 qua ST-LINK (khuyến nghị) |
-| `STM32_BAL_R12_*.bin` | STM32 nạp thô tại `0x08000000` |
-| `STM32_BAL_R12_*.elf` | Ký hiệu debug, không nạp |
-| `ESP32_*.bootloader.bin` | ESP32 tại `0x0` |
-| `ESP32_*.partitions.bin` | ESP32 tại `0x8000` |
-| `ESP32_*.boot_app0.bin` | ESP32 tại `0xe000` |
-| `ESP32_*.app.bin` | ESP32 tại `0x10000` (ứng dụng + web) |
-| `SHA256.json` | Hash 7 tệp trên — kiểm trước khi nạp |
-| `SOURCE_SHA256.json` | Hash các tệp nguồn đã sinh ra bản đó (chỉ RT43 khớp source hiện tại) |
-| `nap_*.bat` | Nạp tự động cả hai board |
+Hướng dẫn chi tiết từng bước: [`../Docs/Nap_Bang_IDE.md`](../Docs/Nap_Bang_IDE.md).
 
-## 3. Chuẩn bị
+## 2. Nạp bằng script
 
-1. Cáp **USB dữ liệu** cho ESP32 (nhiều cáp chỉ sạc), cáp ST-LINK cho STM32.
-2. Đóng Arduino IDE, STM32CubeProgrammer, mọi phần mềm đang giữ COM.
-3. Xe đứng yên, **bánh kê cao hoặc tắt động cơ** trong lúc nạp; pin đủ (đừng nạp khi pack cạn).
-4. Cắm ST-LINK và ESP32 vào máy; mở Device Manager xem **COM của ESP32** (CP210x/CH340).
-5. Kiểm hash (tuỳ chọn nhưng nên làm):
+Nháy đúp `nap_rt44.bat` trong thư mục này → nhập **số COM của ESP32** (bắt buộc, vì phải nạp cả hai
+board). Hoặc lệnh tay:
 
 ```powershell
-cd D:\DA_HTN\Firmware\RT43_MAX_20261120
+$rel = 'D:\DA_HTN\Firmware\RT44_TURN_20261120'
+$cp  = 'C:\ST\STM32CubeIDE_2.1.1\STM32CubeIDE\plugins\com.st.stm32cube.ide.mcu.externaltools.cubeprogrammer.win32_2.2.400.202601091506\tools\bin\STM32_Programmer_CLI.exe'
+$es  = 'C:\Users\DONG NHIEN\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\5.3.1\esptool.exe'
+& $cp -c port=SWD -w "$rel\STM32_BAL_R12_RT44_TURN.hex" -v -rst
+& $es --chip esp32s3 --port COM3 --baud 921600 write-flash `
+  0x0 "$rel\ESP32_RT44_TURN_NET44.bootloader.bin" `
+  0x8000 "$rel\ESP32_RT44_TURN_NET44.partitions.bin" `
+  0xe000 "$rel\ESP32_RT44_TURN_NET44.boot_app0.bin" `
+  0x10000 "$rel\ESP32_RT44_TURN_NET44.app.bin"
+```
+
+## 3. Kiểm sau khi nạp
+
+1. Cấp nguồn, chờ ~5 s (STM32 hiệu chuẩn gyro).
+2. Wi-Fi `TWIP_RACER_S3` / `12345678` → `http://192.168.4.1/ui/r12`.
+3. Banner phải là **`RT44-TURN-NET44`**, ba nút **50 / 80 / MAX 90**.
+4. Serial Monitor ESP32 (115200): có `[UART] … @ 921600 bps` và `[NET41] … -> AP chN`.
+5. Tải một log: dòng `$BINFO` có `BAL-20261120-R12-8DIR-RT44-TURN`, có `# RADIO ch=… rssi=… phy=…`,
+   và `crc_errors=0`.
+
+## 4. Hash
+
+`SHA256.json` (7 tệp binary) và `SOURCE_SHA256.json` (16 tệp nguồn đã sinh ra binary) trong thư mục
+này. Kiểm nhanh:
+
+```powershell
+cd D:\DA_HTN\Firmware\RT44_TURN_20261120
 Get-Content SHA256.json | ConvertFrom-Json | ForEach-Object {
   $_.PSObject.Properties | ForEach-Object {
     $f=$_.Name; $h=(Get-FileHash $f -Algorithm SHA256).Hash.ToLower()
-    "{0,-42} {1}" -f $f, ($(if($h -eq $_.Value){'OK'}else{'SAI'}))
+    "{0,-40} {1}" -f $f, ($(if($h -eq $_.Value){'OK'}else{'SAI'}))
   }
 }
 ```
 
-## 4. Cách nạp
+## 5. Lưu ý vận hành
 
-### Cách A — một script cho mỗi bản (dễ nhất)
-
-Nháy đúp script trong thư mục bản muốn nạp:
-
-| Bản | Script |
-|---|---|
-| RT44-TURN | `RT44_TURN_20261120\nap_rt44.bat` |
-| RT43-MAX | `RT43_MAX_20261120\nap_rt43.bat` |
-| RT42-RF | `RT42_RF_20261120\nap_rt42.bat` (**bắt buộc** nạp cả ESP32) |
-| RT41-LINK | `RT41_LINK_20261120\nap_rt41.bat` (**bắt buộc** nạp cả ESP32) |
-| RT40-HOLD | `RT40_HOLD_20261119\nap_rt40.bat` |
-| RT39-CORNER | `RT39_CORNER_20261119\nap_rt39.bat` |
-| RT38-CONT | `RT38_CONT_20261118\nap_rt38.bat` |
-| RT37-SMOOTH | `RT37_SMOOTH_20261118\nap_rt37.bat` |
-| RT34-CORNER | `RT34_CORNER_20261117\nap_rt34.bat` |
-| RT29-NOCUT | `RT29_NOCUT_20261115\nap_rt29.bat` |
-
-Script hỏi **số COM của ESP32** (ví dụ `COM3`). Nhập xong nó nạp STM32 trước, rồi ESP32.
-Nếu **bỏ trống COM**, script chỉ nạp STM32.
-
-### Cách B — menu chọn bản
-
-Nháy đúp `Firmware\nap_chon_ban.bat`, chọn `1`…`9` rồi nhập COM. Menu gọi đúng
-script ở cách A.
-
-### Cách C — nạp tay
-
-STM32 (thay tên tệp theo bản):
-
-```powershell
-& "C:\ST\STM32CubeIDE_2.1.1\STM32CubeIDE\plugins\com.st.stm32cube.ide.mcu.externaltools.cubeprogrammer.win32_2.2.400.202601091506\tools\bin\STM32_Programmer_CLI.exe" `
-  -c port=SWD -w "D:\DA_HTN\Firmware\RT43_MAX_20261120\STM32_BAL_R12_RT43_MAX.hex" -v -rst
-```
-
-ESP32 (đổi tên tệp theo bản và COM):
-
-```powershell
-$rel='D:\DA_HTN\Firmware\RT43_MAX_20261120'
-$es='C:\Users\DONG NHIEN\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\5.3.1\esptool.exe'
-& $es --chip esp32s3 --port COM3 --baud 921600 write-flash `
-  0x0 "$rel\ESP32_RT43_MAX_NET43.bootloader.bin" `
-  0x8000 "$rel\ESP32_RT43_MAX_NET43.partitions.bin" `
-  0xe000 "$rel\ESP32_RT43_MAX_NET43.boot_app0.bin" `
-  0x10000 "$rel\ESP32_RT43_MAX_NET43.app.bin"
-```
-
-> Dùng **esptool v5**: lệnh là `write-flash` (có gạch nối). Bản v3 cũ dùng `write_flash`.
-
-### Cách D — nạp bằng IDE (Build + Run / Upload)
-
-Nếu muốn mở **STM32CubeIDE** bấm Build → Run và mở **Arduino IDE** bấm Upload thay vì dùng script,
-xem hướng dẫn riêng: [`../Docs/Nap_Bang_IDE.md`](../Docs/Nap_Bang_IDE.md). Chín bản đều có source sẵn để mở
-(RT43 dùng cây hiện tại; RT42/RT41/RT40/RT39/RT38/RT37/RT34/RT29 dùng snapshot trong `.build\ide_src`, tạo lại
-bằng `tools\ide_sources.ps1`).
-
-## 5. Kiểm sau khi nạp
-
-1. Rút ST-LINK, cấp nguồn xe, chờ ~5 s (STM32 hiệu chuẩn gyro 500 mẫu).
-2. Kết nối Wi-Fi `TWIP_RACER_S3` / `12345678`, mở `http://192.168.4.1/ui/r12`.
-3. Banner phải đúng bản:
-
-| Bản | Banner | Nút tốc độ |
-|---|---|---|
-| RT43 | `RT43-MAX-NET43` | 50 / 80 / MAX 90 |
-| RT42 | `RT42-RF-NET42` | 50 / 80 / MAX 90 |
-| RT41 | `RT41-LINK-NET41` | 50 / 80 / MAX 90 |
-| RT40 | `RT40-HOLD-NET40` | 50 / 80 / MAX 90 |
-| RT39 | `RT39-CORNER-NET39` | 50 / 80 / MAX 90 |
-| RT38 | `RT38-CONT-NET38` | 50 / 80 / MAX 90 |
-| RT37 | `RT37-SMOOTH-NET37` | 50 / 80 / MAX 90 |
-| RT34 | `RT34-CORNER-NET35` | 50 / 80 / MAX 90 |
-| RT29 | `RT29-NOCUT-NET30` | 50 / 72 / 80 |
-
-4. Trong log tải về, dòng `$BINFO` phải chứa đúng build ID của bản vừa nạp.
-5. Nếu trang báo “Chờ thông tin phiên bản STM32…” hoặc nút BẬT CÂN BẰNG bị khoá: hai board đang
-   lệch bản → nạp lại cả hai.
-
-## 6. Lưu ý khi đổi bản
-
-- RT29 **không có** mức 90 và **không có** bù bánh trái/trần cua → cua và chạy thẳng sẽ khác RT34/RT37/RT38/RT39.
-- RT42 chỉ đổi lớp truyền thông + hằng số lease; luật điều khiển y hệt RT40/RT41.
-- RT41 **phải nạp cả hai board** (UART 921600 hai đầu); RT42 cũng vậy (lease đổi trên STM32, log header đổi trên ESP32).
-- RT40 **chưa có log xe**; RT39 có 8 log (1 100 s) nhưng chính các log đó cho thấy 3 lỗi mà RT40 sửa.
-- RT40 cua ở 72 cm/s (thay vì 75) và tự hạ thêm khi có bánh sát 100 % duty.
-- Mức 90 chỉ dùng khi **pin đo ≥ 12,0 V**; dưới ~11,9 V governor sẽ ghìm.
-- Sau mỗi lượt: STOP → chờ 2 s → tải log. `archive_error=1` vẫn cần bấm “SỬA VÙNG LOG FLASH” một lần
-  khi motor đã dừng (xem HANDOFF).
-- Không nạp khi xe đang cân bằng hoặc đang chạy.
+- Mức **MAX 90** chỉ đạt đúng 0,90 m/s khi pin **≥ 12,0 V**; pack yếu thì trần duty tự hạ về ~0,80
+  (RT43) để không bão hoà bánh và không ngã.
+- Bánh trái cần ~11 % duty nhiều hơn bánh phải (cơ khí). Nếu chạy thẳng mà `v_l − v_r` > 0,15 m/s,
+  cần kiểm bạc đạn/belt/motor trái — không chỉnh gain.
+- Sau mỗi lượt: **STOP → chờ ~2 s → tải log**.
+- Không nạp khi xe đang cân bằng hoặc đang chạy; bánh kê cao khi nạp.
