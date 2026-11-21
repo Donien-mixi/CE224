@@ -37,7 +37,7 @@ Trong `Xe_Can_Bang/Core`:
 
 | Thư mục | Là gì |
 |---|---|
-| `Firmware/RT44_TURN_20261120/` | **Bản nạp chốt**: hex/bin/elf cho STM32, 4 tệp ESP32, hash, `nap_rt44.bat` |
+| `Firmware/RT45_CLEAN_20261121/` | **Bản nạp hiện hành**: hex/bin/elf cho STM32, 4 tệp ESP32, hash, `nap_rt45.bat` (bản trước: `RT44_TURN_20261120/`, dùng quay lui) |
 | `Docs/` | Báo cáo từng vòng (`RTxx_*.md`), hướng dẫn nạp, luật điều khiển, kế hoạch dọn code |
 | `tools/` | 42 host test (`test_*.cjs`), script build (`build_stm32.ps1`), chạy mô phỏng |
 | `Simulation/` | Mô hình Scilab + harness native dùng chung header firmware (`Simulation/current/`) |

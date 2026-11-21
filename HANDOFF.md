@@ -1,8 +1,18 @@
 # Bàn giao đồ án TWIP — 19/11/2026 (bản RT40)
 
 # (dòng dưới là bản hiện hành RT41)
-> **Bản hiện hành: STM32 `BAL-20261120-R12-8DIR-RT44-TURN` + ESP32 `TWIP-WEB-20261120-BAL-R12-8DIR-RT44-TURN-NET44`.**
-> **RT44 (20/11):** log RT42+RT41 ở MAX 90, cùng lệnh 1,15 rad/s: yaw thực trải **0,90–1,38 rad/s**
+> **Bản hiện hành: STM32 `BAL-20261121-R12-8DIR-RT45-CLEAN` + ESP32 `TWIP-WEB-20261121-BAL-R12-8DIR-RT45-CLEAN-NET45`.**
+> **RT45 (21/11) — dọn code, KHÔNG đổi hành vi điều khiển:** tách `balance_motion/turn/recovery` ra `.c`,
+> hook governor thành 3 hàm yếu, 55 thông số vào `tuning.h`, bỏ 31 nhãn lịch sử trong comment, gom 3 probe
+> `TWIP_PROBE_*`, tách vòng 200 Hz thành 9 hàm. Không đổi `CAT_K`/observer/khung 122 B/giá trị thông số nào.
+> Kiểm: **38/38** host test, **3 bộ mô phỏng 73/73 tệp trùng**, bước 1–3 `.bin` **giống từng byte**
+> (`3921ebd5…`), bước 4 đối chiếu **9 236 ký tự câu lệnh khớp**. Gói:
+> [`Firmware/RT45_CLEAN_20261121`](Firmware/RT45_CLEAN_20261121/README.md): 7 binary + hash; STM32 bin
+> 84 588 B `9e017396…`, ESP32 app 1 094 304 B `1b76a1d6…`.
+> **Lượt chạy đầu là nghiệm thu:** `robot_fsm.c` không có test tự động → làm đúng mục 4 của README gói;
+> nếu có bất thường quay lui bằng `nap_rt44.bat`.
+>
+> **BẢN TRƯỚC — RT44 (20/11):** log RT42+RT41 ở MAX 90, cùng lệnh 1,15 rad/s: yaw thực trải **0,90–1,38 rad/s**
 > (lệch 53 %), vượt tới 20 %, dao động tới 0,38 rad/s; hai hướng xấu nhất cần **bánh trái** nhanh nhất
 > (bánh trái cần ~11 % duty nhiều hơn). Sửa: hệ số dư duty nhân vào **cả tham chiếu yaw**, ngưỡng
 > 96→**92 %**, hồi ≤86 %. Chi tiết: [`Firmware/RT44_TURN_20261120/README.md`](Firmware/RT44_TURN_20261120/README.md).
@@ -108,9 +118,8 @@ format vùng log Flash (mục 6).
 > **9 236 ký tự khớp**; bước 5 dọn 1,8 GB (`da4583d`).
 > **Cảnh báo:** `robot_fsm.c` **không có test tự động** (38 test + mô phỏng chỉ dùng header) ⇒ phải có một
 > lượt chạy thật/kê cao có log trước khi tin bước 4.
-> **Bản nạp trên xe vẫn là RT44/NET44 đóng gói ngày 20/11, không nạp lại**: `.bin` build từ HEAD hiện khác
-> byte bản đóng gói (do refactor). Muốn nạp thì phải bump RT45, đóng gói lại, chạy lại 38 test + 3 bộ mô
-> phỏng và một lượt bench.
+> **Đã bump RT45 + đóng gói** (`Firmware/RT45_CLEAN_20261121`, 7 binary + hash, `nap_rt45.bat`) để nạp thử.
+> Nếu chưa nạp thì xe vẫn chạy RT44/NET44 (20/11); quay lui bất cứ lúc nào bằng `nap_rt44.bat`.
 
 ## 1. Đọc nhanh trong 5 phút
 
@@ -241,13 +250,14 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 
 | Bản | Thư mục | Ghi chú |
 |---|---|---|
-| **RT44-TURN / NET44** (bản chốt) | `Firmware/RT44_TURN_20261120/` | Bản duy nhất còn trong repo; các bản RT29 → RT43 đã xoá khỏi cây làm việc (còn trong git history) |
+| **RT45-CLEAN / NET45** (bản hiện hành) | `Firmware/RT45_CLEAN_20261121/` | Dọn code, không đổi hành vi; 7 binary + 20 nguồn trong hash |
+| RT44-TURN / NET44 (bản trước) | `Firmware/RT44_TURN_20261120/` | Bản đang chạy trên xe (20/11); dùng để quay lui |
 
-Kiểm ngày 20/11 (RT41): **7/7** tệp binary khớp `SHA256.json`; **15/15** tệp nguồn khớp
-`SOURCE_SHA256.json` → bản `.bin/.hex` được build từ **đúng source hiện tại**. Build lại trong
-workspace CubeIDE `D:\CubeIDE_ws` ra `.hex` **trùng hash** bản đóng gói (`4b1efacf…`).
-`test_build_id_sync` PASS: 9 literal trên 55 tệp. Build IDE trong workspace sạch
-`D:\CubeIDE_ws_verify` (workspace chính đang mở trong CubeIDE) ra hex `d65d152c…` trùng bản đóng gói.
+Kiểm 21/11 (RT45): **7/7** binary khớp `SHA256.json`; **20/20** tệp nguồn khớp `SOURCE_SHA256.json` →
+`.bin/.hex` được build từ đúng source hiện tại. Build lại trong workspace sạch `D:\CubeIDE_ws_verify` ra
+`.hex` **trùng hash** bản đóng gói (`16b9c7a5…`). `test_build_id_sync` PASS: 9 literal trên 55 tệp.
+
+Kiểm 20/11 (RT44): `.hex` `0ee37a5c…`, `test_build_id_sync` PASS.
 
 ### 4.3 Build
 
@@ -280,19 +290,22 @@ node tools/run_governor_sim.cjs --stress --edge                        # 12 ca
 node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 ```
 
-- Host test: **41/41 pass** (Node.js 24, GCC msys2), gồm 8 test RT36–RT40 (`test_rt36_anchor`,
-  `test_rt36_lateral`, `test_rt36_hold`, `test_rt36_brake`, `test_rt37_smooth`, `test_rt38_continuous`,
-  `test_rt38_recovery`, `test_rt39_corner`, `test_rt40_hold`) — mỗi test có old-constant probe phải fail.
-- Mô phỏng, chạy lại sau RT40 ngày 19/11: **12/12** ca đủ 20/20 s ở MAX 80, **12/12** `--edge`,
-  **12/12** `--launch50` (pitch từng ca **trùng khớp RT39**); ở MAX 90 vẫn **11/12** — ca 7 ngã ở 8,87 s
-  (RT39: 8,95 s; pin 11,2 V). Kết quả ở `Simulation/results/runs/…`, đếm ca từ `summary.csv`.
+- Host test: **38/38 bộ** chạy được PASS (42 tệp `test_*.cjs`, 4 tệp rỗng 0 B) + 9 probe hằng số cũ phải
+  fail (Node.js 24, GCC msys2). `tools/test_uart_schedule.py` và `test_build_id_sync` PASS.
+- Mô phỏng (21/11, sau RT45): **73/73 tệp trùng** với bản trước khi dọn — `--stress` @0,80,
+  `--stress --edge` @0,90, `--stress --launch --launch50` @0,90; mỗi bộ **12 ca**, tất cả 20,000/20 s,
+  `fault 0` (chỉ `scilab_console.txt` khác đường dẫn). Kết quả ở `Simulation/results/runs/…`, đếm ca từ
+  `summary.csv`.
 
 ### 4.5 Nạp
 
-Nháy đúp `nap_rt44.bat` trong `Firmware\RT44_TURN_20261120` → nhập COM của ESP32 (**bắt buộc** cho RT41/RT42). Script nạp STM32 bằng
-`STM32_Programmer_CLI.exe`, ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
-Kiểm sau khi nạp: banner `RT44-TURN-NET44`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
-Serial ESP32 có `[UART] … @ 921600 bps` và `[NET41] … -> AP chN`, log có `crc_errors=0`.
+Nháy đúp `nap_rt45.bat` trong `Firmware\RT45_CLEAN_20261121` → nhập COM của ESP32 (**bắt buộc**: build ID
+đổi ở cả hai board, ESP32 kiểm tra `$BINFO` của STM32). Script nạp STM32 bằng `STM32_Programmer_CLI.exe`,
+ESP32 bằng `esptool` v5 (`write-flash`) tại `0x0 / 0x8000 / 0xe000 / 0x10000`.
+Kiểm sau khi nạp: banner `RT45-CLEAN-NET45`, ba nút **50 / 80 / MAX 90**, nút ĐO LẠI GYRO bấm được,
+Serial ESP32 có `[UART] … @ 921600 bps` và `[NET41] … -> AP chN`, log có `crc_errors=0` và BINFO
+`BAL-20261121-R12-8DIR-RT45-CLEAN`.
+Quay lui: `nap_rt44.bat` trong `Firmware\RT44_TURN_20261120` (nạp lại **cả hai** board).
 
 Chín bản (RT43 / RT42 / RT41 / RT40 / RT39 / RT38 / RT37 / RT34 / RT29) đều có sẵn đủ file hai board; bảng chọn bản, cách nạp từng bản, kiểm
 banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — Nạp bằng IDE (CubeIDE Build+Run / Arduino IDE Upload):

@@ -1,12 +1,14 @@
-# Firmware — bản chốt RT44-TURN / NET44
+# Firmware — bản hiện hành RT45-CLEAN / NET45
 
-Chỉ còn **một bản** trong repo. Các bản cũ (RT29 → RT43) đã xoá khỏi cây làm việc cho gọn; nếu cần
-lấy lại thì còn nguyên trong **git history** (`git log --oneline -- Firmware`).
+Hai bản trong repo: **RT45** (hiện hành, dọn code) và **RT44** (bản trước, đang chạy trên xe — để quay
+lui). Các bản cũ hơn (RT29 → RT43) đã xoá khỏi cây làm việc; còn nguyên trong **git history**
+(`git log --oneline -- Firmware`).
 
 | Board | Build ID | Tệp nạp |
 |---|---|---|
-| STM32F411CEU6 | `BAL-20261120-R12-8DIR-RT44-TURN` | `STM32_BAL_R12_RT44_TURN.hex` (khuyến nghị) · `.bin` (nạp thô tại `0x08000000`) · `.elf` (chỉ để debug) |
-| ESP32-S3 | `TWIP-WEB-20261120-BAL-R12-8DIR-RT44-TURN-NET44` | `ESP32_RT44_TURN_NET44.app.bin` (`0x10000`) + `bootloader.bin` (`0x0`) + `partitions.bin` (`0x8000`) + `boot_app0.bin` (`0xe000`) |
+| STM32F411CEU6 | `BAL-20261121-R12-8DIR-RT45-CLEAN` | `Firmware/RT45_CLEAN_20261121/STM32_BAL_R12_RT45_CLEAN.hex` (khuyến nghị) · `.bin` (nạp thô tại `0x08000000`) · `.elf` (chỉ để debug) |
+| ESP32-S3 | `TWIP-WEB-20261121-BAL-R12-8DIR-RT45-CLEAN-NET45` | `ESP32_RT45_CLEAN_NET45.app.bin` (`0x10000`) + `bootloader.bin` (`0x0`) + `partitions.bin` (`0x8000`) + `boot_app0.bin` (`0xe000`) |
+| *Bản trước* | `BAL-20261120-R12-8DIR-RT44-TURN` / `TWIP-WEB-…-RT44-TURN-NET44` | `Firmware/RT44_TURN_20261120/` — dùng để quay lui |
 
 Ba mức tốc độ **50 / 80 / MAX 90 cm/s**; cua 0,719 m/s (tự hạ khi bánh sát trần duty); bù lệch bánh
 trái 110 PWM.

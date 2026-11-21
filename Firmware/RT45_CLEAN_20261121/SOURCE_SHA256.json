@@ -1,0 +1,22 @@
+{
+    "Xe_Can_Bang\\Core\\Inc\\tuning.h":  "b625ea1920b7c60f7db47e28355b4e85bf40c800daac3e5f84fddc4c286706de",
+    "Xe_Can_Bang\\Core\\Inc\\balance_motion.h":  "5d67e6e30878b51b8faa65c95be90c393e1b52651e7caf24d534224afb5c1694",
+    "Xe_Can_Bang\\Core\\Inc\\balance_turn.h":  "d1fe119626fe1182de6b81e18a47989598541372f62cd95cef2e01e975492047",
+    "Xe_Can_Bang\\Core\\Inc\\balance_governor.h":  "21fd175461208bdbdb9689fdf80c85612bde6620a6861929a373a1cf50d143b8",
+    "Xe_Can_Bang\\Core\\Inc\\balance_profile.h":  "4fdd585dae79a10dd2b924fdc8c231f47e438d984a1a9c5b5e69a821caeba4ab",
+    "Xe_Can_Bang\\Core\\Inc\\balance_interlock.h":  "4be9510a866e794f036e87b574d81a253875a987176eece4fda7febe7c30f41d",
+    "Xe_Can_Bang\\Core\\Inc\\balance_recovery.h":  "4033a24f4b6778e153c453b11f16a4d8c64b1a03b0d8d9154ec3fc53604f0b62",
+    "Xe_Can_Bang\\Core\\Inc\\balance_trim.h":  "583452a6d666338863c55188580309b40941267fcbb154661ec70ee7c6ec9b0f",
+    "Xe_Can_Bang\\Core\\Src\\balance_motion.c":  "49ab44ffa40caaac9e5e7dfec15370fc0681c073e82ff7f4bc6f7709f2c39029",
+    "Xe_Can_Bang\\Core\\Src\\balance_turn.c":  "3b1de636176fc6d88cffa963b74b10b5d1a96784c3f697b244d2eda6bb20ea72",
+    "Xe_Can_Bang\\Core\\Src\\balance_recovery.c":  "6059a8a88a874a2c0dbc6ddb18ae5cbb12b083fc365f89985b1047a1a42b31f1",
+    "Xe_Can_Bang\\Core\\Src\\robot_fsm.c":  "6f804fb632552ed65c1c75d396b482356c9a25de3b3b6c48eaff6014b8cf552a",
+    "Xe_Can_Bang\\Core\\Src\\usart.c":  "1586e659ca98ae18f92bd3e6edad94d05f2416ecb2cad666991b49c17538899c",
+    "ESP32_S3_Gateway\\balance_web.h":  "a1141933b647e02bff8c1a6a45f0e12072b1dfe6930e5bd5f4463cf4fb68a76f",
+    "ESP32_S3_Gateway\\firmware_build.h":  "7f608c1b62da9a2a089562b19df2899edc9d513fd3e5ffece43b4948073e1cf0",
+    "ESP32_S3_Gateway\\dashboard_html.h":  "238295fce693bd15683cc61deffd2d0bbbe967cb2c7191b3fcc613ca3ed4f4a1",
+    "ESP32_S3_Gateway\\control_session.h":  "a0ae52aea81f0d354e167ca5a9e39ee2fb5e589c1040d5a09c3109ec7ee55453",
+    "ESP32_S3_Gateway\\network_routes.h":  "ce57e61406b93242e523c4febcab9be99105dd2457983beb59f1fc23186c7535",
+    "ESP32_S3_Gateway\\network_health.h":  "f845dcd05acb1f970247539a2df1f127d8c88640cf688cb45788afb0252412c9",
+    "ESP32_S3_Gateway\\ESP32_S3_Gateway.ino":  "5781ce002e3809173b7e157211c46b4deea66f3ab737530432a073c16718e775"
+}
