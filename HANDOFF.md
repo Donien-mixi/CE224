@@ -261,7 +261,7 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 ### 4.2 Bản nạp
 
 **Không còn gói nhị phân trong repo.** Firmware nạp bằng IDE từ source: STM32CubeIDE (**Clean → Build → Run**)
-và Arduino IDE (**Upload**). Build sạch trong workspace `D:\CubeIDE_ws_verify` cho ra `.elf/.hex/.bin` trùng
+và Arduino IDE (**Upload**). Build sạch trong một workspace tạm (ví dụ `%TEMP%\cubeide_verify`) cho ra `.elf/.hex/.bin` trùng
 đúng source hiện tại: RT47 `text 83 912 / data 500 / bss 7 540`, `.bin` 84 420 B, SHA256 `a507c4da…`.
 
 Bản cũ (RT44, RT45, RT46) nằm trong **git history**. Muốn quay lui: `git checkout <commit> -- Xe_Can_Bang
@@ -271,7 +271,7 @@ ESP32_S3_Gateway` rồi Build/Upload lại (**cả hai** board), sau đó `git c
 
 ```powershell
 # STM32 (CubeIDE headless; workspace đã link tới D:/DA_HTN/Xe_Can_Bang)
-& "C:\ST\STM32CubeIDE_2.1.1\STM32CubeIDE\headless-build.bat" -data D:\CubeIDE_ws `
+& "C:\ST\STM32CubeIDE_2.1.1\STM32CubeIDE\headless-build.bat" -data %TEMP%\cubeide_verify `
   -application org.eclipse.cdt.managedbuilder.core.headlessbuild `
   -import D:\DA_HTN\Xe_Can_Bang -build Xe_Can_Bang/Debug
 

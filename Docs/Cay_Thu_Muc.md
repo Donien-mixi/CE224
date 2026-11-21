@@ -7,7 +7,7 @@ ra ⇒ xoá được, build lại là có**.
 
 | Thư mục | Là gì | Mở bằng |
 |---|---|---|
-| `Xe_Can_Bang/` | **Project STM32CubeIDE** — firmware cân bằng. `Core/Src/*.c` là code, `Core/Inc/*.h` là khai báo + thông số. `Debug/` là **thư mục build** (máy sinh) | STM32CubeIDE, workspace `D:\CubeIDE_ws`, project `Xe_Can_Bang` |
+| `Xe_Can_Bang/` | **Project STM32CubeIDE** — firmware cân bằng. `Core/Src/*.c` là code, `Core/Inc/*.h` là khai báo + thông số. `Debug/` là **thư mục build** (máy sinh) | STM32CubeIDE, workspace `D:\DA_HTN`, project `Xe_Can_Bang` |
 | `ESP32_S3_Gateway/` | **Sketch Arduino** — Wi-Fi, web, ghi log. `ESP32_S3_Gateway.ino` là file chính; `dashboard_html.h` là trang web nhúng; `balance_web.h`, `network_routes.h` là các đường HTTP | Arduino IDE, mở file `.ino` |
 
 Trong `Xe_Can_Bang/Core`:
@@ -31,7 +31,7 @@ Trong `Xe_Can_Bang/Core`:
 | `.build/` | — (đã xoá) | **có** | chạy test / `node tools/run_governor_sim.cjs` |
 | `Xe_Can_Bang/Debug/` | — (đã xoá) | **có** | bấm **Build** trong CubeIDE (tự sinh lại) |
 | `Simulation/results/` | — (đã xoá) | **có** | `node tools/run_governor_sim.cjs --stress` |
-| `.metadata/` | — (đã xoá) | **có** | CubeIDE tự tạo lại (workspace thật là `D:\CubeIDE_ws`) |
+| `.metadata/` | — (đã xoá) | **có** | CubeIDE tự tạo lại (workspace hiện tại là `D:\DA_HTN`) |
 | `.dsh/`, `.vscode/` | nhỏ | không cần xoá | — |
 
 ## 3. Tài liệu, bản nạp, công cụ

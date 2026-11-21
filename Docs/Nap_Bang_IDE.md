@@ -4,17 +4,17 @@ Chỉ còn **một bản** firmware trong repo. Hai đường nạp bằng IDE:
 
 | Board | Mở ở đâu | Nút |
 |---|---|---|
-| **STM32F411** (`BAL-20261121-R12-8DIR-RT47-SLIM`) | STM32CubeIDE → workspace **`D:\CubeIDE_ws`** | **Build** (búa) → **Run** (tam giác xanh) |
+| **STM32F411** (`BAL-20261121-R12-8DIR-RT47-SLIM`) | STM32CubeIDE → workspace **`D:\DA_HTN`** | **Build** (búa) → **Run** (tam giác xanh) |
 | **ESP32-S3** (`TWIP-WEB-20261121-BAL-R12-8DIR-RT47-SLIM-NET47`) | Arduino IDE → **`D:\DA_HTN\ESP32_S3_Gateway\ESP32_S3_Gateway.ino`** | **Upload** (mũi tên →) |
 
-Source STM32 nằm ở **`D:\DA_HTN\Xe_Can_Bang`** — workspace `D:\CubeIDE_ws` đã import sẵn project
+Source STM32 nằm ở **`D:\DA_HTN\Xe_Can_Bang`** — workspace `D:\DA_HTN` đã import sẵn project
 `Xe_Can_Bang` và build sẵn, nên mở là bấm Build/Run được ngay (project trỏ vào thư mục nguồn, nên luôn
 build đúng code hiện tại).
 
 ## 1. Nạp STM32 bằng STM32CubeIDE
 
 1. **Cắm ST-LINK** vào STM32 và máy tính.
-2. Mở STM32CubeIDE → **File → Switch Workspace → Other…** → dán `D:\CubeIDE_ws` → **Launch**.
+2. Mở STM32CubeIDE → **File → Switch Workspace → Other…** → dán `D:\DA_HTN` → **Launch** (hoặc workspace bất kỳ rồi **File → Open Projects from File System** trỏ tới `D:\DA_HTN\Xe_Can_Bang`).
    (Nếu nhập một đường dẫn chưa tồn tại, CubeIDE **tự tạo** thư mục đó — không cần tạo tay.)
 3. Ở **Project Explorer** đã có project `Xe_Can_Bang`. Chọn nó → **Build**. Chờ `0 errors, 0 warnings`.
 4. Bấm **Run** → lần đầu chọn **STM32 Cortex-M C/C++ Application** → **Run**. CubeIDE nạp hex qua
