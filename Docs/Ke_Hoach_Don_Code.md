@@ -107,23 +107,28 @@ Sau mỗi bước tôi báo: hex giống/khác baseline, test, mô phỏng, và 
 
 ## 5. Tiến độ (cập nhật 21/11/2026)
 
-Bước 6 (tuỳ chọn) đang làm **từng module, mỗi module một commit nhỏ**. **Không bump build ID, không
-nạp board**: đây là refactor, hành vi phải y nguyên. Bước 5 (dọn thư mục) đã xong ở commit `da4583d`.
+Bước 6 (tuỳ chọn) đang làm **từng module, mỗi module một commit nhỏ**; đến 21/11 đã **xong 3/3**.
+**Không bump build ID, không nạp board**: đây là refactor, hành vi phải y nguyên. Bước 5 (dọn thư mục)
+đã xong ở commit `da4583d`.
 
 | Module | Trạng thái | Commit | Bằng chứng |
 |---|---|---|---|
 | 1/3 `balance_recovery` | xong 21/11 | `c8c299c` | 38/38 bộ test chạy được; mô phỏng @0,80 12/12, số từng ca trùng |
-| 2/3 `balance_motion` | xong 21/11 | commit sau `c8c299c` | 38/38 bộ test + 9 probe; hex cùng kích thước; 3 bộ mô phỏng trùng từng byte |
-| 3/3 `balance_turn` | **chưa làm** | — | 19 bộ test include `balance_turn.h` |
+| 2/3 `balance_motion` | xong 21/11 | commit 2/3 (sau `c8c299c`) | 38/38 bộ test + 9 probe; hex cùng kích thước; 3 bộ mô phỏng trùng từng byte |
+| 3/3 `balance_turn` | xong 21/11 | commit 3/3 | 38/38 bộ test + 9 probe; 3 bộ mô phỏng trùng **73/73** file |
+
+Sau 3/3, cả ba module đều là `.c` + `.h`; `balance_motion.h` 340→137 dòng, `balance_turn.h` 325→125
+dòng, `balance_motion.c` 259 dòng, `balance_turn.c` 172 dòng.
 
 ### 2/3 — `balance_motion` (bằng chứng chi tiết)
 
 - **Tách**: `Core/Src/balance_motion.c` chứa 8 hàm (`BeginBrake`, `BeginBrakeHold`, `Cancel`, `Fault`,
-  `Impact`, `corner_budget`, `maxhead`, `maxhead_next`); `balance_motion.h` (340 → 275 dòng) chỉ còn
+  `Impact`, `corner_budget`, `maxhead`, `maxhead_next`); `balance_motion.h` (340 → 275 dòng ở bước này;
+  sau 3/3 còn 137) chỉ còn
   thông số (giữ nguyên tên + `#ifndef`), struct, `Clear`, prototype và `BalanceMotion_Update`.
-- **`BalanceMotion_Update` vẫn inline**: caller chèn hook governor qua macro `BALANCE_MOTION_FILTER` /
-  `BALANCE_MOTION_ANCHOR` **trước khi** include (`robot_fsm.c:30`, `Simulation/current/motion_native.c:4`,
-  10 bộ test). Đưa nốt vào `.c` thì phải đổi hook thành con trỏ hàm — để dành khi tách `balance_turn`.
+- **`BalanceMotion_Update` vẫn inline ở bước này** (sau 3/3 đã chuyển nốt sang `.c`): caller chèn hook
+  governor qua macro `BALANCE_MOTION_FILTER` / `BALANCE_MOTION_ANCHOR` **trước khi** include
+  (`robot_fsm.c:30`, `Simulation/current/motion_native.c:4`, 10 bộ test). Việc đổi hook được xử lý ở mục 3/3.
 - **Token**: 8 thân hàm đã chuyển + `BalanceMotion_Update` **trùng từng token** với bản cũ (so
   `gcc -E -P` sau khi bỏ khoảng trắng). Khác duy nhất: `static inline` → liên kết ngoài.
 - **Host test**: 42 tệp `test_*.cjs`, trong đó **4 tệp rỗng 0 B** (`test_production_*`) → **38/38 bộ
@@ -142,3 +147,30 @@ nạp board**: đây là refactor, hành vi phải y nguyên. Bước 5 (dọn t
   là hồi quy.
 - **Không làm**: không nạp board, không push `main`, không đổi `CAT_K`/observer/khung 122 B, không bump
   build ID.
+### 3/3 — `balance_turn` (bằng chứng chi tiết)
+
+- **Tách**: `Core/Src/balance_turn.c` (172 dòng) chứa `BalanceTurn_Approach`, `BalanceTurn_headroom`,
+  `BalanceTurn_headroom_next` và `BalanceMotion8_Update` (thân ~180 dòng); `balance_turn.h` (325 → 125
+  dòng) chỉ còn thông số + struct + `Clear` + `BalanceMotion8_Maneuver` (4 dòng) + prototype.
+- **Phải đổi hook governor**: trước đây caller define macro `BALANCE_MOTION_FILTER` / `_ANCHOR` **trước khi**
+  include; macro không đi qua được translation unit, nên khi `BalanceMotion8_Update` sang `.c` thì
+  `balance_motion.c` không thấy hook và governor bị bỏ qua. Thay bằng **ba hàm hook yếu** trong
+  `balance_motion.c` (`BalanceMotion_FilterHook`, `BalanceMotion_AnchorHook`,
+  `BalanceMotion_GovernorActive`); `robot_fsm.c`, 10 bộ test và harness mô phỏng cài bản mạnh; nơi không
+  cài thì giữ đúng hành vi cũ (ramp tuyến tính, không neo).
+- **Lỗi bắt được nhờ test**: bản đầu chỉ có 2 hook nên `test_rt18_launch` thấy `v_ref=0` thay vì
+  `1,25e-5` (assert `-sign*s.v_ref>0`). Truy nguyên: khối `#ifndef BALANCE_MOTION_FILTER` (reset `v_ref`
+  về vận tốc đo khi bắt đầu lệnh mới) chạy sai nhánh trong `.c`. Thêm `BalanceMotion_GovernorActive` cho
+  đúng nhánh → test xanh lại. Ghi lại vì đây là kiểu lỗi im lặng, chỉ lộ ở assert biên.
+- **Token**: 4 thân hàm turn + `BalanceMotion_Update` **trùng từng token** với bản cũ (so `gcc -E -P`),
+  trừ đúng hai câu lệnh hook và một câu `GovernorActive`.
+- **Host test**: 38/38 PASS, gồm 9 probe. `tools/lib/legacy_headers.cjs` phải sửa: hằng số `>0.30` và
+  `>0.20` đã chuyển vào `balance_motion.c` nên bản legacy giờ copy + patch ở `.build/legacy_src`
+  (`test_rt8_ab`, `test_rt8_replay` so sánh đúng).
+- **Build**: CubeIDE headless, 0 lỗi 0 cảnh báo; `text 84 176 / data 500 / bss 7 516` (trước bước này:
+  83 952 / 500 / 7 516 — tăng 224 B do gọi hàm thay vì inline). `.bin` 84 684 B, SHA256 `3921ebd5…`;
+  build ID vẫn `RT44-TURN`, có trong `.bin`.
+- **Mô phỏng**: so từng file với lần chạy ngay trước khi tách — `--stress` @0,80 **73/73** file trùng,
+  `--stress --edge` @0,90 **73/73**, `--stress --launch --launch50` @0,90 **73/73**; chỉ
+  `scilab_console.txt` khác đường dẫn/thời điểm. 12 ca/bộ, tất cả 20,000/20 s, `fault 0`.
+- **Không làm**: không bump build ID, không nạp board, không push `main`.

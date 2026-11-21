@@ -100,9 +100,12 @@ Xe đã chốt phần điều khiển: cân bằng, 3 mức tốc độ, 8 hư�
 format vùng log Flash (mục 6).
 
 > **Đang dọn code, không đổi hành vi, không bump build ID** (kế hoạch: [`Docs/Ke_Hoach_Don_Code.md`](Docs/Ke_Hoach_Don_Code.md)).
-> Bước 6 tách module `.h` → `.c` đã xong **2/3**: `balance_recovery` (`c8c299c`) và `balance_motion`
-> (commit sau `c8c299c`: 38/38 test, hex cùng `text/data/bss`, 3 bộ mô phỏng trùng từng byte). Còn
-> **`balance_turn`** — chưa làm. Bản nạp trên xe vẫn là RT44/NET44 đóng gói ngày 20/11, **không** nạp lại.
+> Bước 6 tách module `.h` → `.c` đã xong **3/3**: `balance_recovery` (`c8c299c`), `balance_motion`,
+> `balance_turn`. Ba module giờ đều là `.c` + `.h`; hook governor chuyển từ macro của caller sang **ba hàm
+> yếu** trong `balance_motion.c` (bản mạnh cài ở `robot_fsm.c`). Kiểm: **38/38** host test, **3 bộ mô phỏng
+> trùng 73/73 file** với trước khi tách, build 0 lỗi 0 cảnh báo (`text 84 176 / data 500 / bss 7 516`).
+> **Bản nạp trên xe vẫn là RT44/NET44 đóng gói ngày 20/11, không nạp lại**: `.bin` build từ HEAD hiện khác
+> byte bản đóng gói (do refactor). Muốn nạp thì phải bump RT45, đóng gói lại và chạy lại cổng kiểm chứng.
 
 ## 1. Đọc nhanh trong 5 phút
 

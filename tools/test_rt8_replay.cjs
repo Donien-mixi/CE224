@@ -68,8 +68,9 @@ fs.writeFileSync(file, src);
 const inc = path.join(root, 'Xe_Can_Bang/Core/Inc');
 const legacy = require('./lib/legacy_headers.cjs').ensureLegacyHeaders(root);
 function build(target, legacyFirst) {
-  const args = ['-std=c11', '-O2', '-Wall', '-Wextra', file, path.join(root,'Xe_Can_Bang/Core/Src/balance_recovery.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),'-lm', '-o', target];
-  args.unshift(...(legacyFirst ? ['-I' + legacy, '-I' + inc] : ['-I' + inc]));
+  const srcDir = legacyFirst ? legacy.src : path.join(root,'Xe_Can_Bang/Core/Src');
+  const args = ['-std=c11', '-O2', '-Wall', '-Wextra', file, path.join(root,'Xe_Can_Bang/Core/Src/balance_recovery.c'),path.join(srcDir,'balance_motion.c'),path.join(srcDir,'balance_turn.c'),'-lm', '-o', target];
+  args.unshift(...(legacyFirst ? ['-I' + legacy.inc, '-I' + inc] : ['-I' + inc]));
   const res = cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe', args, { encoding: 'utf8' });
   assert.equal(res.status, 0, res.stderr);
 }

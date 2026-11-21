@@ -16,8 +16,9 @@ const src=String.raw`
 #endif
 #include "balance_governor.h"
 static BalanceGovernor gov;
-#define BALANCE_MOTION_FILTER(o,t,r,w,p,g) BalanceGovernor_Step(&gov,o,t,r,w,p,g)
-#define BALANCE_MOTION_ANCHOR(r,p,d) BalanceGovernor_Anchor(&gov,&r,p,d)
+float BalanceMotion_FilterHook(float o,float t,float r,int w,float p,float g){return BalanceGovernor_Step(&gov,o,t,r,w,p,g);}
+int BalanceMotion_GovernorActive(void){return 1;}
+void BalanceMotion_AnchorHook(float *r,float p,int d){BalanceGovernor_Anchor(&gov,r,p,d);}
 #include "phase1_catalog_params.h"
 #include "balance_turn.h"
 static BalanceMotion s;static BalanceTurn t;static uint32_t ms;static int seq;
@@ -73,7 +74,7 @@ fs.writeFileSync(file,src.replace('0.3068f,0.3067f,0.3059f,0.3042f,0.3016f,0.298
  .replace('0.0052f,-0.0040f,-0.0310f,-0.0696f,-0.1129f,-0.1512f,-0.1991f,-0.2326f,-0.2813f,-0.3197f,-0.3598f,-0.4035f,-0.4442f,-0.4857f,-0.5261f,-0.5607f,-0.6035f,-0.6392f,-0.6756f,-0.7154f,-0.7482f,-0.7817f,-0.8133f,-0.8245f,-0.8472f,-0.8578f,-0.8652f,-0.8661f,-0.8712f,-0.8686f,-0.8724f,-0.8655f,-0.8650f,-0.8554f,-0.8598f,-0.8395f,-0.8544f,-0.8566f,-0.7504f',SPEED).replace('-14.3277f,-15.0810f,-15.8682f,-16.3739f,-16.8070f,-17.1939f,-17.5754f,-17.7691f,-17.9238f,-17.9353f,-17.8830f,-17.8779f,-17.8745f,-17.8131f,-17.5699f,-17.3673f,-17.2746f,-16.7499f,-16.6877f,-16.2902f,-16.0940f,-15.6222f,-15.2831f,-15.2577f,-15.1627f,-15.5194f,-16.2636f,-17.0995f,-18.5270f,-20.2757f,-22.5942f,-25.6661f,-29.1728f,-33.5678f,-38.0242f,-45.4458f,-51.6282f,-56.5798f,0.0000f',THETA).replace('397,398,398,399,400,401,402,403,403,404,405,406,407,408,408,409,410,411,412,413,413,414,415,416,417,418,418,419,420,421,422,423,423,424,425,426,427,428,0',SEQ).replace('2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0',PHASE));
 const inc='-I'+path.join(root,'Xe_Can_Bang/Core/Inc');
 const exe=path.join(out,'push.exe');
-let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror',inc,file,path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),'-lm','-o',exe],{encoding:'utf8'});
+let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror',inc,file,path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_turn.c'),'-lm','-o',exe],{encoding:'utf8'});
 assert.equal(r.status,0,r.stderr||String(r.error));
 const run=cp.spawnSync(exe,[],{encoding:'utf8'});
 process.stdout.write(run.stdout||'');

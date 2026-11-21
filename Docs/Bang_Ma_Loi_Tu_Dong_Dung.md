@@ -33,7 +33,7 @@ Không có tự ARM lại. Sau khi cắt, mỗi tick vòng 200 Hz lại gọi `M
 | **512** | (a) pitch/gyro/v/x không hữu hạn | 1 tick | `robot_fsm.c:278` |
 | **512** | (b) gyro hoặc \|a\|² không hữu hạn | — | `balance_motion.h:93` |
 | **512** | (c) giá trị REC1 không hữu hạn | — | `balance_recovery.h:55` |
-| **512** | (d) `BalanceMotion8_Update` trả false | — | `balance_turn.h:136` → `robot_fsm.c:343` |
+| **512** | (d) `BalanceMotion8_Update` trả false | — | `balance_turn.c:54-55` → `robot_fsm.c:367` |
 | **512** | (e) `motion_cat_step8_mode()` fail | — | `robot_fsm.c:381` |
 | **512** | (f) position/cancel_origin không hữu hạn | — | `balance_motion.h:75` |
 | **2048** | Capture lúc ARM không đạt im lặng | 3 000 ms (\|θ_ARM\| ≤ 58°) / 4 000 ms (> 58°); im = 200 ms `\|pitch\|≤8°, \|gyro\|<25, \|v\|<0,15` | `robot_fsm.c:310`, `balance_startup.h:26-34` |

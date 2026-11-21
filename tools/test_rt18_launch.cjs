@@ -7,8 +7,9 @@ const src=String.raw`
 #include <stdio.h>
 #include "balance_governor.h"
 static BalanceGovernor gov;
-#define BALANCE_MOTION_FILTER(o,t,r,w,p,g) BalanceGovernor_Step(&gov,o,t,r,w,p,g)
-#define BALANCE_MOTION_ANCHOR(r,p,d) BalanceGovernor_Anchor(&gov,&r,p,d)
+float BalanceMotion_FilterHook(float o,float t,float r,int w,float p,float g){return BalanceGovernor_Step(&gov,o,t,r,w,p,g);}
+int BalanceMotion_GovernorActive(void){return 1;}
+void BalanceMotion_AnchorHook(float *r,float p,int d){BalanceGovernor_Anchor(&gov,r,p,d);}
 #include "balance_turn.h"
 static BalanceMotion s;static BalanceTurn t;static unsigned ms,seq;
 static void init(void){BalanceMotion_Clear(&s);BalanceTurn_Clear(&t);BalanceGovernor_Reset(&gov);ms=1000;seq=0;}
@@ -72,5 +73,5 @@ int main(void){
 }
 `;
 fs.writeFileSync(dir+'/test.c',src);
-let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror','-I'+(process.env.TWIP_HEADER_DIR||'Xe_Can_Bang/Core/Inc'),dir+'/test.c','Xe_Can_Bang/Core/Src/balance_motion.c','-lm','-o',dir+'/test.exe'],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
+let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror','-I'+(process.env.TWIP_HEADER_DIR||'Xe_Can_Bang/Core/Inc'),dir+'/test.c','Xe_Can_Bang/Core/Src/balance_motion.c','Xe_Can_Bang/Core/Src/balance_turn.c','-lm','-o',dir+'/test.exe'],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
 r=cp.spawnSync(dir+'/test.exe',[],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);process.stdout.write(r.stdout);

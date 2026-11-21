@@ -85,7 +85,7 @@ function build(extra,tag){
   const exe=path.join(out,tag+'.exe');
   const r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',
     ['-std=c11','-Wall','-Wextra','-Werror','-I'+path.join(root,'Xe_Can_Bang/Core/Inc'),
-     ...(extra||[]),file,path.join(root,'Xe_Can_Bang/Core/Src/balance_recovery.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),'-lm','-o',exe],{encoding:'utf8'});
+     ...(extra||[]),file,path.join(root,'Xe_Can_Bang/Core/Src/balance_recovery.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_motion.c'),path.join(root,'Xe_Can_Bang/Core/Src/balance_turn.c'),'-lm','-o',exe],{encoding:'utf8'});
   assert.equal(r.status,0,(r.stderr||'')+String(r.error||''));
   return exe;
 }

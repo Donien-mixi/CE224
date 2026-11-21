@@ -6,7 +6,8 @@ const code=String.raw`
 #include <stdio.h>
 #include "balance_governor.h"
 static BalanceGovernor gov;
-#define BALANCE_MOTION_FILTER(o,t,r,w,p,g) BalanceGovernor_Step(&gov,o,t,r,w,p,g)
+float BalanceMotion_FilterHook(float o,float t,float r,int w,float p,float g){return BalanceGovernor_Step(&gov,o,t,r,w,p,g);}
+int BalanceMotion_GovernorActive(void){return 1;}
 #include "balance_turn.h"
 #include "balance_recovery.h"
 static BalanceMotion s;static BalanceTurn t;static unsigned ms,seq;
@@ -111,5 +112,5 @@ int main(void){
 }
 `;
 fs.writeFileSync(dir+'/test.c',code);
-let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror','-I'+(process.env.TWIP_HEADER_DIR||'Xe_Can_Bang/Core/Inc'),dir+'/test.c','Xe_Can_Bang/Core/Src/balance_recovery.c','Xe_Can_Bang/Core/Src/balance_motion.c','-lm','-o',dir+'/test.exe'],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
+let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror','-I'+(process.env.TWIP_HEADER_DIR||'Xe_Can_Bang/Core/Inc'),dir+'/test.c','Xe_Can_Bang/Core/Src/balance_recovery.c','Xe_Can_Bang/Core/Src/balance_motion.c','Xe_Can_Bang/Core/Src/balance_turn.c','-lm','-o',dir+'/test.exe'],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
 r=cp.spawnSync(dir+'/test.exe',[],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);process.stdout.write(r.stdout);

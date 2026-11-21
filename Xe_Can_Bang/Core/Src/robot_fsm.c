@@ -27,10 +27,19 @@
 #include "balance_recovery.h"
 #include "balance_governor.h"
 static BalanceGovernor bal_governor;
-#define BALANCE_MOTION_FILTER(old,target,rate,wanted,pitch,gyro) BalanceGovernor_Step(&bal_governor,old,target,rate,wanted,pitch,gyro)
-#define BALANCE_MOTION_ANCHOR(r,p,d) BalanceGovernor_Anchor(&bal_governor,&r,p,d)
 #include "balance_motion.h"
 #include "balance_turn.h"
+
+/* Hook governor cho quỹ đạo dọc: balance_motion.c có bản yếu, ở đây cài bản mạnh
+ * để nối ramp/neo vào bộ trần tốc độ-lực duy nhất của xe. */
+float BalanceMotion_FilterHook(float old,float target,float rate,int wanted,float pitch,float gyro){
+    return BalanceGovernor_Step(&bal_governor,old,target,rate,wanted,pitch,gyro);
+}
+void BalanceMotion_AnchorHook(float *ref,float position,int wanted){
+    BalanceGovernor_Anchor(&bal_governor,ref,position,wanted);
+}
+int BalanceMotion_GovernorActive(void){ return 1; }
+
 #include "balance_interlock.h"
 #include "balance_trim.h"
 
