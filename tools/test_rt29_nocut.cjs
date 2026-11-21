@@ -38,7 +38,7 @@ const file=path.join(out,'nocut.c');
 fs.writeFileSync(file,src);
 const inc='-I'+path.join(root,'Xe_Can_Bang/Core/Inc');
 const exe=path.join(out,'nocut.exe');
-let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror',inc,file,'-lm','-o',exe],{encoding:'utf8'});
+let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror',inc,file,path.join(root,'Xe_Can_Bang/Core/Src/balance_recovery.c'),'-lm','-o',exe],{encoding:'utf8'});
 assert.equal(r.status,0,r.stderr||String(r.error));
 const run=cp.spawnSync(exe,[],{encoding:'utf8'});
 process.stdout.write(run.stdout||'');

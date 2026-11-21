@@ -41,7 +41,7 @@ const inc='-IXe_Can_Bang/Core/Inc';
 function build(extra,tag){
   const exe='.build/replay72/'+tag+'.exe';
   const r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',
-    ['-std=c11','-Wall','-Wextra','-Werror',inc,...(extra||[]),file,'-lm','-o',exe],{encoding:'utf8'});
+    ['-std=c11','-Wall','-Wextra','-Werror',inc,...(extra||[]),file,'Xe_Can_Bang/Core/Src/balance_recovery.c','-lm','-o',exe],{encoding:'utf8'});
   assert.equal(r.status,0,(r.stderr||'')+String(r.error||''));
   return exe;
 }

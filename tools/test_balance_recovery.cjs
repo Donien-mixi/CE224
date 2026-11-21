@@ -73,5 +73,5 @@ int main(void){
 const src=path.join(out,'test.c'),exe=path.join(out,'test.exe');fs.writeFileSync(src,code);
 const deployed=path.join(root,'Xe_Can_Bang/Core/Inc/balance_recovery.h');
 const header=fs.existsSync(deployed)?path.dirname(deployed):path.join(root,'Simulation/experiments/r12_push_recovery_20261018');
-let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror','-I'+header,src,'-lm','-o',exe],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
+let r=cp.spawnSync('C:/msys64/ucrt64/bin/gcc.exe',['-std=c11','-Wall','-Wextra','-Werror','-I'+header,src,path.join(root,'Xe_Can_Bang/Core/Src/balance_recovery.c'),'-lm','-o',exe],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
 r=cp.spawnSync(exe,[],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);process.stdout.write(r.stdout);
