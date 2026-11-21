@@ -11,6 +11,10 @@
 > 84 588 B `9e017396…`, ESP32 app 1 094 304 B `1b76a1d6…`.
 > **Lượt chạy đầu là nghiệm thu:** `robot_fsm.c` không có test tự động → làm đúng mục 4 của README gói;
 > nếu có bất thường quay lui bằng `nap_rt44.bat`.
+> **Đã chạy thử trên xe 21/11** (`output/RT45/…`, 30 000 mẫu / 600 s): `crc_errors=0`, `fault=0` toàn bộ,
+> `exec` p95 **660 µs**, `age` p95 28 ms, REC1 **5/5 episode tự thoát không cắt motor**, MAX 90 đạt
+> 0,883 m/s với duty p95 0,915, cua 4 hướng không ngã. Chi tiết + 3 khoảng trống:
+> [`Docs/RT45_Log_Dau_Tien.md`](Docs/RT45_Log_Dau_Tien.md).
 >
 > **BẢN TRƯỚC — RT44 (20/11):** log RT42+RT41 ở MAX 90, cùng lệnh 1,15 rad/s: yaw thực trải **0,90–1,38 rad/s**
 > (lệch 53 %), vượt tới 20 %, dao động tới 0,38 rad/s; hai hướng xấu nhất cần **bánh trái** nhanh nhất
@@ -227,9 +231,10 @@ P6 là **khoản cộng duy nhất** trong hệ và là hằng số cơ khí đ�
 | Giữ khi đứng yên | sau 3 s đứng yên thật, mốc chảy về vị trí đo 2 cm/s trong phạm vi 15 cm (RT36) | **Chưa kiểm trên xe** |
 | Xuất phát / tăng tốc | ngưỡng nghiêng governor 10°/13° (RT37), không cắt gia tốc ở độ ngả 7–12° bình thường | **Chưa kiểm trên xe** |
 | Đổi hướng liên tục | giữ lệnh cũ tối đa 120 ms khi nút gửi neutral; mốc vượt 20 cm thì neo mốc + giữ tốc độ khi xe đang chạy (RT38) | **Chưa kiểm trên xe** |
-| REC1 khi đang giữ lệnh | gyro ≥150 °/s phải duy trì 60 ms mới vào REC1; không có lệnh vẫn vào ngay (RT38) | **Chưa kiểm trên xe** |
+| REC1 khi đang giữ lệnh | gyro ≥150 °/s phải duy trì 60 ms mới vào REC1; không có lệnh vẫn vào ngay (RT38) | Có — log RT45 21/11 |
 | Bù bánh trái | +110 PWM (đo +98 tiến / +160 lùi / +166 quay), dead-band 0,5, kẹp ±2499, đặt **sau** phân bổ R12 | Có — log RT30/RT31 |
 | Log / web | 122 B, 40 cột, 50 Hz; `/ui/r12`; SoftAP; TX 11 dBm; chỉ ghi Flash khi xe dừng | Có — `reset=power_on`, hết brownout |
+| **Refactor RT45** (3 module `.c`, `tuning.h`, `robot_fsm.c` 9 hàm) | hành vi không đổi; log đầu tiên 600 s | **Có — log RT45 21/11:** 30 000 mẫu, `fault=0`, `exec` p95 **660 µs**, REC1 5/5 tự thoát, MAX 90 đạt 0,883 m/s. Chi tiết: [`Docs/RT45_Log_Dau_Tien.md`](Docs/RT45_Log_Dau_Tien.md) |
 | Mô phỏng | dùng chính header firmware; đường bánh fit từ log `(1)(5)` (lệch 1–2 %) | Không áp dụng |
 
 ## 4. Repo, build, nạp
@@ -329,11 +334,12 @@ banner và bảng quay lui ở [`Firmware/README.md`](Firmware/README.md) — N�
 
 ## 6. Việc còn mở (theo thứ tự)
 
-1. **RT40 chưa có log xe.** Cần một buổi đo: (a) đứng yên 30 s, đẩy nhẹ 1 lần, rồi **giữ 6–8 s**;
-   (b) mỗi mốc 50/80 tiến 3 s → nhả → lùi 3 s → nhả; (c) đổi hướng liên tục ở 50/80; (d) rẽ 4 hướng ở
-   80 và 90 (≥ 2 s mỗi hướng). Đạt khi: REC1 do nghiêng-khi-có-lệnh **0 cước** (RT39: 15), không cắt
-   motor khi bị giữ (RT39: 1 lần fault 4096), **0 lần ngã** (RT39: 3), duty p95 khi cua **< 0,95**
-   (RT39: 1,00), `v_ref` không ghim 0 quá 0,3 s khi đang giữ lệnh (RT39: tới 2,2 s).
+1. **Ba khoảng trống của log RT45 21/11** (đã có 600 s, `fault=0`, REC1 5/5 tự thoát — xem
+   [`Docs/RT45_Log_Dau_Tien.md`](Docs/RT45_Log_Dau_Tien.md)): (a) **mốc 50 chưa lái** (5,4 s ở preset 0
+   nhưng 0 mẫu có lệnh); (b) **MAX 90 thẳng chỉ ~2,6 s** ở `|v|>0,6` — cần giữ 0,90 m/s ≥ 5 s khi pin
+   ≥ 12,0 V để kiểm trần duty ổn định; (c) **chưa có nhịp STOP trong file** (`GSTOP` ở 688 s, log đóng ở
+   638,7 s). Đạt khi: 50 và 80 tiến/lùi đều bám `v_ref`; MAX 90 thẳng `duty` p95 < 0,95; STOP dừng ngay,
+   `fault=0`.
 2. **`archive_error=1`** trong mọi log gần đây → vùng log Flash chưa format lại. Cần bấm
    “SỬA VÙNG LOG FLASH” **một lần khi motor đã dừng** (xe đứng yên, chỉ ESP32 chạy), rồi kiểm
    `archive_saved > 0` trong log kế tiếp.
