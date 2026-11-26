@@ -153,6 +153,18 @@ button:focus:not(:focus-visible){outline:none}
  <div id="balance">
   <label class="check"><input id="floor" type="checkbox" onchange="updateButtons()"><span>Trên nền</span></label>
   <button type="button" class="primary" id="arm" onclick="beginArm()">BẬT CÂN BẰNG</button>
+  <div style="margin-top:8px;padding:8px;border:1px solid #24405f;border-radius:10px">
+   <p class="hint" style="margin:0 0 6px"><b>THỬ BÁNH (BENCH TEST)</b> · bản 26/11</p>
+   <label class="check"><input id="fixture" type="checkbox" onchange="updateButtons()"><span>Đã kê xe, hai bánh quay tự do</span></label>
+   <div class="row" style="gap:6px;flex-wrap:wrap">
+    <button type="button" class="hold" onclick="pulseWheel(1,1)">TRÁI tới</button>
+    <button type="button" class="hold" onclick="pulseWheel(1,-1)">TRÁI lùi</button>
+    <button type="button" class="hold" onclick="pulseWheel(2,1)">PHẢI tới</button>
+    <button type="button" class="hold" onclick="pulseWheel(2,-1)">PHẢI lùi</button>
+    <button type="button" class="hold" onclick="pulseWheel(3,1)">CẢ HAI tới</button>
+   </div>
+   <p class="hint" id="motor-test-status">Bấm DỪNG motor trước khi thử. Mỗi lần 1,5 giây.</p>
+  </div>
   <p class="hint" id="arm-reason">Chờ dữ liệu…</p>
  </div>
  <div class="stick" id="stick">
@@ -169,20 +181,6 @@ button:focus:not(:focus-visible){outline:none}
  <button type="button" class="hold" id="drive-hold" onclick="releaseDrive()">DỪNG CHẠY</button>
  <p class="hint" id="drive-status">Chờ dữ liệu…</p>
 </section>
-<details class="tools" id="motor-test">
- <summary>KIỂM TRA ĐỘNG CƠ (thử bánh)</summary>
- <div class="body">
-  <label class="check"><input id="fixture" type="checkbox" onchange="updateButtons()"><span>Đã kê xe, hai bánh quay tự do</span></label>
-  <div class="row" style="gap:6px;flex-wrap:wrap">
-   <button type="button" class="hold" onclick="pulseWheel(1,1)">TRÁI tới</button>
-   <button type="button" class="hold" onclick="pulseWheel(1,-1)">TRÁI lùi</button>
-   <button type="button" class="hold" onclick="pulseWheel(2,1)">PHẢI tới</button>
-   <button type="button" class="hold" onclick="pulseWheel(2,-1)">PHẢI lùi</button>
-   <button type="button" class="hold" onclick="pulseWheel(3,1)">CẢ HAI tới</button>
-  </div>
-  <p class="hint" id="motor-test-status">Bấm DỪNG motor trước khi thử. Mỗi lần 1,5 giây.</p>
- </div>
-</details>
 <details class="tools">
  <summary>Công cụ và chi tiết</summary>
  <div class="body">
