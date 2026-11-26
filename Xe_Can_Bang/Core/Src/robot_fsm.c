@@ -413,6 +413,42 @@ static void robot_run_veto_chain(void) {
 }
 
 /* Bước 11–14: lõi R12 (nguồn PWM duy nhất), bù bánh trái, ghi PWM hoặc dừng. */
+/* Bài thử bánh trên bàn: PWM cố định 600, tối đa 1,5 giây, chỉ từ STANDBY.
+ * Không dùng PID/observer; thoát khi hết giờ, $STOP, hoặc nghiêng quá 45 độ. */
+#define BENCH_PULSE_PWM 600
+#define BENCH_PULSE_MS 1500U
+static uint32_t bal_bench_ms;
+static uint8_t bal_bench_return_state;
+static void robot_apply_bench_test(void) {
+    ESP32_Command_t *c=ESP32_Comm_GetCommand();
+    if(!c->bench_test) {
+        if(s_robot.state==ROBOT_STATE_BENCH_TEST) {
+            Motor_Stop(); s_robot.pwm_left=s_robot.pwm_right=0;
+            s_robot.state=(Robot_State_t)bal_bench_return_state; LED_SetPattern(LED_PATTERN_SLOW_BLINK);
+        }
+        return;
+    }
+    if(s_robot.state!=ROBOT_STATE_BENCH_TEST) {
+        if(s_robot.state!=ROBOT_STATE_STANDBY && s_robot.state!=ROBOT_STATE_FALLEN) { c->bench_test=0; return; }
+        bal_bench_return_state=(uint8_t)s_robot.state;
+        s_robot.state=ROBOT_STATE_BENCH_TEST; bal_bench_ms=HAL_GetTick();
+        LED_SetPattern(LED_PATTERN_FAST_BLINK);
+    }
+    c->last_cmd_time=HAL_GetTick();
+    if((HAL_GetTick()-bal_bench_ms)>=BENCH_PULSE_MS || fabsf(s_robot.pitch)>45.0f) {
+        c->bench_test=0; Motor_Stop(); s_robot.pwm_left=s_robot.pwm_right=0;
+        s_robot.state=(Robot_State_t)bal_bench_return_state; LED_SetPattern(LED_PATTERN_SLOW_BLINK);
+        return;
+    }
+    int16_t pwm=(int16_t)(BENCH_PULSE_PWM*c->pulse_direction);
+    int16_t left=0,right=0;
+    if(c->pulse_wheel==1) left=pwm;
+    else if(c->pulse_wheel==2) right=pwm;
+    else { left=pwm; right=pwm; }
+    s_robot.pwm_left=left; s_robot.pwm_right=right; s_robot.pwm_base=.5f*(left+right);
+    Motor_SetDuty(left,right);
+}
+
 static void robot_apply_balance_law(void) {
     RobotTick *t=&bal_tick;
     if(s_robot.state==ROBOT_STATE_BALANCING && bal_controller==BALANCE_CONTROLLER_R12) {
@@ -492,7 +528,8 @@ void Robot_ControlLoop_200Hz(void) {
     robot_update_arm_gate();
     robot_handle_arm();
     if(s_robot.state==ROBOT_STATE_BALANCING) robot_run_veto_chain();
-    robot_apply_balance_law();
+    if(s_robot.state==ROBOT_STATE_BENCH_TEST || ESP32_Comm_GetCommand()->bench_test) robot_apply_bench_test();
+    else robot_apply_balance_law();
     robot_check_deadline();
     robot_emit_telemetry();
 }

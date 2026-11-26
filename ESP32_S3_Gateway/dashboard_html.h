@@ -169,6 +169,20 @@ button:focus:not(:focus-visible){outline:none}
  <button type="button" class="hold" id="drive-hold" onclick="releaseDrive()">DỪNG CHẠY</button>
  <p class="hint" id="drive-status">Chờ dữ liệu…</p>
 </section>
+<details class="tools" id="motor-test">
+ <summary>KIỂM TRA ĐỘNG CƠ (thử bánh)</summary>
+ <div class="body">
+  <label class="check"><input id="fixture" type="checkbox" onchange="updateButtons()"><span>Đã kê xe, hai bánh quay tự do</span></label>
+  <div class="row" style="gap:6px;flex-wrap:wrap">
+   <button type="button" class="hold" onclick="pulseWheel(1,1)">TRÁI tới</button>
+   <button type="button" class="hold" onclick="pulseWheel(1,-1)">TRÁI lùi</button>
+   <button type="button" class="hold" onclick="pulseWheel(2,1)">PHẢI tới</button>
+   <button type="button" class="hold" onclick="pulseWheel(2,-1)">PHẢI lùi</button>
+   <button type="button" class="hold" onclick="pulseWheel(3,1)">CẢ HAI tới</button>
+  </div>
+  <p class="hint" id="motor-test-status">Bấm DỪNG motor trước khi thử. Mỗi lần 1,5 giây.</p>
+ </div>
+</details>
 <details class="tools">
  <summary>Công cụ và chi tiết</summary>
  <div class="body">
@@ -390,6 +404,19 @@ function wheelAssist(a,m){
  return {delta:(-a[10]-a[9])*0.204203522/Number(m[7]),pwm:(a[7]-a[8])/2};
 }
 function faultText(f){return [[1,stopSource()],[2,'Mất nhịp điều khiển web quá 1 giây'],[4,'Góc thân vượt giới hạn pha đang chạy'],[8,'Vượt ngân sách pha; hủy lệnh: 1m, phanh nhả nút: 1,25m'],[16,'Vượt tốc độ của pha đang chạy (bắt: 1,0/1,1/1,2 theo góc bật≤48/≤58/>58°; thường: 0,8 m/s; MAX80 có envelope tâm1,12/bánh1,20m/s)'],[32,'Không nhận được mẫu BMI160 hợp lệ. Dừng xe, kiểm tra dây rồi ĐO LẠI GYRO để thử phục hồi I2C.'],[64,'Chu kỳ điều khiển bất thường'],[128,'Hiệu chuẩn gyro chưa đạt'],[256,'Sai cấu hình BMI160'],[512,'Giá trị số không hợp lệ'],[1024,'Thân xe/giá kê chuyển động quá mức khi thử bánh'],[2048,'Hết thời gian bắt thăng bằng: 3 giây; góc bật trên58°:4 giây'],[4096,'Phục hồi/hủy chuyển động quá4 giây; chưa lấy lại cân bằng ổn'],[8192,'Tốc độ quay thân vượt 900°/s: đã DỪNG MOTOR. Kiểm tra và dựng xe, bấm BẬT lại; xe không tự chạy tiếp.']].filter(function(x){return f&x[0];}).map(function(x){return x[1];}).join(' · ');}
+async function pulseWheel(wheel,direction){
+ if(isRunning()){el('motor-test-status').textContent='Bấm DỪNG motor trước khi thử bánh.';return;}
+ if(!el('fixture').checked){el('motor-test-status').textContent='Tích xác nhận đã kê xe trước khi thử.';return;}
+ if(!wsOK||!data){el('motor-test-status').textContent='Chưa kết nối STM32.';return;}
+ el('motor-test-status').textContent='Đang gửi lệnh thử…';
+ try{
+  var body=new URLSearchParams({action:'pulse',wheel:String(wheel),direction:String(direction),fixture:'yes',
+    session:String(session),token:String(sessionToken),stop_revision:String(data.control_revision)});
+  var r=await fetch('/operate',{method:'POST',body:body,signal:AbortSignal.timeout(3000)});
+  var j=await r.json();
+  el('motor-test-status').textContent=j.message||(r.ok?'Đã gửi lệnh thử.':'Lỗi '+r.status);
+ }catch(e){el('motor-test-status').textContent='Lỗi gửi lệnh: '+e.message;}
+}
 function updateButtons(){
  el('download-network').disabled=isRunning();
  el('drive-timing').textContent=fresh()&&row.length===40?'Nút trên web: '+((driveHeld||driveTurn)?'ĐANG GIỮ':'ĐÃ NHẢ')+' · STM32: '+((row[34]||row[37])?'đang nhận hướng chạy':'đã nhận trung tính')+'\nLệnh STM32 #'+row[38]+' · tuổi lệnh '+(row[38]?((row[1]-row[39])>>>0)+' ms':'—')+'\nXác nhận qua web: '+(driveAckMs===null?'chưa đo':driveAckMs+' ms')+' (gồm truyền và chu kỳ hiển thị, không phải độ trễ một chiều).\nBánh trái / phải: '+(100*(row[19]||0)).toFixed(1)+' / '+(100*(row[20]||0)).toFixed(1)+' cm/s · trôi tâm: '+(50*((row[19]||0)+(row[20]||0))).toFixed(1)+' cm/s\nQuay đặt / thực: '+((row[36]||0)*180/Math.PI).toFixed(1)+' / '+(((row[20]||0)-(row[19]||0))/.262*180/Math.PI).toFixed(1)+' °/s':'Chờ dữ liệu mới từ STM32…';
