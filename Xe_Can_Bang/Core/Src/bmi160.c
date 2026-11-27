@@ -143,10 +143,10 @@ bool BMI160_Init(void)
     // Accel: +-8g (Ghi 0x08 vào 0x41)
     if(!BMI160_WriteReg(BMI160_REG_ACC_RANGE, 0x08))return false;
 
-    // 0x29 = ODR 200Hz (0x09), normal bandwidth (0x20) — khớp vòng đọc 200 Hz.
-    if(!BMI160_WriteReg(BMI160_REG_ACC_CONF, 0x29)||!BMI160_WriteReg(BMI160_REG_GYR_CONF, 0x29))return false;
+    // 0x28 = ODR 100Hz (0x08), normal bandwidth (0x20). Log 27/11: ODR 200 làm pitch/pwm dao động gấp đôi, REC1 16% -> quay lại 100Hz.
+    if(!BMI160_WriteReg(BMI160_REG_ACC_CONF, 0x28)||!BMI160_WriteReg(BMI160_REG_GYR_CONF, 0x28))return false;
     uint8_t cfg[4],pmu;
-    return BMI160_ReadReg(BMI160_REG_ACC_CONF,cfg,4)&&cfg[0]==0x29&&cfg[1]==8&&cfg[2]==0x29&&cfg[3]==0&&
+    return BMI160_ReadReg(BMI160_REG_ACC_CONF,cfg,4)&&cfg[0]==0x28&&cfg[1]==8&&cfg[2]==0x28&&cfg[3]==0&&
         BMI160_ReadReg(0x03,&pmu,1)&&(pmu&0x3c)==0x14;
 }
 
@@ -213,7 +213,7 @@ void BMI160_Calibrate_Gyro(uint16_t samples)
             for(unsigned j=0;j<3;j++) {sq[j]+=rates[j]*rates[j];if(fabsf(rates[j])>3.0f)moved=true;}
             valid++;
         }
-        HAL_Delay(10); // ODR 200 Hz: 10 ms = 2 chu kỳ, tránh đếm trùng mẫu.
+        HAL_Delay(10); // ODR 100 Hz: tránh đếm trùng mẫu.
     }
 
     if (valid) {
@@ -280,7 +280,7 @@ void BMI160_Test_Run(void)
     }
 
     // 3. Khởi tạo chip
-    printf("\r\n[3] Khoi tao BMI160 (ODR 200Hz, Accel +-8g, Gyro +-2000 dps)...\r\n");
+    printf("\r\n[3] Khoi tao BMI160 (ODR 100Hz, Accel +-8g, Gyro +-2000 dps)...\r\n");
     if (BMI160_Init()) {
         printf("  -> [PASS] Khoi tao thanh cong!\r\n");
     } else {

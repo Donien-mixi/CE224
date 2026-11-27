@@ -140,7 +140,7 @@ Giữ cách cấp nguồn trực tiếp 3,3 V của module đang dùng; bỏ tr�
 
 **Trạng thái INT1:** người dùng xác nhận dây **INT1 → PB2 đang cắm trên breadboard**; giữ kết nối này trên sơ đồ và PCB mới. Mã GPIO vẫn khai báo EXTI2, nhưng firmware hiện không cấu hình phát data-ready qua INT1 và không dùng callback này để đọc IMU/chạy cân bằng. Phân biệt dây đã nối với việc firmware có sử dụng ngắt đó hay không.
 
-Cảm biến được cấu hình accel ±8 g, gyro ±2000°/s, ODR **200 Hz** (từ 27/11; trước là 100 Hz). STM32 đọc I2C bằng HAL blocking, timeout 2 ms, trong vòng TIM4 **200 Hz**. Không mô tả đây là pipeline dùng INT1 hoặc I2C DMA.
+Cảm biến được cấu hình accel ±8 g, gyro ±2000°/s, ODR **100 Hz** (thử 200 Hz ngày 27/11 nhưng log cho thấy dao động tăng gấp đôi, REC1 16 % nên quay lại 100 Hz). STM32 đọc I2C bằng HAL blocking, timeout 2 ms, trong vòng TIM4 **200 Hz**. Không mô tả đây là pipeline dùng INT1 hoặc I2C DMA.
 
 Firmware thử địa chỉ 0x68 rồi 0x69 khi khởi tạo. SA0 nối GND để cố định địa chỉ theo sơ đồ; không kết luận cứ thấy 0x69 là cảm biến hỏng. Giữ nguyên đường 3,3 V, không cấp 5 V vào 3V3, CS, SDA hoặc SCL. Nhận xét về cấu trúc VIN/LDO của một module không được áp cho mọi phiên bản GY-BMI160.
 

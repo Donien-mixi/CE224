@@ -133,7 +133,7 @@ format vùng log Flash (mục 6).
 > **Gói nhị phân đã xoá** khi chuyển sang nạp bằng IDE; RT44/RT45/RT46 nằm trong git history.
 > **Sửa trực tiếp 21/11 (giữ nguyên build ID RT47):** telemetry UI chuyển sang **WS push 20 Hz** (poll HTTP
 > còn 2 s dự phòng) và tick lệnh 20 → **10 ms**; chỉ cần nạp lại ESP32. Chi tiết: [RT41 §7](Docs/RT41_Duong_Truyen.md).
-> **P0 27/11 (giữ nguyên RT47):** trang nhúng nén **gzip 57 → 18,6 KB** + **ETag/304** (hết nghẽn loop 147 ms khi tải trang); **BMI160 ODR 100 → 200 Hz** (mỗi tick 5 ms có mẫu mới). ESP32 1 058 707 B; STM32 `text 84 616`; 39/39 host test.
+> **P0 27/11 (giữ nguyên RT47):** trang nhúng nén **gzip 57 → 18,6 KB** + **ETag/304** (hết nghẽn loop 147 ms khi tải trang); **BMI160 ODR 100 → 200 Hz** (thử) — log 27/11 cho thấy pitch std 2,74° (gốc 1,46°), PWM std gấp đôi, REC1 16 % thời gian ⇒ **đã quay lại ODR 100 Hz**. ESP32 1 058 707 B; 39/39 host test.
 
 ## 1. Đọc nhanh trong 5 phút
 
