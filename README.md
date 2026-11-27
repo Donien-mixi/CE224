@@ -45,7 +45,7 @@ Trạng thái và việc còn mở: [`HANDOFF.md`](HANDOFF.md).
 | `Xe_Can_Bang/` | Project STM32CubeIDE. Luật điều khiển và giám sát ở `Core/Inc/balance_*.h`, FSM và vòng 200 Hz ở `Core/Src/robot_fsm.c`. |
 | `ESP32_S3_Gateway/` | Sketch Arduino + trang web (`dashboard_html.h`), giao thức UART, phiên điều khiển, log RAM/Flash. |
 | `Simulation/` | Mô hình Scilab, harness native dùng chung header firmware, bộ 36 ca kiểm tra, cấu hình plant. |
-| `tools/` | **38 host test** (38 tệp `test_*.cjs`), script chạy mô phỏng, tải log cứu hộ. Mock gateway cho route test ở `tools/lib/gateway_mock.cjs`. |
+| `tools/` | **39 host test** (39 tệp `test_*.cjs`), script chạy mô phỏng, tải log cứu hộ. Mock gateway cho route test ở `tools/lib/gateway_mock.cjs`. |
 | *(không còn)* | Gói nhị phân đã xoá; firmware nạp bằng IDE, bản cũ nằm trong git history. |
 | `Hardware/` | Schematic, PCB KiCad, thư viện footprint, tài liệu lắp ráp. |
 | `Docs/` | Tài liệu thiết kế + báo cáo các vòng RT22 → RT45 (danh sách ở mục 7). |

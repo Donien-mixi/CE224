@@ -21,7 +21,10 @@
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 
-#include "dashboard_html.h"
+#include "firmware_build.h"
+#include "dashboard_html_gz.h"
+/* ETag trang: tăng khi sửa HTML để điện thoại lấy bản mới (build ID giữ RT47). */
+#define DASHBOARD_ETAG "rt47-20261127a"
 
 #include <esp_heap_caps.h>
 #include <lwip/sockets.h>
@@ -251,8 +254,15 @@ void setup() {
 
   /* Cấu hình Web Server phục vụ giao diện HUD */
   auto serveDashboard=[](){
-    server.sendHeader("Cache-Control","no-store");server.sendHeader("X-TWIP-Build",TWIP_WEB_BUILD);
-    server.send_P(200,"text/html",DASHBOARD_HTML);
+    /* P0: trang nén gzip (57 KB -> 18,6 KB) + ETag; 304 khi chưa đổi.
+     * Trang 54 KB cũ chặn loop tới 147 ms mỗi lần tải. */
+    String inm=server.header("If-None-Match");
+    if(inm.length()&&inm==String("\"" DASHBOARD_ETAG "\"")){server.send(304);return;}
+    server.sendHeader("ETag","\"" DASHBOARD_ETAG "\"");
+    server.sendHeader("Cache-Control","no-cache");
+    server.sendHeader("X-TWIP-Build",TWIP_WEB_BUILD);
+    server.sendHeader("Content-Encoding","gzip");
+    server.send_P(200,"text/html",(PGM_P)DASHBOARD_GZ,(size_t)DASHBOARD_GZ_LEN);
   };
   server.on("/ui/bal-r6",HTTP_GET,serveDashboard);
 

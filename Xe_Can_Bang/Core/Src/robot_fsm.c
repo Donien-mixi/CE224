@@ -124,7 +124,7 @@ void Robot_Init(void) {
   }
   bal_imu_failed=false;
   uint8_t cfg[6];
-  bal_config_ok=BMI160_GetConfig(cfg)&&cfg[1]==0xd1&&cfg[2]==0x28&&cfg[3]==8&&cfg[4]==0x28&&cfg[5]==0;
+  bal_config_ok=BMI160_GetConfig(cfg)&&cfg[1]==0xd1&&cfg[2]==0x29&&cfg[3]==8&&cfg[4]==0x29&&cfg[5]==0;
   if(!bal_config_ok)s_robot.fault|=256;
   float init_pitch = Filter_CalibratedRawPitch(init_imu.ax, init_imu.az);
   Filter_Init(init_pitch);
@@ -188,7 +188,7 @@ void Robot_RecalibrateIMU(void) {
   }
 
   uint8_t cfg[6];
-  bal_config_ok=BMI160_GetConfig(cfg)&&cfg[1]==0xd1&&cfg[2]==0x28&&cfg[3]==8&&cfg[4]==0x28&&cfg[5]==0;
+  bal_config_ok=BMI160_GetConfig(cfg)&&cfg[1]==0xd1&&cfg[2]==0x29&&cfg[3]==8&&cfg[4]==0x29&&cfg[5]==0;
   s_robot.fault=(bal_config_ok?0:256)|(BMI160_CalibrationOK()?0:128);
   Filter_Init(Filter_CalibratedRawPitch(imu.ax, imu.az));
   Encoder_Reset();

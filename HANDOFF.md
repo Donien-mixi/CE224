@@ -133,6 +133,7 @@ format vùng log Flash (mục 6).
 > **Gói nhị phân đã xoá** khi chuyển sang nạp bằng IDE; RT44/RT45/RT46 nằm trong git history.
 > **Sửa trực tiếp 21/11 (giữ nguyên build ID RT47):** telemetry UI chuyển sang **WS push 20 Hz** (poll HTTP
 > còn 2 s dự phòng) và tick lệnh 20 → **10 ms**; chỉ cần nạp lại ESP32. Chi tiết: [RT41 §7](Docs/RT41_Duong_Truyen.md).
+> **P0 27/11 (giữ nguyên RT47):** trang nhúng nén **gzip 57 → 18,6 KB** + **ETag/304** (hết nghẽn loop 147 ms khi tải trang); **BMI160 ODR 100 → 200 Hz** (mỗi tick 5 ms có mẫu mới). ESP32 1 058 707 B; STM32 `text 84 616`; 39/39 host test.
 
 ## 1. Đọc nhanh trong 5 phút
 
@@ -300,7 +301,7 @@ node tools/run_governor_sim.cjs --stress --edge                        # 12 ca
 node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 ```
 
-- Host test: **38/38 bộ** PASS (38 tệp `test_*.cjs`) + 9 probe hằng số cũ phải
+- Host test: **39/39 bộ** PASS (39 tệp `test_*.cjs`) + 9 probe hằng số cũ phải
   fail (Node.js 24, GCC msys2). `tools/test_uart_schedule.py` và `test_build_id_sync` PASS.
 - Mô phỏng (21/11, sau RT45): **73/73 tệp trùng** với bản trước khi dọn — `--stress` @0,80,
   `--stress --edge` @0,90, `--stress --launch --launch50` @0,90; mỗi bộ **12 ca**, tất cả 20,000/20 s,
