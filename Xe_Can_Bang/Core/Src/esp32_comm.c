@@ -73,7 +73,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
 static void Parse_Packet(const char* packet)
 {
-    if(strncmp(packet,"$ARM,",5)&&strncmp(packet,"$MOVE8,",7)&&strncmp(packet,"$PULSE,",7)&&strcmp(packet,"$PING")&&strcmp(packet,"$STOP")&&strcmp(packet,"$CALIB"))return;
+    if(strncmp(packet,"$ARM,",5)&&strncmp(packet,"$MOVE8,",7)&&strcmp(packet,"$PING")&&strcmp(packet,"$STOP")&&strcmp(packet,"$CALIB"))return;
 
     /* Diagnostic mode accepts STOP only, including after finishing or aborting. */
     if (HardwareTest_IsLocked() && strncmp(packet, "$STOP", 5) != 0) return;
@@ -112,24 +112,6 @@ static void Parse_Packet(const char* packet)
             Robot_GetData()->state!=ROBOT_STATE_CALIBRATING) {
             s_command.arm_request=s_command.pulse_request=s_command.diag_request=0;
             s_command.trigger_calib=1;
-        }
-    } else if (!strncmp(packet,"$PULSE,",7)) {
-        /* Thử bánh trên bàn: chỉ nhận khi xe đang dừng (STANDBY), không ARM/không PID. */
-        int wheel=0,direction=0;char tail,canonical[24];
-        if(sscanf(packet,"$PULSE,%d,%d%c",&wheel,&direction,&tail)==2 &&
-           wheel>=1 && wheel<=3 && (direction==1||direction==-1) &&
-           !s_command.emergency_stop && !s_command.trigger_calib &&
-           Robot_GetData()->state!=ROBOT_STATE_BALANCING &&
-           Robot_GetData()->state!=ROBOT_STATE_BENCH_TEST &&
-           Robot_GetData()->state!=ROBOT_STATE_CALIBRATING) {
-            snprintf(canonical,sizeof(canonical),"$PULSE,%d,%d",wheel,direction);
-            if(!strcmp(packet,canonical)) {
-                s_command.bench_test=1;
-                s_command.pulse_wheel=(uint8_t)wheel;
-                s_command.pulse_direction=(int8_t)direction;
-                s_command.arm_request=0;
-                s_command.last_cmd_time=HAL_GetTick();
-            }
         }
     } else if (strncmp(packet, "$STOP", 5) == 0) {
         s_command.emergency_stop = 1;

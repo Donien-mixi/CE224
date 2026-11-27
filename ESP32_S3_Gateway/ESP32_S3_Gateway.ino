@@ -21,10 +21,7 @@
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 
-#include "firmware_build.h"
-#include "dashboard_html_gz.h"
-/* ETag trang: tăng khi sửa HTML để điện thoại lấy bản mới (build ID giữ RT47). */
-#define DASHBOARD_ETAG "rt47-20261127b"
+#include "dashboard_html.h"
 
 #include <esp_heap_caps.h>
 #include <lwip/sockets.h>
@@ -55,8 +52,6 @@ static char balanceMeta[256]={};
 
 void setupBalanceRoutes();
 static void setupNetworkRoutes();
-static void balanceBroadcastFast(void);
-static void balanceBroadcastStatus(void);
 uint8_t testPacket[sizeof(BalanceFrame)];
 unsigned packetLength=42;
 unsigned testPacketUsed = 0;
@@ -254,15 +249,8 @@ void setup() {
 
   /* Cấu hình Web Server phục vụ giao diện HUD */
   auto serveDashboard=[](){
-    /* P0: trang nén gzip (57 KB -> 18,6 KB) + ETag; 304 khi chưa đổi.
-     * Trang 54 KB cũ chặn loop tới 147 ms mỗi lần tải. */
-    String inm=server.header("If-None-Match");
-    if(inm.length()&&inm==String("\"" DASHBOARD_ETAG "\"")){server.send(304);return;}
-    server.sendHeader("ETag","\"" DASHBOARD_ETAG "\"");
-    server.sendHeader("Cache-Control","no-cache");
-    server.sendHeader("X-TWIP-Build",TWIP_WEB_BUILD);
-    server.sendHeader("Content-Encoding","gzip");
-    server.send_P(200,"text/html",(PGM_P)DASHBOARD_GZ,(size_t)DASHBOARD_GZ_LEN);
+    server.sendHeader("Cache-Control","no-store");server.sendHeader("X-TWIP-Build",TWIP_WEB_BUILD);
+    server.send_P(200,"text/html",DASHBOARD_HTML);
   };
   server.on("/ui/bal-r6",HTTP_GET,serveDashboard);
 
@@ -313,10 +301,6 @@ void loop() {
   server.handleClient();
   webSocket.loop();
   receiveSTM32();
-  /* Telemetry đẩy qua WS thay poll HTTP: hàng CSV tối đa 20 Hz, trạng thái 1 Hz. */
-  balanceBroadcastFast();
-  static uint32_t lastStatusPush=0;
-  if((uint32_t)(tick-lastStatusPush)>=1000){lastStatusPush=tick;balanceBroadcastStatus();}
 
   /* Gateway heartbeat: a closed browser must not cut the motor. While the STM32
    * reports balancing, keep its command watchdog fresh even with no page open;

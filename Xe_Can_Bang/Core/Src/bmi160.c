@@ -143,7 +143,7 @@ bool BMI160_Init(void)
     // Accel: +-8g (Ghi 0x08 vào 0x41)
     if(!BMI160_WriteReg(BMI160_REG_ACC_RANGE, 0x08))return false;
 
-    // 0x28 = ODR 100Hz (0x08), normal bandwidth (0x20). Log 27/11: ODR 200 làm pitch/pwm dao động gấp đôi, REC1 16% -> quay lại 100Hz.
+    // 0x28 = ODR 100Hz (0x08), normal bandwidth (0x20).
     if(!BMI160_WriteReg(BMI160_REG_ACC_CONF, 0x28)||!BMI160_WriteReg(BMI160_REG_GYR_CONF, 0x28))return false;
     uint8_t cfg[4],pmu;
     return BMI160_ReadReg(BMI160_REG_ACC_CONF,cfg,4)&&cfg[0]==0x28&&cfg[1]==8&&cfg[2]==0x28&&cfg[3]==0&&
@@ -213,7 +213,7 @@ void BMI160_Calibrate_Gyro(uint16_t samples)
             for(unsigned j=0;j<3;j++) {sq[j]+=rates[j]*rates[j];if(fabsf(rates[j])>3.0f)moved=true;}
             valid++;
         }
-        HAL_Delay(10); // ODR 100 Hz: tránh đếm trùng mẫu.
+        HAL_Delay(10); // ODR 100 Hz: avoid counting the same update twice.
     }
 
     if (valid) {

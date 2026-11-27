@@ -31,7 +31,6 @@ typedef struct {
     volatile uint8_t profile_request; // reserved legacy mailbox; cleared, no switching
     uint8_t arm_profile; // must be12; stale ARM for another law is rejected
     int8_t pulse_direction;
-    uint8_t pulse_wheel;    // 1: bánh trái, 2: bánh phải, 3: cả hai
     uint8_t bench_test;     // 1: Chế độ test quay bánh trực tiếp trên bàn, 0: Cân bằng tự động
     uint32_t last_cmd_time; // Thời điểm nhận gói tin cuối (dùng cho Failsafe timeout)
     uint32_t arm_drive_epoch;

@@ -131,9 +131,10 @@ format vùng log Flash (mục 6).
 > **Cảnh báo:** `robot_fsm.c` **không có test tự động** (38 test + mô phỏng chỉ dùng header) ⇒ phải có một
 > lượt chạy thật/kê cao có log trước khi tin bước 4.
 > **Gói nhị phân đã xoá** khi chuyển sang nạp bằng IDE; RT44/RT45/RT46 nằm trong git history.
-> **Sửa trực tiếp 21/11 (giữ nguyên build ID RT47):** telemetry UI chuyển sang **WS push 20 Hz** (poll HTTP
-> còn 2 s dự phòng) và tick lệnh 20 → **10 ms**; chỉ cần nạp lại ESP32. Chi tiết: [RT41 §7](Docs/RT41_Duong_Truyen.md).
-> **P0 27/11 (giữ nguyên RT47):** trang nhúng nén **gzip 57 → 18,6 KB** + **ETag/304** (hết nghẽn loop 147 ms khi tải trang); **BMI160 ODR 100 → 200 Hz** (thử) — log 27/11 cho thấy pitch std 2,74° (gốc 1,46°), PWM std gấp đôi, REC1 16 % thời gian ⇒ **đã quay lại ODR 100 Hz**. ESP32 1 058 707 B; 39/39 host test.
+> **27/11 — quay về bản chốt RT47 (`0236c9e`).** Các tối ưu thử nghiệm (WS push 20 Hz + tick 10 ms,
+> nút thử bánh, gzip trang, ODR 200 Hz, chẩn đoán lỗi) đã nằm trong git history (`3a08b7b`…`73ea42b`).
+> Log 27/11 cho thấy ODR 200 và nhịp lệnh 10 ms làm pitch/PWM dao động và REC1 tới 16 % thời gian ⇒ tạm gỡ hết
+> để so sánh đúng hành vi bản chốt; 38/38 host test.
 
 ## 1. Đọc nhanh trong 5 phút
 
@@ -301,7 +302,7 @@ node tools/run_governor_sim.cjs --stress --edge                        # 12 ca
 node tools/run_governor_sim.cjs --stress --launch --launch50           # 12 ca
 ```
 
-- Host test: **39/39 bộ** PASS (39 tệp `test_*.cjs`) + 9 probe hằng số cũ phải
+- Host test: **38/38 bộ** PASS (38 tệp `test_*.cjs`) + 9 probe hằng số cũ phải
   fail (Node.js 24, GCC msys2). `tools/test_uart_schedule.py` và `test_build_id_sync` PASS.
 - Mô phỏng (21/11, sau RT45): **73/73 tệp trùng** với bản trước khi dọn — `--stress` @0,80,
   `--stress --edge` @0,90, `--stress --launch --launch50` @0,90; mỗi bộ **12 ca**, tất cả 20,000/20 s,

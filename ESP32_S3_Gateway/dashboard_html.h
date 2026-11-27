@@ -153,18 +153,6 @@ button:focus:not(:focus-visible){outline:none}
  <div id="balance">
   <label class="check"><input id="floor" type="checkbox" onchange="updateButtons()"><span>Trên nền</span></label>
   <button type="button" class="primary" id="arm" onclick="beginArm()">BẬT CÂN BẰNG</button>
-  <div style="margin-top:8px;padding:8px;border:1px solid #24405f;border-radius:10px">
-   <p class="hint" style="margin:0 0 6px"><b>THỬ BÁNH (BENCH TEST)</b> · bản 26/11</p>
-   <label class="check"><input id="fixture" type="checkbox" onchange="updateButtons()"><span>Đã kê xe, hai bánh quay tự do</span></label>
-   <div class="row" style="gap:6px;flex-wrap:wrap">
-    <button type="button" class="hold" onclick="pulseWheel(1,1)">TRÁI tới</button>
-    <button type="button" class="hold" onclick="pulseWheel(1,-1)">TRÁI lùi</button>
-    <button type="button" class="hold" onclick="pulseWheel(2,1)">PHẢI tới</button>
-    <button type="button" class="hold" onclick="pulseWheel(2,-1)">PHẢI lùi</button>
-    <button type="button" class="hold" onclick="pulseWheel(3,1)">CẢ HAI tới</button>
-   </div>
-   <p class="hint" id="motor-test-status">Bấm DỪNG motor trước khi thử. Mỗi lần 1,5 giây.</p>
-  </div>
   <p class="hint" id="arm-reason">Chờ dữ liệu…</p>
  </div>
  <div class="stick" id="stick">
@@ -265,7 +253,7 @@ function padEnd(e){
  pad.addEventListener('pointerdown',function(e){
   if(e.button!==undefined&&e.button!==0)return;
   if(padId!==null)return;
-   if(!canDrive()){if(el('message'))el('message').textContent=driveBlockReason();return;}
+   if(!canDrive()){if(el('message'))el('message').textContent='Chưa sẵn sàng điều khiển.';return;}
   if(drivePointer!==null)releaseDrive();
   padRect=pad.getBoundingClientRect();
   padId=e.pointerId;padActive=true;padSector=-1;padKx=padKy=0;drivePointer=e.pointerId;
@@ -291,27 +279,6 @@ function selectDriveSpeed(preset){if(preset!==0&&preset!==1&&preset!==2)return;r
 function el(id){return document.getElementById(id);}
 function ownsControl(){return data&&data.owner===session&&data.owner_token===sessionToken&&sessionToken>0;}
 function canDrive(){return fresh()&&matched()&&wsOK&&ownsControl()&&!document.hidden&&!busy&&!pending&&!armWaitUntil&&mode==='balance'&&el('floor').checked&&row[4]===3&&row[28]!==1&&row[6]===0&&(row[33]&1)&&data.drive_epoch>0&&row[32]===data.drive_epoch&&blockers(true).length===0;}
-function driveBlockReason(){
- if(!data)return 'Chưa có dữ liệu STM32.';
- if(!fresh())return 'Dữ liệu STM32 cũ hơn 0,5 s — chờ vài giây hoặc kiểm tra UART.';
- if(!matched())return 'Sai phiên bản STM32 (cần BAL-20261121-R12-8DIR-RT47-SLIM).';
- if(!wsOK)return 'Mất kênh điều khiển WebSocket — kết nối lại Wi-Fi.';
- if(!ownsControl())return 'Trang này không giữ kênh điều khiển — bấm BẬT CÂN BẰNG lại.';
- if(document.hidden)return 'Trang đang bị ẩn.';
- if(busy)return 'Đang tải log.';
- if(pending)return 'Đang chờ xác nhận lệnh trước.';
- if(armWaitUntil)return 'Đang chờ ARM xong.';
- if(mode!=='balance')return 'Đang ở chế độ khác.';
- if(!el('floor').checked)return 'Chưa tích "Trên nền".';
- if(row[4]!==3)return 'Xe chưa cân bằng (state '+row[4]+').';
- if(row[28]===1)return 'Đang bắt thăng bằng (phase 1) — chờ xong.';
- if(row[6]!==0)return 'Có lỗi: '+faultText(row[6]);
- if(!(row[33]&1))return 'Chưa sẵn sàng di chuyển: cần đứng yên ~0,5 s (pitch '+row[17].toFixed(1)+'°, v '+((row[19]+row[20])/2).toFixed(3)+' m/s, lệch '+((row[21]-row[30])*100).toFixed(0)+' cm).';
- if(!(data.drive_epoch>0))return 'Chưa có epoch điều khiển — bấm BẬT CÂN BẰNG.';
- if(row[32]!==data.drive_epoch)return 'Epoch lệch (ESP32 vừa khởi động lại?) — bấm DỪNG rồi BẬT CÂN BẰNG.';
- var b=blockers(true);if(b.length)return b.join(' ');
- return 'Chưa sẵn sàng.';
-}
 function driveTick(forceNeutral){
  if((driveHeld||driveTurn)&&!canDrive()){driveHeld=0;driveTurn=0;drivePointer=null;forceNeutral=true;}
  var neutral=driveHeld===0&&driveTurn===0;
@@ -370,7 +337,7 @@ document.addEventListener('pointerup',releasePointer,true);document.addEventList
 // Only all-fingers-up releases the owner; another finger cannot take control.
 ['touchend','touchcancel'].forEach(function(type){document.addEventListener(type,function(e){if(!e.touches||e.touches.length===0)releaseDrive();},true);});
 document.addEventListener('keyup',function(e){if(drivePointer==='keyboard'&&(e.key===' '||e.key==='Enter'))releaseDrive();},true);
-setInterval(driveTick,10);
+setInterval(driveTick,20);
 function stopSource(){return ({controller_background:'Trang điều khiển bị ẩn (chuyển ứng dụng hoặc khóa màn hình)',controller_page_left:'Rời trang điều khiển',controller_disconnected:'Trang điều khiển mất kết nối',stop_button_ws:'Nút DỪNG trên web',stop_button_http:'Nút DỪNG trên web'})[data&&data.stop_source]||'Lệnh STOP; chưa biết nguồn';}
 function isRunning(){return row[4]===3||row[4]===7;}
 function fresh(){return data&&data.seen&&data.age_ms<500&&Date.now()-lastFresh<500;}
@@ -423,19 +390,6 @@ function wheelAssist(a,m){
  return {delta:(-a[10]-a[9])*0.204203522/Number(m[7]),pwm:(a[7]-a[8])/2};
 }
 function faultText(f){return [[1,stopSource()],[2,'Mất nhịp điều khiển web quá 1 giây'],[4,'Góc thân vượt giới hạn pha đang chạy'],[8,'Vượt ngân sách pha; hủy lệnh: 1m, phanh nhả nút: 1,25m'],[16,'Vượt tốc độ của pha đang chạy (bắt: 1,0/1,1/1,2 theo góc bật≤48/≤58/>58°; thường: 0,8 m/s; MAX80 có envelope tâm1,12/bánh1,20m/s)'],[32,'Không nhận được mẫu BMI160 hợp lệ. Dừng xe, kiểm tra dây rồi ĐO LẠI GYRO để thử phục hồi I2C.'],[64,'Chu kỳ điều khiển bất thường'],[128,'Hiệu chuẩn gyro chưa đạt'],[256,'Sai cấu hình BMI160'],[512,'Giá trị số không hợp lệ'],[1024,'Thân xe/giá kê chuyển động quá mức khi thử bánh'],[2048,'Hết thời gian bắt thăng bằng: 3 giây; góc bật trên58°:4 giây'],[4096,'Phục hồi/hủy chuyển động quá4 giây; chưa lấy lại cân bằng ổn'],[8192,'Tốc độ quay thân vượt 900°/s: đã DỪNG MOTOR. Kiểm tra và dựng xe, bấm BẬT lại; xe không tự chạy tiếp.']].filter(function(x){return f&x[0];}).map(function(x){return x[1];}).join(' · ');}
-async function pulseWheel(wheel,direction){
- if(isRunning()){el('motor-test-status').textContent='Bấm DỪNG motor trước khi thử bánh.';return;}
- if(!el('fixture').checked){el('motor-test-status').textContent='Tích xác nhận đã kê xe trước khi thử.';return;}
- if(!wsOK||!data){el('motor-test-status').textContent='Chưa kết nối STM32.';return;}
- el('motor-test-status').textContent='Đang gửi lệnh thử…';
- try{
-  var body=new URLSearchParams({action:'pulse',wheel:String(wheel),direction:String(direction),fixture:'yes',
-    session:String(session),token:String(sessionToken),stop_revision:String(data.control_revision)});
-  var r=await fetch('/operate',{method:'POST',body:body,signal:AbortSignal.timeout(3000)});
-  var j=await r.json();
-  el('motor-test-status').textContent=j.message||(r.ok?'Đã gửi lệnh thử.':'Lỗi '+r.status);
- }catch(e){el('motor-test-status').textContent='Lỗi gửi lệnh: '+e.message;}
-}
 function updateButtons(){
  el('download-network').disabled=isRunning();
  el('drive-timing').textContent=fresh()&&row.length===40?'Nút trên web: '+((driveHeld||driveTurn)?'ĐANG GIỮ':'ĐÃ NHẢ')+' · STM32: '+((row[34]||row[37])?'đang nhận hướng chạy':'đã nhận trung tính')+'\nLệnh STM32 #'+row[38]+' · tuổi lệnh '+(row[38]?((row[1]-row[39])>>>0)+' ms':'—')+'\nXác nhận qua web: '+(driveAckMs===null?'chưa đo':driveAckMs+' ms')+' (gồm truyền và chu kỳ hiển thị, không phải độ trễ một chiều).\nBánh trái / phải: '+(100*(row[19]||0)).toFixed(1)+' / '+(100*(row[20]||0)).toFixed(1)+' cm/s · trôi tâm: '+(50*((row[19]||0)+(row[20]||0))).toFixed(1)+' cm/s\nQuay đặt / thực: '+((row[36]||0)*180/Math.PI).toFixed(1)+' / '+(((row[20]||0)-(row[19]||0))/.262*180/Math.PI).toFixed(1)+' °/s':'Chờ dữ liệu mới từ STM32…';
@@ -510,9 +464,6 @@ function connect(){
    if(Number.isInteger(h.session)&&Number.isInteger(h.token)&&h.token>0){
     clearTimeout(deadline);session=h.session;sessionToken=h.token;wsOK=true;wsDelay=500;
     if(!document.hidden){socket.send('$PING*');poll();}
-   }else if(h.t==='s'){applyStatus(h);}
-   else if(h.t==='r'&&data&&data.meta&&typeof h.r==='string'){
-    applyStatus(Object.assign({},data,{row:h.r,age_ms:h.age_ms,seen:true}));
    }
   }catch(ignore){}
  };
@@ -550,19 +501,9 @@ async function poll(){
  pollWait=pollBody();
  try{await pollWait;}finally{polling=false;pollWait=null;}
 }
-async function fetchStatus(){
- var r=await fetch('/balance-status',{cache:'no-store',signal:AbortSignal.timeout(2000)});if(!r.ok)throw Error('HTTP');return await r.json();
-}
 async function pollBody(){
- try{await applyStatus(await fetchStatus());}catch(e){pollFailed(e);}
-}
-function pollFailed(e){
- driveHeld=0;driveTurn=0;drivePointer=null;cancelArmWait('Đã hủy chờ vì lỗi kết nối/dữ liệu.');
- el('link').textContent='Mất dữ liệu mới';
- el('reason').textContent='Không lấy được dữ liệu: '+e.message;updateButtons();
-}
-async function applyStatus(d){
  try{
+  var r=await fetch('/balance-status',{cache:'no-store',signal:AbortSignal.timeout(2000)});if(!r.ok)throw Error('HTTP');var d=await r.json();
   data=d;
  if(!d.seen||d.age_ms>=500){
    cancelArmWait('Đã hủy chờ vì mất dữ liệu mới từ STM32.');
@@ -637,7 +578,7 @@ async function pollNetwork(){
  }catch(e){el('network-health').textContent='Chưa liên lạc được ESP32. Nếu Wi-Fi biến mất rồi log RAM về0, kiểm tra mục lý do khởi động sau khi kết nối lại. Không rút pin trước khi tải log còn lại.';}
  finally{networkPolling=false;}
 }
-connect();poll();setInterval(poll,2000);setInterval(pollNetwork,1000);
+connect();poll();setInterval(poll,200);setInterval(pollNetwork,1000);
 </script>
 </body></html>
 )dash";

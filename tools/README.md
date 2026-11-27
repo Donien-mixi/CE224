@@ -1,5 +1,5 @@
-> **Trạng thái đồ án · 21/11/2026.** Workspace ở **RT47-SLIM / NET47**: **39/39 host test** chạy được
-> pass (39 tệp `test_*.cjs`); mô phỏng native **12/12 ca × 3 bộ** đủ 20/20 s.
+> **Trạng thái đồ án · 21/11/2026.** Workspace ở **RT47-SLIM / NET47**: **38/38 host test** chạy được
+> pass (38 tệp `test_*.cjs`); mô phỏng native **12/12 ca × 3 bộ** đủ 20/20 s.
 > Firmware nạp bằng IDE từ source — xem [Docs/Nap_Bang_IDE](../Docs/Nap_Bang_IDE.md).
 > Xem [trạng thái kỹ thuật](../HANDOFF.md) và [tổng quan](../Docs/Tong_Quan_Do_An.md).
 
@@ -14,7 +14,7 @@ Get-ChildItem tools/test_*.cjs | ForEach-Object { node $_.FullName }
 Mỗi test tự biên dịch phần C/C++ tương ứng vào `.build/<tên_test>/` rồi chạy. Không test nào nạp
 firmware hay mở cổng COM.
 
-## Test đang dùng (39 tệp chạy được)
+## Test đang dùng (38 tệp chạy được)
 
 | Nhóm | Tệp | Kiểm cái gì |
 |---|---|---|
@@ -44,7 +44,6 @@ Mỗi test sửa hành vi đều có **old-constant probe**: tự biên dịch l
 
 - `run_governor_sim.cjs`: chạy mô phỏng native (xem `../Simulation/README.md`).
   `--stress` = 12 ca tốc độ, `--edge` = 12 ca biên, `--launch --launch50` = 12 ca khởi hành 50 cm/s.
-- `gen_dashboard_gz.cjs`: sinh `dashboard_html_gz.h` (gzip trang) — chạy sau mỗi lần sửa HTML.
 - `Tai_Log_Cuu_Ho.*`: tải log qua cổng cứu hộ khi trang web không mở được.
 - `log_manifest_template.csv`: mẫu ghi điều kiện từng lượt chạy xe.
 

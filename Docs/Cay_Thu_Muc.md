@@ -39,7 +39,7 @@ Trong `Xe_Can_Bang/Core`:
 | Thư mục | Là gì |
 |---|---|
 | `Docs/` | Báo cáo từng vòng (`RTxx_*.md`), hướng dẫn nạp, luật điều khiển, kế hoạch dọn code |
-| `tools/` | 39 host test (39 tệp `test_*.cjs`), script chạy mô phỏng |
+| `tools/` | 38 host test (38 tệp `test_*.cjs`), script chạy mô phỏng |
 | `Simulation/` | Mô hình Scilab + harness native dùng chung header firmware (`Simulation/current/`) |
 | `Hardware/` | Sơ đồ, PCB KiCad, footprint |
 | `output/` | Log thô đã tải về + script phân tích theo từng vòng (`output/RTxx/`) |
