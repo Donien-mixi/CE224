@@ -24,7 +24,7 @@
 #include "firmware_build.h"
 #include "dashboard_html_gz.h"
 /* ETag trang: tăng khi sửa HTML để điện thoại lấy bản mới (build ID giữ RT47). */
-#define DASHBOARD_ETAG "rt47-20261127a"
+#define DASHBOARD_ETAG "rt47-20261127b"
 
 #include <esp_heap_caps.h>
 #include <lwip/sockets.h>
