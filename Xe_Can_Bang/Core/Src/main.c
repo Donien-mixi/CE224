@@ -132,6 +132,7 @@ int main(void)
      * UART DMA recovery and byte scanning run with interrupts enabled. */
     ESP32_Comm_Process();
     HardwareTest_Service();
+    Robot_ImuRecovery();   /* thu lai BMI160 sau va dap, khong can tat nguon */
 
     /* 2. Xử lý yêu cầu hiệu chuẩn lại IMU từ web ($CALIB) — chạy NGOÀI ngắt 200Hz */
     if (ESP32_Comm_GetCommand()->trigger_calib) {

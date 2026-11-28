@@ -64,6 +64,7 @@ void Robot_BalanceService(void);
   *         (chạy trong vòng lặp chính, tạm dừng ngắt TIM4 để tránh xung đột I2C)
   */
 void Robot_RecalibrateIMU(void);
+void Robot_ImuRecovery(void);
 
 /**
   * @brief  Vòng lặp điều khiển thời gian thực 200Hz (gọi trong ngắt TIM4 5ms)

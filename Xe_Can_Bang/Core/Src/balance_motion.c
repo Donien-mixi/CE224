@@ -170,7 +170,7 @@ int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word,
     }else s->blocked_ticks=0;
     if(fresh&&dir==0)s->release_required=false;
     // Đang bị giữ: quỹ đạo chỉ chờ trên vị trí đo.
-    if(s->cancel_flags&&!s->ready&&(!allow||fabsf(s->v_ref)>.0001f))s->x_ref=position;
+    if(s->cancel_flags&&!s->ready&&(!allow||fabsf(s->v_ref)>.0001f)&&fabsf(speed)<.05f)s->x_ref=position;
     if(allow&&!s->release_required&&!s->cancel_flags){
         /* Lần chạy đầu tiên chỉ cần xe yên thật, không cần quay về vị trí ARM.
          * Không đổi mốc giữ hay lực khi đứng yên: lệnh mới tự lấy mốc của nó. */

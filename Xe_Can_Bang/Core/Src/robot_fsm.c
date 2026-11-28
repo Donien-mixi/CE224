@@ -142,6 +142,31 @@ void Robot_Init(void) {
 
 }
 
+/* Tu dong thu lai BMI160 khi dang EMERGENCY do loi doc (fault 32/256), khong can
+ * tat nguon: dung TIM4, ResetBus + Init (co soft-reset), roi tra ve STANDBY.
+ * Khong hieu chuan tu dong: neu thieu hieu chuan, dat fault 128 de trang nhac
+ * nguoi dung bam DO LAI GYRO khi xe dung yen. Thu lai moi 2 s. */
+void Robot_ImuRecovery(void) {
+  static uint32_t last_attempt;
+  if (s_robot.state != ROBOT_STATE_EMERGENCY) return;
+  if (!bal_imu_failed && !(s_robot.fault & (32U | 256U))) return;
+  uint32_t now = HAL_GetTick();
+  if ((uint32_t)(now - last_attempt) < 2000U) return;
+  last_attempt = now;
+  HAL_TIM_Base_Stop_IT(&htim4);
+  bool ok = BMI160_Init();
+  if (ok) {
+    bal_imu_failed = false;
+    s_robot.fault &= (uint16_t)~(32U | 256U);
+    s_robot.fault |= BMI160_CalibrationOK() ? 0U : 128U;
+    s_robot.ready = 0;
+    s_robot.state = ROBOT_STATE_STANDBY;
+    LED_SetPattern(LED_PATTERN_SLOW_BLINK);
+  }
+  __HAL_TIM_SET_COUNTER(&htim4, 0);
+  HAL_TIM_Base_Start_IT(&htim4);
+}
+
 void Robot_RecalibrateIMU(void) {
   if (HardwareTest_IsLocked() || s_robot.state==ROBOT_STATE_BALANCING || s_robot.state==ROBOT_STATE_BENCH_TEST) return;
   /* Tạm dừng vòng điều khiển 200Hz để tránh truy cập I2C chồng chéo trong lúc
