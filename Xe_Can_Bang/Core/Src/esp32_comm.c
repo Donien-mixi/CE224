@@ -124,7 +124,18 @@ static void Parse_Packet(const char* packet)
     }
 }
 
+static void esp32_comm_process_inner(void);
+/* P1.4: chi goi tu ISR TIM4 (200 Hz); guard giu an toan neu ham bi goi lai. */
+static volatile uint8_t s_comm_busy;
 void ESP32_Comm_Process(void)
+{
+    if (s_comm_busy) return;
+    s_comm_busy = 1;
+    esp32_comm_process_inner();
+    s_comm_busy = 0;
+}
+
+static void esp32_comm_process_inner(void)
 {
     /* Cơ chế tự phục hồi Watchdog TOÀN DIỆN nếu DMA RX bị chết:
      * CHỈ clear cờ lỗi ORE/FE/NE/PE và đọc SR/DR khi THỰC SỰ có lỗi phần cứng hoặc DMA bị tắt.

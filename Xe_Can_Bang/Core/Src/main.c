@@ -130,7 +130,6 @@ int main(void)
     /* 1. Xử lý giải mã lệnh UART từ ESP32-S3 qua DMA buffer
      * The parser masks only TIM4 around complete command publication.
      * UART DMA recovery and byte scanning run with interrupts enabled. */
-    ESP32_Comm_Process();
     HardwareTest_Service();
     Robot_ImuRecovery();   /* thu lai BMI160 sau va dap, khong can tat nguon */
 

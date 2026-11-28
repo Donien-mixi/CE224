@@ -46,7 +46,7 @@
 - `setInterval(driveTick,20)` → `10`.
 - **Chấp nhận:** `age` p50 ≤ 10 ms, p95 ≤ 20 ms (đã đo được 7/15 ms ở lần thử trước).
 
-### [ ] P1.4 — Parse UART bằng IDLE-DMA trên STM32
+### [x] P1.4 — Parse UART trong ISR 200 Hz (STM32)
 
 - `Core/Src/esp32_comm.c`: dùng `HAL_UARTEx_ReceiveToIdle_DMA` (hoặc cờ IDLE) để parse ngay khi
   khung kết thúc, thay vì chờ main loop.
@@ -102,3 +102,4 @@
 | `A3` | Nới ngưỡng sẵn sàng 0,3 s | STM32 84 224 B, 39/39 test |
 | `P1.5` | DTIM=1, beacon 100 ms | ESP32 1 059 143 B, 39/39 test |
 | `P2.2` | Ping WS 1 s | ESP32 1 059 207 B, 39/39 test |
+| `P1.4` | Parse UART trong ISR 200 Hz | STM32 84 264 B, 39/39 test |

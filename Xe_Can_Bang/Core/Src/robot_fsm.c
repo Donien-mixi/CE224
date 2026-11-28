@@ -512,6 +512,8 @@ static void robot_emit_telemetry(void) {
 /* Vòng 16 bước. Không đổi thứ tự: mỗi bước là một hàm ở trên. */
 void Robot_ControlLoop_200Hz(void) {
     robot_tick_start();
+    /* P1.4: parse lenh UART ngay trong ISR 200 Hz, khong cho main loop. */
+    ESP32_Comm_Process();
     robot_read_inputs();
     robot_check_safe_state();
     robot_update_arm_gate();
