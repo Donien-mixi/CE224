@@ -21,10 +21,10 @@
 #define BALANCE_MOTION_ACCEL (s->speed_preset?(fabsf(old)>.50f?.40f:.70f):(fabsf(old)>.50f?.30f:.60f))  // gia tốc tăng tốc (m/s²); dùng s và old của module gọi
 #endif
 #ifndef BALANCE_MOTION_DECEL
-#define BALANCE_MOTION_DECEL .90f  // giảm tốc khi nhả lệnh (m/s²)
+#define BALANCE_MOTION_DECEL 1.20f  // giảm tốc khi nhả lệnh (m/s²) — 28/11: 0.90 -> 1.20 để bớt trôi
 #endif
 #ifndef BALANCE_MOTION_REVERSE_DECEL
-#define BALANCE_MOTION_REVERSE_DECEL 1.0f  // giảm tốc khi đảo chiều (m/s²)
+#define BALANCE_MOTION_REVERSE_DECEL 1.80f  // giảm tốc khi đảo chiều (m/s²) — 28/11: 1.0 -> 1.8 để đảo chiều nhanh
 #endif
 #ifndef BALANCE_MOTION_HOLD_RELAX
 #define BALANCE_MOTION_HOLD_RELAX .02f  // nhả mốc khi đứng yên (m/s)
@@ -33,7 +33,7 @@
 #define BALANCE_MOTION_HOLD_SPAN .15f  // phạm vi được phép nhả mốc (m)
 #endif
 #ifndef BALANCE_MOTION_RELEASE_HOLD_TICKS
-#define BALANCE_MOTION_RELEASE_HOLD_TICKS 24U  // số nhịp 5 ms giữ lệnh cũ khi neutral (24 = 120 ms)
+#define BALANCE_MOTION_RELEASE_HOLD_TICKS 8U  // số nhịp 5 ms giữ lệnh cũ khi neutral (8 = 40 ms) — 28/11: 24 -> 8
 #endif
 #ifndef BALANCE_MOTION_LEAD_CUT
 #define BALANCE_MOTION_LEAD_CUT 0  // test: 1 = luật cũ cắt tốc độ khi lệch mốc quá 20 cm
