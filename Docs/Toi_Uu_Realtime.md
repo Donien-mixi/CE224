@@ -32,7 +32,7 @@
 
 ## 2. Đường truyền — giảm độ trễ lệnh
 
-### [ ] P1.1 — Tick lệnh 20 → 10 ms (ESP32)
+### [x] P1.1 — Tick lệnh 20 → 10 ms (ESP32)
 
 - `setInterval(driveTick,20)` → `10`.
 - **Chấp nhận:** `age` p50 ≤ 10 ms, p95 ≤ 20 ms (đã đo được 7/15 ms ở lần thử trước).
@@ -88,3 +88,4 @@
 | Commit | Mục | Kết quả |
 |---|---|---|
 | `A2` | Đổi mốc không nhả hướng | ESP32 1 094 235 B, 38/38 test |
+| `P1.1` | Tick lệnh 10 ms | ESP32 1 094 235 B, 38/38 test |

@@ -341,7 +341,7 @@ document.addEventListener('pointerup',releasePointer,true);document.addEventList
 // Only all-fingers-up releases the owner; another finger cannot take control.
 ['touchend','touchcancel'].forEach(function(type){document.addEventListener(type,function(e){if(!e.touches||e.touches.length===0)releaseDrive();},true);});
 document.addEventListener('keyup',function(e){if(drivePointer==='keyboard'&&(e.key===' '||e.key==='Enter'))releaseDrive();},true);
-setInterval(driveTick,20);
+setInterval(driveTick,10);
 function stopSource(){return ({controller_background:'Trang điều khiển bị ẩn (chuyển ứng dụng hoặc khóa màn hình)',controller_page_left:'Rời trang điều khiển',controller_disconnected:'Trang điều khiển mất kết nối',stop_button_ws:'Nút DỪNG trên web',stop_button_http:'Nút DỪNG trên web'})[data&&data.stop_source]||'Lệnh STOP; chưa biết nguồn';}
 function isRunning(){return row[4]===3||row[4]===7;}
 function fresh(){return data&&data.seen&&data.age_ms<500&&Date.now()-lastFresh<500;}
