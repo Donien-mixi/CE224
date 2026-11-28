@@ -254,6 +254,15 @@ void setup() {
   };
   server.on("/ui/bal-r6",HTTP_GET,serveDashboard);
 
+  /* Chan doan: /ping tra "pong" (server song?), /diag tra do dai HTML + heap + reset. */
+  server.on("/ping",HTTP_GET,[](){server.send(200,"text/plain","pong");});
+  server.on("/diag",HTTP_GET,[](){
+    char b[256];
+    snprintf(b,sizeof b,"{\"html_len\":%u,\"heap\":%u,\"min_heap\":%u,\"uptime\":%lu,\"boot\":%lu,\"reset\":\"%s\"}",
+      (unsigned)strlen_P(DASHBOARD_HTML),(unsigned)ESP.getFreeHeap(),(unsigned)ESP.getMinFreeHeap(),
+      (unsigned long)millis(),(unsigned long)gatewayBootId,gatewayResetText(gatewayResetReason));
+    server.send(200,"application/json",b);
+  });
   server.on("/", HTTP_GET, serveDashboard);
   server.on(TWIP_WEB_PATH, HTTP_GET, serveDashboard);
   server.on("/ui/bal-r7-r12",HTTP_GET,serveDashboard); // old bookmark, same R12-only page
