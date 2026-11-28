@@ -234,6 +234,15 @@ void setup() {
 #endif
   bool apOK=WiFi.softAP(AP_SSID,AP_PASS,apChannel,false,4);
   esp_err_t bwOK=esp_wifi_set_bandwidth(WIFI_IF_AP,WIFI_BW_HT20);
+  /* P1.5: DTIM=1, beacon 100 ms -> dien thoai thuc day thuong xuyen hon, giam duoi tre Wi-Fi. */
+  {
+    wifi_config_t apcfg;
+    if(esp_wifi_get_config(WIFI_IF_AP,&apcfg)==ESP_OK){
+      apcfg.ap.beacon_interval=100;
+      apcfg.ap.dtim_period=1;
+      esp_wifi_set_config(WIFI_IF_AP,&apcfg);
+    }
+  }
   /* NET34: ha cong suat phat tu 17 dBm xuong 11 dBm.
    * Log RT32 (ba file (3)(5)/(4)(5)/(5)(5)) cho thay ESP32 reset do SUT AP NGUON
    * (reset=brownout) moi khi motor dao chieu; dinh dong WiFi la mot phan cua xung

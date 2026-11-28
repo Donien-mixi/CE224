@@ -52,7 +52,7 @@
   khung kết thúc, thay vì chờ main loop.
 - **Chấp nhận:** `age` max không tăng; `exec` p95 ≤ 700 µs; 38/38 test.
 
-### [ ] P1.5 — SoftAP DTIM = 1, beacon 100 ms (ESP32)
+### [x] P1.5 — SoftAP DTIM = 1, beacon 100 ms (ESP32)
 
 - Giảm trễ hướng xuống do điện thoại ngủ theo DTIM.
 - **Chấp nhận:** `age` p95/max giảm; `ws_leaves=0`.
@@ -99,4 +99,5 @@
 | `A2` | Đổi mốc không nhả hướng | ESP32 1 094 235 B, 38/38 test |
 | `P1.1` | Tick lệnh 10 ms | ESP32 1 094 235 B, 38/38 test |
 | `P2.1` | Gzip 54,8 → 18,1 KB + ETag/304 | ESP32 1 059 107 B, 39/39 test |
-| `A3` | Nới ngưỡng sẵn sàng 0,3 s | STM32 84 292 B, 39/39 test |
+| `A3` | Nới ngưỡng sẵn sàng 0,3 s | STM32 84 224 B, 39/39 test |
+| `P1.5` | DTIM=1, beacon 100 ms | ESP32 1 059 143 B, 39/39 test |
