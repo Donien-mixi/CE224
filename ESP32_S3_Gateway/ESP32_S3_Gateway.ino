@@ -21,7 +21,10 @@
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 
-#include "dashboard_html.h"
+#include "firmware_build.h"
+#include "dashboard_html_gz.h"
+/* ETag trang: tang khi sua HTML de dien thoai lay ban moi. */
+#define DASHBOARD_ETAG "rt47-20261128a"
 
 #include <esp_heap_caps.h>
 #include <lwip/sockets.h>
@@ -249,8 +252,14 @@ void setup() {
 
   /* Cấu hình Web Server phục vụ giao diện HUD */
   auto serveDashboard=[](){
-    server.sendHeader("Cache-Control","no-store");server.sendHeader("X-TWIP-Build",TWIP_WEB_BUILD);
-    server.send_P(200,"text/html",DASHBOARD_HTML);
+    /* P2.1: trang nen gzip (54,8 KB -> 18,1 KB) + ETag; 304 khi chua doi. */
+    String inm=server.header("If-None-Match");
+    if(inm.length()&&inm==String("\"" DASHBOARD_ETAG "\"")){server.send(304);return;}
+    server.sendHeader("ETag","\"" DASHBOARD_ETAG "\"");
+    server.sendHeader("Cache-Control","no-cache");
+    server.sendHeader("X-TWIP-Build",TWIP_WEB_BUILD);
+    server.sendHeader("Content-Encoding","gzip");
+    server.send_P(200,"text/html",(PGM_P)DASHBOARD_GZ,(size_t)DASHBOARD_GZ_LEN);
   };
   server.on("/ui/bal-r6",HTTP_GET,serveDashboard);
 
@@ -258,8 +267,8 @@ void setup() {
   server.on("/ping",HTTP_GET,[](){server.send(200,"text/plain","pong");});
   server.on("/diag",HTTP_GET,[](){
     char b[256];
-    snprintf(b,sizeof b,"{\"html_len\":%u,\"heap\":%u,\"min_heap\":%u,\"uptime\":%lu,\"boot\":%lu,\"reset\":\"%s\"}",
-      (unsigned)strlen_P(DASHBOARD_HTML),(unsigned)ESP.getFreeHeap(),(unsigned)ESP.getMinFreeHeap(),
+    snprintf(b,sizeof b,"{\"gz_len\":%u,\"heap\":%u,\"min_heap\":%u,\"uptime\":%lu,\"boot\":%lu,\"reset\":\"%s\"}",
+      (unsigned)DASHBOARD_GZ_LEN,(unsigned)ESP.getFreeHeap(),(unsigned)ESP.getMinFreeHeap(),
       (unsigned long)millis(),(unsigned long)gatewayBootId,gatewayResetText(gatewayResetReason));
     server.send(200,"application/json",b);
   });

@@ -22,6 +22,7 @@
 - **Chấp nhận:** thả ở 0,5 và 0,8 m/s → quãng trôi **sau khi dừng ≤ 5 cm/10 s**; không lắc thân;
   vẫn qua 38/38 test. Nếu lắc: giảm `DECEL` hoặc nới khoá về 1 s.
 - **Đo:** log `x - x_ref` sau khi `drive_direction=0`; đếm số mẫu `|v|>0,05` khi không lệnh.
+- **Thử 28/11:** giữ mốc tại điểm thả làm `test_rt19_hold` fail (hợp đồng cũ: chốt mốc tại **vị trí dừng**). Cần quyết định: đổi hợp đồng + test, hoặc chỉ giảm quãng dừng (`DECEL`). Đã revert thử nghiệm.
 
 ### [x] A2 — Đổi mốc 50/80/90 không nhả hướng (ESP32)
 
@@ -48,7 +49,7 @@
 - Giảm trễ hướng xuống do điện thoại ngủ theo DTIM.
 - **Chấp nhận:** `age` p95/max giảm; `ws_leaves=0`.
 
-### [ ] P2.1 — Gzip trang + ETag (ESP32)
+### [x] P2.1 — Gzip trang + ETag (ESP32)
 
 - Đã từng làm (commit `baa330f`): 57 → 19 KB, 304 khi không đổi.
 - **Chấp nhận:** `loop_gap_max_ms` < 20 ms (hiện 100–147 ms khi tải trang); trang mở bình thường.
@@ -89,3 +90,4 @@
 |---|---|---|
 | `A2` | Đổi mốc không nhả hướng | ESP32 1 094 235 B, 38/38 test |
 | `P1.1` | Tick lệnh 10 ms | ESP32 1 094 235 B, 38/38 test |
+| `P2.1` | Gzip 54,8 → 18,1 KB + ETag/304 | ESP32 1 059 107 B, 39/39 test |
