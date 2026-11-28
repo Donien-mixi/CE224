@@ -253,7 +253,7 @@ function padEnd(e){
  pad.addEventListener('pointerdown',function(e){
   if(e.button!==undefined&&e.button!==0)return;
   if(padId!==null)return;
-   if(!canDrive()){if(el('message'))el('message').textContent=driveBlockReason();return;}
+   if(!canDrive()){if(el('message'))el('message').textContent='Chưa sẵn sàng điều khiển.';return;}
   if(drivePointer!==null)releaseDrive();
   padRect=pad.getBoundingClientRect();
   padId=e.pointerId;padActive=true;padSector=-1;padKx=padKy=0;drivePointer=e.pointerId;
@@ -279,27 +279,6 @@ function selectDriveSpeed(preset){if(preset!==0&&preset!==1&&preset!==2)return;r
 function el(id){return document.getElementById(id);}
 function ownsControl(){return data&&data.owner===session&&data.owner_token===sessionToken&&sessionToken>0;}
 function canDrive(){return fresh()&&matched()&&wsOK&&ownsControl()&&!document.hidden&&!busy&&!pending&&!armWaitUntil&&mode==='balance'&&el('floor').checked&&row[4]===3&&row[28]!==1&&row[6]===0&&(row[33]&1)&&data.drive_epoch>0&&row[32]===data.drive_epoch&&blockers(true).length===0;}
-function driveBlockReason(){
- if(!data)return 'Chưa có dữ liệu STM32.';
- if(!fresh())return 'Dữ liệu STM32 cũ hơn 0,5 s.';
- if(!matched())return 'Sai phiên bản STM32.';
- if(!wsOK)return 'Mất kênh điều khiển WebSocket.';
- if(!ownsControl())return 'Trang không giữ kênh điều khiển — bấm BẬT CÂN BẰNG lại.';
- if(document.hidden)return 'Trang đang bị ẩn.';
- if(busy)return 'Đang tải log.';
- if(pending)return 'Đang chờ xác nhận lệnh trước.';
- if(armWaitUntil)return 'Đang chờ ARM xong.';
- if(mode!=='balance')return 'Đang ở chế độ khác.';
- if(!el('floor').checked)return 'Chưa tích "Trên nền".';
- if(row[4]!==3)return 'Xe chưa cân bằng (state '+row[4]+').';
- if(row[28]===1)return 'Đang bắt thăng bằng — chờ xong.';
- if(row[6]!==0)return 'Có lỗi: '+faultText(row[6]);
- if(!(row[33]&1))return 'Chưa sẵn sàng di chuyển: cần yên ~0,5 s (pitch '+row[17].toFixed(1)+'°, v '+((row[19]+row[20])/2).toFixed(3)+' m/s, lệch '+((row[21]-row[30])*100).toFixed(0)+' cm).';
- if(!(data.drive_epoch>0))return 'Chưa có epoch điều khiển — bấm BẬT CÂN BẰNG.';
- if(row[32]!==data.drive_epoch)return 'Epoch lệch (ESP32 vừa reset?) — bấm DỪNG rồi BẬT CÂN BẰNG.';
- var b=blockers(true);if(b.length)return b.join(' ');
- return 'Chưa sẵn sàng.';
-}
 function driveTick(forceNeutral){
  if((driveHeld||driveTurn)&&!canDrive()){driveHeld=0;driveTurn=0;drivePointer=null;forceNeutral=true;}
  var neutral=driveHeld===0&&driveTurn===0;
