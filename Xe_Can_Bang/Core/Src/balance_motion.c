@@ -219,6 +219,8 @@ int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word,
     float rate=old*target<0?BALANCE_MOTION_REVERSE_DECEL:
         fabsf(target)<fabsf(old)?BALANCE_MOTION_DECEL:BALANCE_MOTION_ACCEL;
     if(s->recovery_limited&&old*target>=0&&fabsf(target)>fabsf(old))rate=fminf(rate,.30f);
+    /* 28/11: dang phanh ma than da nga nguoc chieu thi phanh mem hon, tranh cu lui. */
+    if(s->braking&&((old>0&&pitch<-2.0f)||(old<0&&pitch>2.0f)))rate=fminf(rate,.45f);
     s->v_ref=BalanceMotion_FilterHook(old,target,rate,wanted,pitch,gyro);
     if(s->used&&!s->cancel_flags){
         if(s->braking){

@@ -21,7 +21,7 @@
 #define BALANCE_MOTION_ACCEL (s->speed_preset?(fabsf(old)>.50f?.40f:.70f):(fabsf(old)>.50f?.30f:.60f))  // gia tốc tăng tốc (m/s²); dùng s và old của module gọi
 #endif
 #ifndef BALANCE_MOTION_DECEL
-#define BALANCE_MOTION_DECEL 1.20f  // giảm tốc khi nhả lệnh (m/s²) — 28/11: 0.90 -> 1.20 để bớt trôi
+#define BALANCE_MOTION_DECEL 0.80f  // giảm tốc khi nhả lệnh (m/s²) — 28/11: 1.20 -> 0.80 để phanh mềm, giảm cú lùi
 #endif
 #ifndef BALANCE_MOTION_REVERSE_DECEL
 #define BALANCE_MOTION_REVERSE_DECEL 1.80f  // giảm tốc khi đảo chiều (m/s²) — 28/11: 1.0 -> 1.8 để đảo chiều nhanh
