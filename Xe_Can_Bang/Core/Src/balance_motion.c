@@ -174,10 +174,15 @@ int BalanceMotion_Update(BalanceMotion *s,bool allow,uint32_t word,
     if(allow&&!s->release_required&&!s->cancel_flags){
         /* Lần chạy đầu tiên chỉ cần xe yên thật, không cần quay về vị trí ARM.
          * Không đổi mốc giữ hay lực khi đứng yên: lệnh mới tự lấy mốc của nó. */
-        bool anchor_ok=s->used?fabsf(position-s->x_ref)<.08f:dir==0;
-        bool quiet=fabsf(pitch)<=5&&fabsf(gyro)<25&&fabsf(speed)<(s->cancel_flags?.10f:.15f)&&fabsf(s->v_ref)<.01f&&anchor_ok;
-        if(quiet){if(s->stable<100U)s->stable++;}else s->stable=0;
-        if(s->stable>=100U)s->ready=true;
+        /* 28/11: noi nguong "yen" de xe vao duoc lenh ngay sau ARM/tong.
+         * Truoc: pitch<=5, gyro<25, |v|<0.15, neo 8 cm, 100 nhip (0.5 s).
+         * Nay:   pitch<=6 (hysteresis reset >7.5), gyro<35 (reset >45),
+         *        |v|<0.20 (reset >=0.25), neo 15 cm, 60 nhip (0.3 s). */
+        bool anchor_ok=s->used?fabsf(position-s->x_ref)<.15f:dir==0;
+        bool quiet=fabsf(pitch)<=6.0f&&fabsf(gyro)<35.0f&&fabsf(speed)<(s->cancel_flags?.15f:.20f)&&fabsf(s->v_ref)<.01f&&anchor_ok;
+        if(quiet){if(s->stable<60U)s->stable++;}
+        else if(fabsf(pitch)>7.5f||fabsf(gyro)>45.0f||fabsf(speed)>=.25f)s->stable=0;
+        if(s->stable>=60U)s->ready=true;
     }
     int wanted=allow&&s->ready&&!s->release_required&&fresh?dir:0;
     /* Trong cửa sổ đổi nút vẫn chạy hướng cũ, nên đảo chiều đi qua 0 thay vì

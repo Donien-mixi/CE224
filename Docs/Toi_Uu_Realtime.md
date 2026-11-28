@@ -10,6 +10,14 @@
 > 3. Không push khi đang làm dở. Nếu một mục thất bại, revert commit đó rồi mới làm mục khác.
 > 4. Giữ nguyên build ID RT47/NET47 (theo yêu cầu "không tạo bản firmware mới"); mỗi commit ghi rõ mục nào.
 
+## 0. Đã làm trong đợt này
+
+### [x] A3 — Nới ngưỡng "sẵn sàng điều khiển" (STM32)
+
+- Trước: pitch ≤5°, gyro <25, |v| <0,15, neo 8 cm, 100 nhịp (0,5 s) → sau khi ARM/tông phải chờ lâu, có log 24,8 s không nhận được lệnh.
+- Nay: pitch ≤6° (hysteresis reset >7,5°), gyro <35 (reset >45), |v| <0,20 (reset ≥0,25), neo 15 cm, **60 nhịp (0,3 s)**.
+- Test `test_rt18_launch` cập nhật theo hợp đồng mới (vẫn chặn pitch 8°, gyro 50, v 0,25).
+
 ## 1. Hai điểm hành vi còn thiếu
 
 ### [ ] A1 — Dừng và giữ đúng vị trí khi ngắt tín hiệu (STM32)
@@ -91,3 +99,4 @@
 | `A2` | Đổi mốc không nhả hướng | ESP32 1 094 235 B, 38/38 test |
 | `P1.1` | Tick lệnh 10 ms | ESP32 1 094 235 B, 38/38 test |
 | `P2.1` | Gzip 54,8 → 18,1 KB + ETag/304 | ESP32 1 059 107 B, 39/39 test |
+| `A3` | Nới ngưỡng sẵn sàng 0,3 s | STM32 84 292 B, 39/39 test |

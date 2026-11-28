@@ -19,13 +19,13 @@ static void step(int d,float x,float p,float gy,float v,int pwm){
 }
 int main(void){
  for(int sign=-1;sign<=1;sign+=2){
-  init();for(int i=0;i<99;i++){step(0,sign*.11f,sign*2.8f,0,0,300);assert(!s.ready);}
+  init();for(int i=0;i<59;i++){step(0,sign*.11f,sign*2.8f,0,0,300);assert(!s.ready);}
   step(0,sign*.11f,sign*2.8f,0,0,300);
   assert(s.ready&&s.x_ref==0&&!s.used); // no force/anchor jump at idle
   init();for(int i=0;i<200;i++)step(sign,sign*.11f,sign*2.8f,0,0,300);
   assert(!s.ready&&!s.used&&s.v_ref==0); // no queued press admitted before readiness
   for(int unsafe=0;unsafe<3;unsafe++){
-   init();for(int i=0;i<200;i++)step(0,sign*.11f,sign*(unsafe==0?6:2.8f),unsafe==1?30:0,unsafe==2?.2f:0,300);
+   init();for(int i=0;i<200;i++)step(0,sign*.11f,sign*(unsafe==0?8:2.8f),unsafe==1?50:0,unsafe==2?.25f:0,300);
    assert(!s.ready); // relaxing the old ARM-position test cannot bypass motion/angle quietness
   }
   // Log148.187: modest PWM/angle, ref positive while measured still negative.
