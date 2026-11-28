@@ -62,7 +62,7 @@
 - Đã từng làm (commit `baa330f`): 57 → 19 KB, 304 khi không đổi.
 - **Chấp nhận:** `loop_gap_max_ms` < 20 ms (hiện 100–147 ms khi tải trang); trang mở bình thường.
 
-### [ ] P2.2 — Giãn ping WS 200 ms → 1 s
+### [x] P2.2 — Giãn ping WS 200 ms → 1 s
 
 - **Chấp nhận:** `ws_leaves=0`, `age` không đổi.
 
@@ -101,3 +101,4 @@
 | `P2.1` | Gzip 54,8 → 18,1 KB + ETag/304 | ESP32 1 059 107 B, 39/39 test |
 | `A3` | Nới ngưỡng sẵn sàng 0,3 s | STM32 84 224 B, 39/39 test |
 | `P1.5` | DTIM=1, beacon 100 ms | ESP32 1 059 143 B, 39/39 test |
+| `P2.2` | Ping WS 1 s | ESP32 1 059 207 B, 39/39 test |

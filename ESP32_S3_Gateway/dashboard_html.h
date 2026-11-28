@@ -483,10 +483,12 @@ function connect(){
 /* A half-open socket (phone Wi-Fi dropped without FIN) still looks open. Only a
  * gateway frame proves the command channel is alive: 3 s of silence forces a
  * reconnect instead of sending commands into a dead link. */
+var wsLastPing=0;
 function wsAlive(){
  if(!wsOK)return;
  if(wsLast&&Date.now()-wsLast>3000){try{ws.close();}catch(e){}return;}
- if(!document.hidden&&!(ws.bufferedAmount>0))ws.send('$PING*');
+ /* P2.2: ping 1 s thay 200 ms; van kiem tra song moi 200 ms qua wsLast. */
+ if(!document.hidden&&!(ws.bufferedAmount>0)&&Date.now()-wsLastPing>=1000){wsLastPing=Date.now();ws.send('$PING*');}
 }
 setInterval(function(){wsAlive();updateButtons();},200);
 document.addEventListener('visibilitychange',function(){
