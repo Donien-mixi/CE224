@@ -23,7 +23,7 @@
   vẫn qua 38/38 test. Nếu lắc: giảm `DECEL` hoặc nới khoá về 1 s.
 - **Đo:** log `x - x_ref` sau khi `drive_direction=0`; đếm số mẫu `|v|>0,05` khi không lệnh.
 
-### [ ] A2 — Đổi mốc 50/80/90 không nhả hướng (ESP32)
+### [x] A2 — Đổi mốc 50/80/90 không nhả hướng (ESP32)
 
 - **Hiện tượng:** đổi mốc gọi `releaseDrive()` → nhả lệnh, chờ 120 ms rồi mới chạy mốc mới → khựng.
 - **Sửa:** trong `ESP32_S3_Gateway/dashboard_html.h`, `selectDriveSpeed()`: nếu đang giữ hướng
@@ -87,4 +87,4 @@
 
 | Commit | Mục | Kết quả |
 |---|---|---|
-| *(chưa có)* | | |
+| `A2` | Đổi mốc không nhả hướng | ESP32 1 094 235 B, 38/38 test |

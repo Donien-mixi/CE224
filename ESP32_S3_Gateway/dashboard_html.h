@@ -275,7 +275,11 @@ function padEnd(e){
 document.addEventListener('selectstart',function(e){e.preventDefault();});
 document.addEventListener('dragstart',function(e){e.preventDefault();});
 document.addEventListener('contextmenu',function(e){e.preventDefault();});
-function selectDriveSpeed(preset){if(preset!==0&&preset!==1&&preset!==2)return;releaseDrive();drivePreset=preset;driveTick();updateButtons();}
+function selectDriveSpeed(preset){if(preset!==0&&preset!==1&&preset!==2)return;
+ var holding=driveHeld!==0||driveTurn!==0;
+ drivePreset=preset;
+ if(holding){driveTick();}else{releaseDrive();}
+ updateButtons();}
 function el(id){return document.getElementById(id);}
 function ownsControl(){return data&&data.owner===session&&data.owner_token===sessionToken&&sessionToken>0;}
 function canDrive(){return fresh()&&matched()&&wsOK&&ownsControl()&&!document.hidden&&!busy&&!pending&&!armWaitUntil&&mode==='balance'&&el('floor').checked&&row[4]===3&&row[28]!==1&&row[6]===0&&(row[33]&1)&&data.drive_epoch>0&&row[32]===data.drive_epoch&&blockers(true).length===0;}
@@ -395,7 +399,7 @@ function updateButtons(){
  el('drive-timing').textContent=fresh()&&row.length===40?'Nút trên web: '+((driveHeld||driveTurn)?'ĐANG GIỮ':'ĐÃ NHẢ')+' · STM32: '+((row[34]||row[37])?'đang nhận hướng chạy':'đã nhận trung tính')+'\nLệnh STM32 #'+row[38]+' · tuổi lệnh '+(row[38]?((row[1]-row[39])>>>0)+' ms':'—')+'\nXác nhận qua web: '+(driveAckMs===null?'chưa đo':driveAckMs+' ms')+' (gồm truyền và chu kỳ hiển thị, không phải độ trễ một chiều).\nBánh trái / phải: '+(100*(row[19]||0)).toFixed(1)+' / '+(100*(row[20]||0)).toFixed(1)+' cm/s · trôi tâm: '+(50*((row[19]||0)+(row[20]||0))).toFixed(1)+' cm/s\nQuay đặt / thực: '+((row[36]||0)*180/Math.PI).toFixed(1)+' / '+(((row[20]||0)-(row[19]||0))/.262*180/Math.PI).toFixed(1)+' °/s':'Chờ dữ liệu mới từ STM32…';
  el('speed-normal').className=drivePreset===0?'selected':'';el('speed-fast').className=drivePreset===1?'selected':'';
  el('speed-max').className=drivePreset===2?'selected':'';
- el('speed-ack').textContent='Đã chọn '+([50,72,80][drivePreset])+' cm/s; STM32 xác nhận '+((row[33]&4096)?80:(row[33]&256)?72:50)+' cm/s. Đổi mức sẽ nhả lệnh cũ.';
+ el('speed-ack').textContent='Đã chọn '+([50,72,80][drivePreset])+' cm/s; STM32 xác nhận '+((row[33]&4096)?80:(row[33]&256)?72:50)+' cm/s. Đổi mức áp dụng ngay khi đang giữ hướng.';
  var blocked=blockers().length||busy||pending||armWaitUntil||isRunning()||document.hidden;
  el('profile-status').textContent=matched()?'STM32 ĐÃ XÁC NHẬN R12 · CF 0,998 · khởi động ±60°':'Chờ đúng firmware STM32 R12 chính thức.';
  el('arm').textContent='BẬT CÂN BẰNG R'+(activeController()||'…');
